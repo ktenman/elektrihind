@@ -18,8 +18,9 @@ FROM openjdk:21-rc-jdk
 # Set the current working directory inside the container
 WORKDIR /app
 
-# Copy the JAR file from the build stage
+# Copy the JAR file and application.yml from the build stage
 COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/src/main/resources/application.yml application.yml
 
 # Set the command to run your application
 CMD ["java", "-jar", "/app/app.jar"]

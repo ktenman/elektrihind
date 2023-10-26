@@ -12,8 +12,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableRetry
 public class ElektrihindApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(ElektrihindApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(ElektrihindApplication.class, args);
+    }
 
 }

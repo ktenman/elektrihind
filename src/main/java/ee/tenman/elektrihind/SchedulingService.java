@@ -3,8 +3,8 @@ package ee.tenman.elektrihind;
 import jakarta.annotation.Resource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +18,7 @@ public class SchedulingService {
     @Resource
     private TelegramService telegramService;
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "${scheduling.cronExpression}")
     public void fetchDailyPrices() {
         List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices();
         List<ElectricityPrice> filteredPrices = filterPricesForNext24Hours(electricityPrices);

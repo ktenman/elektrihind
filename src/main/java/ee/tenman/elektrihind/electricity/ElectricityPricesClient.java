@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.List;
 
-@FeignClient(name = "electricityPricesClient", url = "https://elektrihind.ee/api")
+@FeignClient(name = "electricityPricesClient", url = "${electricity-prices-api.url}")
 public interface ElectricityPricesClient {
 
     @GetMapping("/stock_price_daily.php")

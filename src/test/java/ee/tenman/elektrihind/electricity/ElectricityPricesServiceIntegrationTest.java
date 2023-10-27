@@ -1,6 +1,7 @@
 package ee.tenman.elektrihind.electricity;
 
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
@@ -16,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @AutoConfigureWireMock(port = 0)
+@Slf4j
 class ElectricityPricesServiceIntegrationTest {
 
     @Resource

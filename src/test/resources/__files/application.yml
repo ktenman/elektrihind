@@ -4,4 +4,4 @@ telegram:
   privateChatId:
 
 electricity-prices-api:
-  url: https://elektrihind.ee/api
+  url: http://localhost:${wiremock.server.port}

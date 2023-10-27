@@ -1,8 +1,0 @@
-telegram:
-  botToken:
-  monitoringChatId:
-  privateChatId:
-
-electricityPricesClient:
-  ribbon:
-    listOfServers: http://localhost:${wiremock.server.port}

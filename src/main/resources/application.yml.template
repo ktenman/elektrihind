@@ -1,0 +1,9 @@
+telegram:
+  botToken:
+  monitoringChatId:
+  privateChatId:
+
+scheduling:
+#  cronExpression: "0 0 12 * * ?" # Every day at 12:00
+  cronExpression: "0 * * * * *" # Every minute
+

@@ -19,8 +19,8 @@ public class TelegramService {
     }
 
     public void sendToTelegram(String message) {
-//        telegramClient.sendMessage(monitoringChatId, message);
-        telegramClient.sendMessage(privateChatId, message);
+        telegramClient.sendMessage(monitoringChatId, message);
+//        telegramClient.sendMessage(privateChatId, message);
     }
 
 }

@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
+import wiremock.com.google.common.net.HttpHeaders;
+import wiremock.com.google.common.net.MediaType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,7 +32,7 @@ class ElectricityPricesServiceIntegrationTest {
     void testFetchDailyPrices() {
         stubFor(get(urlEqualTo(ENDPOINT_DAILY_PRICES))
                 .willReturn(aResponse()
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString())
                         .withBodyFile(RESPONSE_FILE_DAILY_PRICES)));
 
         List<ElectricityPrice> prices = electricityPricesService.fetchDailyPrices();

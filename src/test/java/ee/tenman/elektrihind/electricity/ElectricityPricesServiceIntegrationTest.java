@@ -24,12 +24,14 @@ class ElectricityPricesServiceIntegrationTest {
     private ElectricityPricesService electricityPricesService;
 
     private static final String ENDPOINT_DAILY_PRICES = "/stock_price_daily.php";
-    private static final String RESPONSE_FILE_DAILY_PRICES = "__files/daily_prices_response.json";
+    private static final String RESPONSE_FILE_DAILY_PRICES = "daily_prices_response.json";
 
     @Test
     void testFetchDailyPrices() {
-        stubFor(get(urlEqualTo(ENDPOINT_DAILY_PRICES)).willReturn(aResponse()
-                .withBodyFile(RESPONSE_FILE_DAILY_PRICES)));
+        stubFor(get(urlEqualTo(ENDPOINT_DAILY_PRICES))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBodyFile(RESPONSE_FILE_DAILY_PRICES)));
 
         List<ElectricityPrice> prices = electricityPricesService.fetchDailyPrices();
 

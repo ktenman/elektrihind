@@ -37,8 +37,8 @@ class SchedulingServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(clock.instant()).thenReturn(Instant.parse("2023-10-27T10:00:00.00Z"));
-        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        lenient().when(clock.instant()).thenReturn(Instant.parse("2023-10-27T10:00:00.00Z"));
+        lenient().when(clock.getZone()).thenReturn(ZoneId.systemDefault());
     }
 
     @Test

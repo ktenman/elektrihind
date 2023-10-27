@@ -15,6 +15,11 @@ RUN mvn package -DskipTests
 # Switch to a new stage and use AdoptOpenJDK for the runtime
 FROM azul/zulu-openjdk-alpine:21-jre-latest
 
+# Set the time zone
+ENV TZ=Europe/Tallinn
+RUN apk add --no-cache tzdata \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Set the current working directory inside the container
 WORKDIR /app
 

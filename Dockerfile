@@ -13,7 +13,7 @@ COPY src /app/src
 RUN mvn package -DskipTests
 
 # Switch to a new stage and use AdoptOpenJDK for the runtime
-FROM openjdk:21-rc-jdk
+FROM azul/zulu-openjdk-alpine:21-jre-latest
 
 # Set the current working directory inside the container
 WORKDIR /app

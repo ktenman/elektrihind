@@ -8,6 +8,13 @@ Elektrihind is a service dedicated to providing insights on electricity prices i
 * Built with Spring Boot, making it easily scalable and maintainable
 * Containerized with Docker for simplified deployment
 
+### Telegram Integration:
+
+* Sends automated alerts and updates to a designated Telegram chat.
+* Offers retries in sending messages, ensuring delivery.
+* Adheres to a daily message limit to prevent spamming.
+* Displays electricity prices in a user-friendly format on Telegram.
+
 ## Pre-requisites
 * Docker installed
 * Docker service running and enabled on startup

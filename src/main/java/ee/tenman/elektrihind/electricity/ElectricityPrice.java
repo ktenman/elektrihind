@@ -1,6 +1,7 @@
-package ee.tenman.elektrihind;
+package ee.tenman.elektrihind.electricity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import ee.tenman.elektrihind.util.DateTimeConstants;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -13,6 +14,6 @@ public class ElectricityPrice {
 
     @Override
     public String toString() {
-        return String.format("%s - %.2f%n", date.format(Configs.DATE_TIME_FORMATTER), price);
+        return String.format("%s - %.2f%n", date.format(DateTimeConstants.DATE_TIME_FORMATTER), price);
     }
 }

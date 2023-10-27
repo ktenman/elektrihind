@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind;
+package ee.tenman.elektrihind.electricity;
 
 import feign.FeignException;
 import jakarta.annotation.Resource;

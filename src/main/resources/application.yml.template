@@ -5,5 +5,6 @@ telegram:
 
 scheduling:
 #  cronExpression: "0 0 12 * * ?" # Every day at 12:00
-  cronExpression: "0 * * * * *" # Every minute
+#  cronExpression: "0 * * * * *" # Every minute
+  cronExpression: "0 59 13 * * *"
 

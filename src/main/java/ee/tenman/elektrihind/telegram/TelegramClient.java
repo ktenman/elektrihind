@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind;
+package ee.tenman.elektrihind.telegram;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

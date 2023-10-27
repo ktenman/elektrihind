@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind;
+package ee.tenman.elektrihind.telegram;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ public class TelegramService {
     }
 
     public void sendToTelegram(String message) {
-        telegramClient.sendMessage(monitoringChatId, message);
+//        telegramClient.sendMessage(monitoringChatId, message);
         telegramClient.sendMessage(privateChatId, message);
     }
 

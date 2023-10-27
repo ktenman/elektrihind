@@ -10,7 +10,7 @@ RUN mvn dependency:go-offline -B
 
 # Copy the project files and build the project
 COPY src /app/src
-RUN mvn package -DskipTests
+RUN mvn package
 
 # Switch to a new stage and use AdoptOpenJDK for the runtime
 FROM azul/zulu-openjdk-alpine:21-jre-latest

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="org.hibernate" level="WARN"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+    <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ,Europe/Tallinn} [%thread] %-5level %logger{36} - %msg%n</pattern>
+</configuration>

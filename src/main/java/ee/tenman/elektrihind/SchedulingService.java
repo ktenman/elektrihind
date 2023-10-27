@@ -7,6 +7,9 @@ import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
 import ee.tenman.elektrihind.telegram.TelegramService;
 import jakarta.annotation.Resource;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@Slf4j
 public class SchedulingService {
 
     @Resource
@@ -31,9 +35,10 @@ public class SchedulingService {
     @Resource
     private Clock clock;
 
-    private static final int DAILY_MESSAGE_LIMIT = 2;
+    static final int DAILY_MESSAGE_LIMIT = 2;
 
-    private static final LoadingCache<LocalDate, Integer> MESSAGE_COUNT_PER_DAY = CacheBuilder.newBuilder()
+    @Getter
+    private final LoadingCache<LocalDate, Integer> messageCountPerDay = CacheBuilder.newBuilder()
             .expireAfterWrite(7, TimeUnit.DAYS)
             .build(
                     new CacheLoader<>() {
@@ -44,38 +49,53 @@ public class SchedulingService {
                     }
             );
 
+    @Setter
     private List<ElectricityPrice> latestPrices = new ArrayList<>();
 
     @Scheduled(cron = "0 59 * * * ?") // Runs every 60 minutes
     public void fetchAndSendPrices() {
+        log.info("Fetching and sending prices...");
+
         List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices();
+        log.debug("Fetched {} prices.", electricityPrices.size());
 
-        if (isNewPricesAvailable(electricityPrices)) {
-            List<ElectricityPrice> filteredPrices = filterPricesForNext24Hours(electricityPrices);
-            String formattedPrices = formatPricesForTelegram(filteredPrices);
-
-            if (canSendMessageToday()) {
-                telegramService.sendToTelegram(formattedPrices);
-                incrementMessageCountForToday();
-            }
-
-            latestPrices = new ArrayList<>(electricityPrices);
+        if (!isNewPricesAvailable(electricityPrices)) {
+            log.info("No new prices available. Skipping send.");
+            return;
         }
+
+        List<ElectricityPrice> filteredPrices = filterPricesForNext24Hours(electricityPrices);
+        String formattedPrices = formatPricesForTelegram(filteredPrices);
+
+        if (canSendMessageToday()) {
+            sendMessageAndIncrementCount(formattedPrices);
+            log.info("Message sent successfully.");
+        } else {
+            log.info("Message sending limit reached for today.");
+        }
+
+        latestPrices = new ArrayList<>(electricityPrices);
     }
 
-    private boolean isNewPricesAvailable(List<ElectricityPrice> electricityPrices) {
+    void sendMessageAndIncrementCount(String formattedPrices) {
+        telegramService.sendToTelegram(formattedPrices);
+        incrementMessageCountForToday();
+        log.debug("Message count for today incremented.");
+    }
+
+    boolean isNewPricesAvailable(List<ElectricityPrice> electricityPrices) {
         return !electricityPrices.equals(latestPrices);
     }
 
-    private boolean canSendMessageToday() {
+    boolean canSendMessageToday() {
         LocalDate today = LocalDate.now(clock);
-        return MESSAGE_COUNT_PER_DAY.getUnchecked(today) < DAILY_MESSAGE_LIMIT;
+        return messageCountPerDay.getUnchecked(today) < DAILY_MESSAGE_LIMIT;
     }
 
-    private void incrementMessageCountForToday() {
+    void incrementMessageCountForToday() {
         LocalDate today = LocalDate.now(clock);
-        int currentCount = MESSAGE_COUNT_PER_DAY.getUnchecked(today);
-        MESSAGE_COUNT_PER_DAY.put(today, currentCount + 1);
+        int currentCount = messageCountPerDay.getUnchecked(today);
+        messageCountPerDay.put(today, currentCount + 1);
     }
 
     public List<ElectricityPrice> filterPricesForNext24Hours(List<ElectricityPrice> electricityPrices) {
@@ -88,15 +108,20 @@ public class SchedulingService {
 
     public String formatPricesForTelegram(List<ElectricityPrice> filteredPrices) {
         StringBuilder builder = new StringBuilder();
-
         filteredPrices.forEach(builder::append);
 
         Optional<ElectricityPrice> mostExpensiveHour = filteredPrices.stream().max(Comparator.comparingDouble(ElectricityPrice::getPrice));
         Optional<ElectricityPrice> cheapestHour = filteredPrices.stream().min(Comparator.comparingDouble(ElectricityPrice::getPrice));
 
         builder.append("\n");
-        mostExpensiveHour.ifPresent(p -> builder.append("The most expensive: ").append(p));
-        cheapestHour.ifPresent(p -> builder.append("The cheapest: ").append(p));
+        mostExpensiveHour.ifPresent(p -> {
+            builder.append("The most expensive: ").append(p);
+            log.debug("Most expensive price: {}", p);
+        });
+        cheapestHour.ifPresent(p -> {
+            builder.append("The cheapest: ").append(p);
+            log.debug("Cheapest price: {}", p);
+        });
 
         return builder.toString();
     }

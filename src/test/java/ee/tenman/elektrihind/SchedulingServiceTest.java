@@ -47,8 +47,7 @@ class SchedulingServiceTest {
 
     @Test
     void fetchAndSendPrices_withNewPrices_shouldSendMessage() {
-        List<ElectricityPrice> prices = createSamplePrices();
-        when(electricityPricesService.fetchDailyPrices()).thenReturn(prices);
+        mockFetchDailyPrices(createSamplePrices());
         schedulingService.setLatestPrices(new ArrayList<>());
 
         schedulingService.fetchAndSendPrices();
@@ -60,7 +59,7 @@ class SchedulingServiceTest {
     void fetchAndSendPrices_withNoNewPrices_shouldNotSendMessage() {
         List<ElectricityPrice> prices = createSamplePrices();
         schedulingService.setLatestPrices(prices);
-        when(electricityPricesService.fetchDailyPrices()).thenReturn(prices);
+        mockFetchDailyPrices(prices);
 
         schedulingService.fetchAndSendPrices();
 
@@ -69,27 +68,21 @@ class SchedulingServiceTest {
 
     @Test
     void canSendMessageToday_withNoMessagesSent_shouldReturnTrue() {
-        boolean result = schedulingService.canSendMessageToday();
-        assertThat(result).isTrue();
+        assertThat(schedulingService.canSendMessageToday()).isTrue();
     }
 
     @Test
     void canSendMessageToday_withDailyLimitReached_shouldReturnFalse() {
-        for (int i = 0; i < SchedulingService.DAILY_MESSAGE_LIMIT; i++) {
-            schedulingService.incrementMessageCountForToday();
-        }
+        maxOutDailyMessageLimit();
 
-        boolean result = schedulingService.canSendMessageToday();
-        assertThat(result).isFalse();
+        assertThat(schedulingService.canSendMessageToday()).isFalse();
     }
 
     @Test
     void formatPricesForTelegram_givenPrices_shouldFormatCorrectly() {
-        List<ElectricityPrice> prices = createSamplePrices();
-        String result = schedulingService.formatPricesForTelegram(prices);
+        String result = schedulingService.formatPricesForTelegram(createSamplePrices());
 
-        assertThat(result).contains("The most expensive:")
-                .contains("The cheapest:");
+        assertThat(result).contains("The most expensive:", "The cheapest:");
     }
 
     @Test
@@ -104,29 +97,26 @@ class SchedulingServiceTest {
 
     @Test
     void isNewPricesAvailable_whenPricesAreDifferentFromLatest_shouldReturnTrue() {
-        List<ElectricityPrice> newPrices = createSamplePrices();
         schedulingService.setLatestPrices(new ArrayList<>());
-        boolean result = schedulingService.isNewPricesAvailable(newPrices);
 
-        assertThat(result).isTrue();
+        assertThat(schedulingService.isNewPricesAvailable(createSamplePrices())).isTrue();
     }
 
     @Test
     void isNewPricesAvailable_whenPricesAreSameAsLatest_shouldReturnFalse() {
         List<ElectricityPrice> samePrices = createSamplePrices();
         schedulingService.setLatestPrices(new ArrayList<>(samePrices));
-        boolean result = schedulingService.isNewPricesAvailable(samePrices);
 
-        assertThat(result).isFalse();
+        assertThat(schedulingService.isNewPricesAvailable(samePrices)).isFalse();
     }
 
     @Test
     void fetchAndSendPrices_whenCanSendMessageTodayIsTrue_shouldSendPrices() {
-        List<ElectricityPrice> newPrices = createSamplePrices();
-        when(electricityPricesService.fetchDailyPrices()).thenReturn(newPrices);
+        mockFetchDailyPrices(createSamplePrices());
         schedulingService.setLatestPrices(new ArrayList<>());
         LocalDate today = LocalDate.now(clock);
         schedulingService.getMessageCountPerDay().put(today, 1);
+
         schedulingService.fetchAndSendPrices();
 
         verify(telegramService).sendToTelegram(anyString());
@@ -134,11 +124,10 @@ class SchedulingServiceTest {
 
     @Test
     void fetchAndSendPrices_whenCanSendMessageTodayIsFalse_shouldNotSendPrices() {
-        List<ElectricityPrice> newPrices = createSamplePrices();
-        when(electricityPricesService.fetchDailyPrices()).thenReturn(newPrices);
+        mockFetchDailyPrices(createSamplePrices());
         schedulingService.setLatestPrices(new ArrayList<>());
-        LocalDate today = LocalDate.now(clock);
-        schedulingService.getMessageCountPerDay().put(today, SchedulingService.DAILY_MESSAGE_LIMIT);
+        maxOutDailyMessageLimit();
+
         schedulingService.fetchAndSendPrices();
 
         verify(telegramService, never()).sendToTelegram(anyString());
@@ -147,24 +136,38 @@ class SchedulingServiceTest {
     @Test
     void getMessageCount_whenDateNotInCache_shouldReturnZero() {
         LocalDate someDate = LocalDate.of(2022, 1, 1);
-        int result = schedulingService.getMessageCount(someDate);
-        assertThat(result).isEqualTo(0);
+
+        assertThat(schedulingService.getMessageCount(someDate)).isZero();
     }
 
     @Test
     void getMessageCount_whenDateInCache_shouldReturnCount() {
         LocalDate someDate = LocalDate.of(2022, 1, 1);
-        int sampleCount = 5;
-        schedulingService.getMessageCountPerDay().put(someDate, sampleCount);
-        int result = schedulingService.getMessageCount(someDate);
-        assertThat(result).isEqualTo(sampleCount);
+        schedulingService.getMessageCountPerDay().put(someDate, 5);
+
+        assertThat(schedulingService.getMessageCount(someDate)).isEqualTo(5);
     }
 
     private List<ElectricityPrice> createSamplePrices() {
         return List.of(
-                new ElectricityPrice(Instant.parse("2023-10-27T11:00:00.00Z").atZone(ZoneId.systemDefault()).toLocalDateTime(), 100.0),
-                new ElectricityPrice(Instant.parse("2023-10-27T12:00:00.00Z").atZone(ZoneId.systemDefault()).toLocalDateTime(), 50.0),
-                new ElectricityPrice(Instant.parse("2023-10-28T09:00:00.00Z").atZone(ZoneId.systemDefault()).toLocalDateTime(), 150.0)
+                newPrice("2023-10-27T11:00:00.00Z", 100.0),
+                newPrice("2023-10-27T12:00:00.00Z", 50.0),
+                newPrice("2023-10-28T09:00:00.00Z", 150.0)
         );
     }
+
+    private ElectricityPrice newPrice(String instant, double price) {
+        return new ElectricityPrice(Instant.parse(instant).atZone(ZoneId.systemDefault()).toLocalDateTime(), price);
+    }
+
+    private void mockFetchDailyPrices(List<ElectricityPrice> prices) {
+        when(electricityPricesService.fetchDailyPrices()).thenReturn(prices);
+    }
+
+    private void maxOutDailyMessageLimit() {
+        for (int i = 0; i < SchedulingService.DAILY_MESSAGE_LIMIT; i++) {
+            schedulingService.incrementMessageCountForToday();
+        }
+    }
+
 }

@@ -1,16 +1,22 @@
 package ee.tenman.elektrihind.electricity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import ee.tenman.elektrihind.config.CustomLocalDateTimeDeserializer;
 import ee.tenman.elektrihind.util.DateTimeConstants;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
+@Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class ElectricityPrice {
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
+    @JsonDeserialize(using = CustomLocalDateTimeDeserializer.class)
     private LocalDateTime date;
     private Double price;
 

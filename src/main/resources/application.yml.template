@@ -2,3 +2,7 @@ telegram:
   botToken:
   monitoringChatId:
   privateChatId:
+
+electricityPricesClient:
+  ribbon:
+    listOfServers: https://elektrihind.ee/api

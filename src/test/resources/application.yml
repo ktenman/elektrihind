@@ -1,4 +1,8 @@
 telegram:
-  botToken: 6412476546:AAHMGNNrpdRr9w6Dj_Ve6V0PSLgRLNwHQtk
-  monitoringChatId: -1001645546677
-  privateChatId: 116578187
+  botToken:
+  monitoringChatId:
+  privateChatId:
+
+electricityPricesClient:
+  ribbon:
+    listOfServers: http://localhost:${wiremock.server.port}

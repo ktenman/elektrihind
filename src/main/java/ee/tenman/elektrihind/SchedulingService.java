@@ -1,8 +1,7 @@
 package ee.tenman.elektrihind;
 
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
 import ee.tenman.elektrihind.telegram.TelegramService;
@@ -38,16 +37,10 @@ public class SchedulingService {
     static final int DAILY_MESSAGE_LIMIT = 2;
 
     @Getter
-    private final LoadingCache<LocalDate, Integer> messageCountPerDay = CacheBuilder.newBuilder()
-            .expireAfterWrite(7, TimeUnit.DAYS)
-            .build(
-                    new CacheLoader<>() {
-                        @Override
-                        public Integer load(LocalDate key) {
-                            return 0;
-                        }
-                    }
-            );
+    private final Cache<LocalDate, Integer> messageCountPerDay =
+            CacheBuilder.newBuilder()
+                    .expireAfterWrite(7, TimeUnit.DAYS)
+                    .build();
 
     @Setter
     private List<ElectricityPrice> latestPrices = new ArrayList<>();
@@ -87,14 +80,22 @@ public class SchedulingService {
         return !electricityPrices.equals(latestPrices);
     }
 
+    int getMessageCount(LocalDate date) {
+        Integer count = messageCountPerDay.getIfPresent(date);
+        if (count == null) {
+            return 0;
+        }
+        return count;
+    }
+
     boolean canSendMessageToday() {
         LocalDate today = LocalDate.now(clock);
-        return messageCountPerDay.getUnchecked(today) < DAILY_MESSAGE_LIMIT;
+        return getMessageCount(today) < DAILY_MESSAGE_LIMIT;
     }
 
     void incrementMessageCountForToday() {
         LocalDate today = LocalDate.now(clock);
-        int currentCount = messageCountPerDay.getUnchecked(today);
+        int currentCount = getMessageCount(today);
         messageCountPerDay.put(today, currentCount + 1);
     }
 

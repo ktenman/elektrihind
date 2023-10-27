@@ -18,7 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SchedulingServiceTest {
@@ -95,7 +99,7 @@ class SchedulingServiceTest {
 
         verify(telegramService).sendToTelegram(samplePrices);
         LocalDate today = LocalDate.now(clock);
-        assertThat(schedulingService.getMessageCountPerDay().getUnchecked(today)).isEqualTo(1);
+        assertThat(schedulingService.getMessageCountPerDay().getIfPresent(today)).isEqualTo(1);
     }
 
     @Test
@@ -138,6 +142,22 @@ class SchedulingServiceTest {
         schedulingService.fetchAndSendPrices();
 
         verify(telegramService, never()).sendToTelegram(anyString());
+    }
+
+    @Test
+    void getMessageCount_whenDateNotInCache_shouldReturnZero() {
+        LocalDate someDate = LocalDate.of(2022, 1, 1);
+        int result = schedulingService.getMessageCount(someDate);
+        assertThat(result).isEqualTo(0);
+    }
+
+    @Test
+    void getMessageCount_whenDateInCache_shouldReturnCount() {
+        LocalDate someDate = LocalDate.of(2022, 1, 1);
+        int sampleCount = 5;
+        schedulingService.getMessageCountPerDay().put(someDate, sampleCount);
+        int result = schedulingService.getMessageCount(someDate);
+        assertThat(result).isEqualTo(sampleCount);
     }
 
     private List<ElectricityPrice> createSamplePrices() {

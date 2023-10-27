@@ -1,5 +1,8 @@
 package ee.tenman.elektrihind;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
 import ee.tenman.elektrihind.telegram.TelegramService;
@@ -8,10 +11,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class SchedulingService {
@@ -25,12 +31,51 @@ public class SchedulingService {
     @Resource
     private Clock clock;
 
-    @Scheduled(cron = "${scheduling.cronExpression}")
-    public void fetchDailyPrices() {
+    private static final int DAILY_MESSAGE_LIMIT = 2;
+
+    private static final LoadingCache<LocalDate, Integer> MESSAGE_COUNT_PER_DAY = CacheBuilder.newBuilder()
+            .expireAfterWrite(7, TimeUnit.DAYS)
+            .build(
+                    new CacheLoader<>() {
+                        @Override
+                        public Integer load(LocalDate key) {
+                            return 0;
+                        }
+                    }
+            );
+
+    private List<ElectricityPrice> latestPrices = new ArrayList<>();
+
+    @Scheduled(cron = "0 59 * * * ?") // Runs every 60 minutes
+    public void fetchAndSendPrices() {
         List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices();
-        List<ElectricityPrice> filteredPrices = filterPricesForNext24Hours(electricityPrices);
-        String formattedPrices = formatPricesForTelegram(filteredPrices);
-        telegramService.sendToTelegram(formattedPrices);
+
+        if (isNewPricesAvailable(electricityPrices)) {
+            List<ElectricityPrice> filteredPrices = filterPricesForNext24Hours(electricityPrices);
+            String formattedPrices = formatPricesForTelegram(filteredPrices);
+
+            if (canSendMessageToday()) {
+                telegramService.sendToTelegram(formattedPrices);
+                incrementMessageCountForToday();
+            }
+
+            latestPrices = new ArrayList<>(electricityPrices);
+        }
+    }
+
+    private boolean isNewPricesAvailable(List<ElectricityPrice> electricityPrices) {
+        return !electricityPrices.equals(latestPrices);
+    }
+
+    private boolean canSendMessageToday() {
+        LocalDate today = LocalDate.now(clock);
+        return MESSAGE_COUNT_PER_DAY.getUnchecked(today) < DAILY_MESSAGE_LIMIT;
+    }
+
+    private void incrementMessageCountForToday() {
+        LocalDate today = LocalDate.now(clock);
+        int currentCount = MESSAGE_COUNT_PER_DAY.getUnchecked(today);
+        MESSAGE_COUNT_PER_DAY.put(today, currentCount + 1);
     }
 
     public List<ElectricityPrice> filterPricesForNext24Hours(List<ElectricityPrice> electricityPrices) {
@@ -55,5 +100,4 @@ public class SchedulingService {
 
         return builder.toString();
     }
-
 }

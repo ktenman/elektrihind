@@ -1,0 +1,31 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v2
+        with:
+          java-version: '21'
+          distribution: 'adopt'
+
+      - name: Set up Maven 3.9.5
+        env:
+          MAVEN_VERSION: 3.9.5
+        run: |
+          wget https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.zip
+          unzip apache-maven-${MAVEN_VERSION}-bin.zip
+          sudo mv apache-maven-${MAVEN_VERSION} /opt/
+          sudo ln -s /opt/apache-maven-${MAVEN_VERSION}/bin/mvn /usr/bin/mvn
+
+      - name: Build with Maven
+        run: mvn clean install

@@ -26,5 +26,8 @@ WORKDIR /app
 # Copy the JAR file from the build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Set the command to run your application
-CMD ["java", "-jar", "/app/app.jar"]
+# Set the timezone for the JVM
+ENV JAVA_OPTS="-Duser.timezone=Europe/Tallinn"
+
+# Set the command to run your application with JAVA_OPTS
+CMD ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

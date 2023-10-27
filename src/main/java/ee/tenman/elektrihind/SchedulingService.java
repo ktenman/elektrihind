@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class SchedulingService {
 
+    static final int DAILY_MESSAGE_LIMIT = 2;
+
     @Resource
     private ElectricityPricesService electricityPricesService;
 
@@ -34,13 +36,10 @@ public class SchedulingService {
     @Resource
     private Clock clock;
 
-    static final int DAILY_MESSAGE_LIMIT = 2;
-
     @Getter
-    private final Cache<LocalDate, Integer> messageCountPerDay =
-            CacheBuilder.newBuilder()
-                    .expireAfterWrite(7, TimeUnit.DAYS)
-                    .build();
+    private final Cache<LocalDate, Integer> messageCountPerDay = CacheBuilder.newBuilder()
+            .expireAfterWrite(7, TimeUnit.DAYS)
+            .build();
 
     @Setter
     private List<ElectricityPrice> latestPrices = new ArrayList<>();

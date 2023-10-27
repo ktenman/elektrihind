@@ -25,7 +25,7 @@ jobs:
           wget https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.zip
           unzip apache-maven-${MAVEN_VERSION}-bin.zip
           sudo mv apache-maven-${MAVEN_VERSION} /opt/
-          sudo ln -s /opt/apache-maven-${MAVEN_VERSION}/bin/mvn /usr/bin/mvn
+          sudo ln -sf /opt/apache-maven-${MAVEN_VERSION}/bin/mvn /usr/bin/mvn
 
       - name: Build with Maven
         run: mvn clean install

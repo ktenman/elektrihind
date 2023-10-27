@@ -30,10 +30,9 @@ class ElectricityPricesServiceIntegrationTest {
 
     @Test
     void testFetchDailyPrices() {
-        stubFor(get(urlEqualTo(ENDPOINT_DAILY_PRICES))
-                .willReturn(aResponse()
-                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString())
-                        .withBodyFile(RESPONSE_FILE_DAILY_PRICES)));
+        stubFor(get(urlEqualTo(ENDPOINT_DAILY_PRICES)).willReturn(aResponse()
+                .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString())
+                .withBodyFile(RESPONSE_FILE_DAILY_PRICES)));
 
         List<ElectricityPrice> prices = electricityPricesService.fetchDailyPrices();
 

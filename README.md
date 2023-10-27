@@ -10,10 +10,10 @@ Elektrihind is a service dedicated to providing insights on electricity prices i
 
 ### Telegram Integration:
 
-* Sends automated alerts and updates to a designated Telegram chat.
-* Offers retries in sending messages, ensuring delivery.
-* Adheres to a daily message limit to prevent spamming.
-* Displays electricity prices in a user-friendly format on Telegram.
+* Sends automated alerts and updates to a designated Telegram chat
+* Offers retries in sending messages, ensuring delivery
+* Adheres to a daily message limit to prevent spamming
+* Displays electricity prices in a user-friendly format on Telegram
 
 ## Pre-requisites
 * Docker installed

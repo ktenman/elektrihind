@@ -30,7 +30,7 @@ jobs:
 
       - name: Build with Maven and Run Sonar Analysis
         run: |
-          mvn clean install org.sonarsource.scanner.maven:sonar \
+          mvn clean install sonar:sonar \
             -Dsonar.projectKey=ktenman:elektrihind \
             -Dsonar.organization=ktenman \
             -Dsonar.host.url=https://sonarcloud.io \

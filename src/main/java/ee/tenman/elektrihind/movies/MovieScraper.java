@@ -7,7 +7,6 @@ import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import ee.tenman.elektrihind.movies.imdb.IMDBService;
 import ee.tenman.elektrihind.telegram.TelegramService;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
@@ -48,7 +47,7 @@ public class MovieScraper {
     @Resource
     private IMDBService imdbService;
 
-    @PostConstruct
+    //    @PostConstruct
     public void fetchMovies() {
         Instant startTime = Instant.now();
         log.info("Starting movie fetching process.");

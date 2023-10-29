@@ -5,3 +5,10 @@ telegram:
 
 electricity-prices-api:
   url: https://elektrihind.ee/api
+
+omdb-api:
+  url: http://www.omdbapi.com
+  key:
+
+imdb-api:
+  url: https://imdb-api.projects.thetuhin.com

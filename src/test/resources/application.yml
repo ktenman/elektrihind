@@ -5,3 +5,10 @@ telegram:
 
 electricity-prices-api:
   url: http://localhost:${wiremock.server.port}
+
+omdb-api:
+  url: http://localhost:${wiremock.server.port}
+  key:
+
+imdb-api:
+  url: http://localhost:${wiremock.server.port}

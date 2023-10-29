@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.open;
@@ -73,7 +74,7 @@ public class MovieScraper {
         log.info("Initializing browser configurations.");
         Configuration.browser = "firefox";
         Configuration.headless = true;
-        open("https://poff.ee/otsi_filmi/index.html");
+        open("https://poff.ee/otsi_filmi/?towns=Tartu&cinemas=Elektriteater%2C%20Tartu");
     }
 
     private List<String> fetchMovieUrls() {
@@ -93,17 +94,26 @@ public class MovieScraper {
 
         for (int i = 0; i < Math.min(UPPER_LIMIT, movieUrls.size()); i++) {
             String url = movieUrls.get(i);
-            movies.add(fetchMovieDetailsFromUrl(url));
+            fetchMovieDetailsFromUrl(url).ifPresent(movies::add);
         }
 
         return movies;
     }
 
-    private MovieDto fetchMovieDetailsFromUrl(String url) {
+    private Optional<MovieDto> fetchMovieDetailsFromUrl(String url) {
         log.info("Fetching details for movie URL: {}", url);
         open(url);
         waitForElementToBeVisible(By.className("str_info_value"));
-        return fetchMovieDetailsFromCurrentPage(url);
+
+        ElementsCollection screeningVenue = $$(By.className("screening_venue"))
+                .filter(Condition.text("Elektriteater, Tartu"));
+
+        if (screeningVenue.isEmpty()) {
+            log.info("Movie is not screened in Tartu: {}", url);
+            return Optional.empty();
+        }
+
+        return Optional.ofNullable(fetchMovieDetailsFromCurrentPage(url));
     }
 
     private void waitForElementToBeVisible(By selector) {

@@ -32,7 +32,7 @@ jobs:
         run: |
           mvn clean install sonar:sonar \
             -Dsonar.projectKey=elektrihind \
-            -Dsonar.organization=ktenman \
+            -Dsonar.organization=Konstantin Tenman \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 

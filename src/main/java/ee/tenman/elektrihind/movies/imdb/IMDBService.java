@@ -14,12 +14,12 @@ import java.util.Optional;
 public class IMDBService {
 
     @Resource
-    private IMDBApiClient electricityPricesClient;
+    private IMDBApiClient imdbApiClient;
 
     @Retryable(value = FeignException.class, maxAttempts = 7, backoff = @Backoff(delay = 7777))
     public Optional<Double> getImdbRating(String imdbId) {
         log.info("Fetching movie details for ID: {}", imdbId);
-        IMDB movieDetails = electricityPricesClient.fetchMovie(imdbId);
+        IMDB movieDetails = imdbApiClient.fetchMovie(imdbId);
         log.info("Fetched movie details: {}", movieDetails);
         return Optional.ofNullable(movieDetails)
                 .map(IMDB::getRating)

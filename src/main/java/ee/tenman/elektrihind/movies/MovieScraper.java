@@ -133,23 +133,7 @@ public class MovieScraper {
         }
 
         movieDtoBuilder.imdbLink(movieDetails.getImdbLink());
-        try {
-            movieDtoBuilder.imdbRating(Double.parseDouble(movieDetails.getImdbRating()));
-        } catch (NumberFormatException e) {
-            log.warn("Invalid IMDb rating format for movie: {}", movieDtoBuilder.build().getTitle());
-        }
-
         MovieDto movieDto = movieDtoBuilder.build();
-
-        if (movieDto.getImdbRating() == -1.0) {
-            imdbService.getImdbRating(movieDto.getImdbId()).ifPresentOrElse(
-                    newRating -> {
-                        movieDto.setImdbRating(newRating);
-                        log.info("Updated rating for movie {}: {}", movieDto.getTitle(), newRating);
-                    },
-                    () -> log.warn("Failed to fetch IMDb rating for movie: {}", movieDto.getTitle())
-            );
-        }
 
         updateMovieData(movieDto);
 

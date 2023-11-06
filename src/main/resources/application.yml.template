@@ -2,6 +2,9 @@ telegram:
   botToken:
   monitoringChatId:
   privateChatId:
+  elektriteemu:
+    token:
+    username:
 
 electricity-prices-api:
   url: https://elektrihind.ee/api

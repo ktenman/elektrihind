@@ -1,44 +1,19 @@
+image: jelastic/maven:3.9.5-openjdk-21
+
 stages:
-  - prepare
+  - build
   - test
-  - analyze
 
-variables:
-  MAVEN_CLI_OPTS: "-s .m2/settings.xml --batch-mode"
-  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  SONAR_TOKEN: ${SONAR_TOKEN} # Define this variable in your CI/CD settings
-  MAVEN_VERSION: "3.9.5" # Define Maven version here
+cache:
+  paths:
+    - .m2/repository
 
-before_script:
-  - export PATH=/opt/apache-maven-${MAVEN_VERSION}/bin:$PATH
-
-prepare:
-  image: eclipse-temurin:21-jdk-alpine
-  stage: prepare
+build:
+  stage: build
   script:
-    - apk add --no-cache wget unzip
-    - wget https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.zip
-    - unzip -d /opt apache-maven-${MAVEN_VERSION}-bin.zip
-    - ln -s /opt/apache-maven-${MAVEN_VERSION}/bin/mvn /usr/bin/mvn
-  artifacts:
-    paths:
-      - /opt/apache-maven-${MAVEN_VERSION}
-  only:
-    - main
+    - mvn compile
 
 test:
-  image: maven:${MAVEN_VERSION}-eclipse-temurin-21-alpine
   stage: test
   script:
-    - mvn $MAVEN_CLI_OPTS test
-  only:
-    - main
-
-analyze:
-  image: maven:${MAVEN_VERSION}-eclipse-temurin-21-alpine
-  stage: analyze
-  script:
-    - mvn $MAVEN_CLI_OPTS clean install sonar:sonar -Dsonar.projectKey=ktenman_elektrihind -Dsonar.organization=ktenman -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN
-    - mvn $MAVEN_CLI_OPTS org.owasp:dependency-check-maven:check
-  only:
-    - main
+    - mvn test

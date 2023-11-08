@@ -1,35 +1,43 @@
 stages:
-  - build_image
-  - deploy_image
+  - prepare
+  - test
+  - analyze
 
 variables:
-  IMAGE_TAG: $CI_REGISTRY_IMAGE/my-maven-app:latest
+  MAVEN_CLI_OPTS: "-s .m2/settings.xml --batch-mode"
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  SONAR_TOKEN: ${SONAR_TOKEN} # Define this variable in your CI/CD settings
 
-# Define the job to build and push the Docker image
-build_image:
-  stage: build_image
-  image: docker:24.0.7
-  services:
-    - docker:24.0.7-dind
+before_script:
+  - export PATH=/opt/apache-maven-3.9.5/bin:$PATH
+
+prepare:
+  image: eclipse-temurin:21-jdk-alpine
+  stage: prepare
   script:
-    - echo "Building Docker image..."
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $IMAGE_TAG .
-    - docker push $IMAGE_TAG
+    - apk add --no-cache wget unzip
+    - wget https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.zip
+    - unzip -d /opt apache-maven-${MAVEN_VERSION}-bin.zip
+    - ln -s /opt/apache-maven-${MAVEN_VERSION}/bin/mvn /usr/bin/mvn
+  artifacts:
+    paths:
+      - /opt/apache-maven-${MAVEN_VERSION}
   only:
     - main
 
-# Define the job to run the application using the built Docker image
-deploy_image:
-  stage: deploy_image
-  image: $IMAGE_TAG
+test:
+  image: maven:3.9.5-eclipse-temurin-21-alpine
+  stage: test
   script:
-    - echo "Running application..."
-    - >
-      if [ -z "$CI_COMMIT_TAG" ]; then
-        echo "Running a non-tagged build, not deploying";
-      else
-        java $JAVA_OPTS -jar /app/app.jar
-      fi
+    - mvn $MAVEN_CLI_OPTS test
   only:
-    - tags
+    - main
+
+analyze:
+  image: maven:3.9.5-eclipse-temurin-21-alpine
+  stage: analyze
+  script:
+    - mvn $MAVEN_CLI_OPTS clean install sonar:sonar -Dsonar.projectKey=ktenman_elektrihind -Dsonar.organization=ktenman -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN
+    - mvn $MAVEN_CLI_OPTS org.owasp:dependency-check-maven:check
+  only:
+    - main

@@ -17,7 +17,7 @@ diagnostics:
   stage: diagnostics
   script:
     - echo "Checking Docker version..."
-    - docker version || true
+    - docker --version || true
     - echo "Checking which Docker..."
     - which docker || true
     - echo "Checking PATH..."
@@ -50,6 +50,8 @@ build:
   script:
     - echo "Compiling the project..."
     - mvn compile
+    - echo "Listing contents of the Maven repository to ensure it's populated..."
+    - ls -la ~/.m2/repository/ || true
 
 test:
   stage: test

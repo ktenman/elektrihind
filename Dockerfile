@@ -1,5 +1,5 @@
 # Use an OpenJDK 21 base image
-FROM openjdk:21-jdk-alpine as build
+FROM openjdk:21-jdk-slim as build
 
 # Install Maven
 RUN apk add --no-cache curl tar bash procps && \
@@ -25,7 +25,7 @@ RUN mvn package
 
 # Switch to a new stage to reduce the final image size
 # Use an OpenJDK 21 JRE image for the runtime
-FROM openjdk:21-jre-alpine
+FROM FROM openjdk:21-jdk-slim
 
 # Set the time zone
 ENV TZ=Europe/Tallinn

@@ -1,0 +1,25 @@
+stages:
+  - build
+
+build_job:
+  stage: build
+  image: maven:3.9.5-jdk-21
+  only:
+    - main
+  script:
+    - git fetch --unshallow || true # GitLab already does a full clone
+    - mvn --version
+
+    # Set up JDK 21 - In GitLab, this is handled by the image tag
+
+    # Set up Maven 3.9.5 - Maven is already included in the Maven Docker image
+
+    # Build with Maven and Run Sonar Analysis
+    - mvn clean install sonar:sonar -X \
+        -Dsonar.projectKey=ktenman_elektrihind \
+        -Dsonar.organization=ktenman \
+        -Dsonar.host.url=https://sonarcloud.io \
+        -Dsonar.login=$SONAR_TOKEN
+
+    # OWASP Dependency Check
+    - mvn org.owasp:dependency-check-maven:check

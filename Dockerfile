@@ -1,17 +1,19 @@
 # Use an OpenJDK 21 base image for the build
 FROM openjdk:21-jdk-slim as build
 
-# Install required tools including Git
-# Note: For Debian-based images, use apt-get instead of apk
+# Install required tools including Git and Docker
 RUN apt-get update && \
     apt-get install -y git curl tar bash procps && \
+    curl -fsSL https://get.docker.com | sh && \
     rm -rf /var/lib/apt/lists/* && \
     curl -fsSL https://archive.apache.org/dist/maven/maven-3/3.9.5/binaries/apache-maven-3.9.5-bin.tar.gz | tar -xzC /opt && \
     ln -s /opt/apache-maven-3.9.5 /opt/maven && \
     ln -s /opt/maven/bin/mvn /usr/bin/mvn
 
-# Verify installation of Maven and Git
-RUN mvn -version && git --version
+# Verify installation of Maven, Git, and Docker
+RUN mvn -version && \
+    git --version && \
+    docker --version
 
 # Set the working directory
 WORKDIR /app

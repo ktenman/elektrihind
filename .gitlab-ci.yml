@@ -5,7 +5,8 @@ services:
 
 variables:
   DOCKER_DRIVER: overlay2
-  IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
+  # Define the image tag, and use the CI_REGISTRY_IMAGE variable for the repository path
+  IMAGE_TAG: $CI_REGISTRY_IMAGE/maven-jdk-21:latest
 
 stages:
   - build_image
@@ -13,26 +14,27 @@ stages:
   - test
 
 before_script:
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
 
-build_docker_image:
+build_image:
   stage: build_image
   script:
-    - docker build -t $IMAGE_TAG .
-    - docker push $IMAGE_TAG
+    - docker build --pull -t "$IMAGE_TAG" .
+    - docker push "$IMAGE_TAG"
+
+cache:
+  key: "$CI_COMMIT_REF_NAME"
+  paths:
+    - .m2/repository
 
 build:
   stage: build
+  image: "$IMAGE_TAG"
   script:
-    - docker pull $IMAGE_TAG
-    - docker run --name maven_build $IMAGE_TAG mvn compile
+    - mvn compile
 
 test:
   stage: test
+  image: "$IMAGE_TAG"
   script:
-    - docker pull $IMAGE_TAG
-    - docker run --name maven_test $IMAGE_TAG mvn test
-
-cache:
-  paths:
-    - .m2/repository
+    - mvn test

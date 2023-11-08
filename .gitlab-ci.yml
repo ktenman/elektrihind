@@ -7,9 +7,10 @@ variables:
   MAVEN_CLI_OPTS: "-s .m2/settings.xml --batch-mode"
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   SONAR_TOKEN: ${SONAR_TOKEN} # Define this variable in your CI/CD settings
+  MAVEN_VERSION: "3.9.5" # Define Maven version here
 
 before_script:
-  - export PATH=/opt/apache-maven-3.9.5/bin:$PATH
+  - export PATH=/opt/apache-maven-${MAVEN_VERSION}/bin:$PATH
 
 prepare:
   image: eclipse-temurin:21-jdk-alpine
@@ -26,7 +27,7 @@ prepare:
     - main
 
 test:
-  image: maven:3.9.5-eclipse-temurin-21-alpine
+  image: maven:${MAVEN_VERSION}-eclipse-temurin-21-alpine
   stage: test
   script:
     - mvn $MAVEN_CLI_OPTS test
@@ -34,7 +35,7 @@ test:
     - main
 
 analyze:
-  image: maven:3.9.5-eclipse-temurin-21-alpine
+  image: maven:${MAVEN_VERSION}-eclipse-temurin-21-alpine
   stage: analyze
   script:
     - mvn $MAVEN_CLI_OPTS clean install sonar:sonar -Dsonar.projectKey=ktenman_elektrihind -Dsonar.organization=ktenman -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN

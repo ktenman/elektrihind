@@ -1,33 +1,35 @@
-# Set the base image to Maven with Java 21
-FROM maven:3.9.5-eclipse-temurin-21-alpine AS build
+# Use a specific version tag if possible for reproducibility
+FROM maven:3.9.5-openjdk-21 AS build
 
-# Set the current working directory inside the container
+# Set the working directory in the Docker image
 WORKDIR /app
 
-# Copy the Maven POM file and download the dependencies, so they will be cached
-COPY pom.xml .
+# Copy only the POM file and install dependencies to leverage Docker cache
+COPY pom.xml ./
 RUN mvn dependency:go-offline -B
 
-# Copy the project files and build the project
-COPY src /app/src
-RUN mvn package
+# Copy the source code and build the application
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Switch to a new stage and use AdoptOpenJDK for the runtime
-FROM azul/zulu-openjdk-alpine:21-jre-latest
+# Use a specific tag for the base image for reproducibility
+FROM azul/zulu-openjdk-alpine:21-jre
 
-# Set the time zone
+# Set the application's timezone
 ENV TZ=Europe/Tallinn
-RUN apk add --no-cache tzdata \
-    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN apk add --no-cache tzdata && \
+    cp /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone && \
+    apk del tzdata
 
-# Set the current working directory inside the container
+# Set the working directory in the image
 WORKDIR /app
 
 # Copy the JAR file from the build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Set the timezone for the JVM
+# Set the JVM timezone option
 ENV JAVA_OPTS="-Duser.timezone=Europe/Tallinn"
 
-# Set the command to run your application with JAVA_OPTS
-CMD ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
+# Define the command to run the app using the JAVA_OPTS
+CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

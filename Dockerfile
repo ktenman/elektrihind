@@ -1,14 +1,17 @@
-# Use an OpenJDK 21 base image
+# Use an OpenJDK 21 base image for the build
 FROM openjdk:21-jdk-slim as build
 
-# Install Maven
-RUN apk add --no-cache curl tar bash procps && \
+# Install required tools including Git
+# Note: For Debian-based images, use apt-get instead of apk
+RUN apt-get update && \
+    apt-get install -y git curl tar bash procps && \
+    rm -rf /var/lib/apt/lists/* && \
     curl -fsSL https://archive.apache.org/dist/maven/maven-3/3.9.5/binaries/apache-maven-3.9.5-bin.tar.gz | tar -xzC /opt && \
     ln -s /opt/apache-maven-3.9.5 /opt/maven && \
     ln -s /opt/maven/bin/mvn /usr/bin/mvn
 
-# Verify installation
-RUN mvn -version
+# Verify installation of Maven and Git
+RUN mvn -version && git --version
 
 # Set the working directory
 WORKDIR /app
@@ -25,12 +28,15 @@ RUN mvn package
 
 # Switch to a new stage to reduce the final image size
 # Use an OpenJDK 21 JRE image for the runtime
-FROM FROM openjdk:21-jdk-slim
+FROM openjdk:21-jdk-slim
 
 # Set the time zone
 ENV TZ=Europe/Tallinn
-RUN apk add --no-cache tzdata && \
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+# Install tzdata for setting timezone
+RUN apt-get update && \
+    apt-get install -y tzdata && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
 WORKDIR /app

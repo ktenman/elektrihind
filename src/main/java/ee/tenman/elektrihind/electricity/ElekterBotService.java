@@ -99,7 +99,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
             if (message.hasText()) {
                 String messageText = message.getText();
-                Pattern durationPattern = Pattern.compile("parim hind (\\d+)min", Pattern.CASE_INSENSITIVE);
+                Pattern durationPattern = Pattern.compile("parim hind (\\d+) min", Pattern.CASE_INSENSITIVE);
                 Matcher matcher = durationPattern.matcher(messageText);
 
                 if (messageText.equals("/start")) {
@@ -111,13 +111,15 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 } else if (matcher.find()) {
                     // Extract the number of minutes from the message
                     int durationInMinutes = Integer.parseInt(matcher.group(1));
-                    List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices();
+                    List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices()
+                            .stream()
+                            .filter(electricityPrice -> electricityPrice.getDate().isAfter(LocalDateTime.now(clock))).toList();
                     // Assume that findBestPriceForDuration is a method that calculates the best starting time
                     // and total price for the given duration. You would need to implement this.
                     BestPriceResult bestPrice = findBestPriceForDuration(electricityPrices, durationInMinutes);
                     if (bestPrice != null) {
-                        sendMessage(chatId, "Best time to start is " + bestPrice.getStartTime() +
-                                " with a total cost of " + bestPrice.getTotalCost() + " cents.");
+                        sendMessage(chatId, "Best time to start is " + bestPrice.getStartTime() + "with average price of " + bestPrice.getAveragePrice() + " cents/kWh. " +
+                                "Total cost is " + bestPrice.getTotalCost() + " EUR.");
                     } else {
                         sendMessage(chatId, "Could not calculate the best time to start your washing machine.");
                     }
@@ -141,21 +143,42 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     private BestPriceResult findBestPriceForDuration(List<ElectricityPrice> electricityPrices, int durationInMinutes) {
         BestPriceResult bestPriceResult = null;
-        Double lowestTotalCost = Double.MAX_VALUE;
-        String bestStartTime = null;
+        double lowestTotalCost = Double.MAX_VALUE;
+        LocalDateTime bestStartTime = null;
 
-        // Assuming that electricityPrices are sorted by time.
-        for (int i = 0; i < electricityPrices.size() - durationInMinutes; i++) {
+        // Convert durationInMinutes to hours and remaining minutes
+        int fullHours = durationInMinutes / 60;
+        int remainingMinutes = durationInMinutes % 60;
+
+        // Loop through the list, considering partial hours
+        for (int i = 0; i <= electricityPrices.size() - fullHours - 1; i++) {
             double totalCost = 0;
-            for (int j = i; j < i + durationInMinutes; j++) {
+
+            // Add full hour costs
+            for (int j = i; j < i + fullHours; j++) {
                 totalCost += electricityPrices.get(j).getPrice();
             }
+
+            // Prorate the cost of the remaining minutes in the last hour
+            double partialHourCost = (electricityPrices.get(i + fullHours).getPrice() / 60) * remainingMinutes;
+            totalCost += partialHourCost;
+
+            // Check if the calculated cost is the new lowest
             if (totalCost < lowestTotalCost) {
                 lowestTotalCost = totalCost;
-                bestStartTime = electricityPrices.get(i).getDate().toString();
-                bestPriceResult = new BestPriceResult(bestStartTime, lowestTotalCost);
+                bestStartTime = electricityPrices.get(i).getDate();
+                bestPriceResult = new BestPriceResult(bestStartTime.toString(), lowestTotalCost, durationInMinutes);
             }
         }
+
+        // If the best start time is in the last hour, adjust it to the minute
+        if (bestStartTime != null && remainingMinutes > 0) {
+            // Calculate how many minutes into the hour the machine should start
+            int startMinute = 60 - remainingMinutes;
+            bestStartTime = bestStartTime.plusMinutes(startMinute);
+            bestPriceResult = new BestPriceResult(bestStartTime.toString(), lowestTotalCost, durationInMinutes);
+        }
+
         return bestPriceResult;
     }
 

@@ -1,25 +1,32 @@
 stages:
+  - build_image
   - build
 
-build_job:
-  stage: build
-  image: maven:3.9.5-jdk-21
+variables:
+  IMAGE_TAG: $CI_REGISTRY_IMAGE/maven-jdk-21:3.9.5
+
+# Define the job to build and push the Docker image
+build_image:
+  stage: build_image
+  image: docker:19.03.12
+  services:
+    - docker:19.03.12-dind
+  script:
+    - echo "Building Docker image..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
   only:
     - main
+
+# Define the job to use the built Docker image for Maven build
+build_job:
+  stage: build
+  image: $IMAGE_TAG
   script:
-    - git fetch --unshallow || true # GitLab already does a full clone
-    - mvn --version
-
-    # Set up JDK 21 - In GitLab, this is handled by the image tag
-
-    # Set up Maven 3.9.5 - Maven is already included in the Maven Docker image
-
-    # Build with Maven and Run Sonar Analysis
-    - mvn clean install sonar:sonar -X \
-        -Dsonar.projectKey=ktenman_elektrihind \
-        -Dsonar.organization=ktenman \
-        -Dsonar.host.url=https://sonarcloud.io \
-        -Dsonar.login=$SONAR_TOKEN
-
-    # OWASP Dependency Check
+    - echo "Running Maven build..."
+    - mvn clean install
+    - mvn sonar:sonar -Dsonar.projectKey=ktenman_elektrihind -Dsonar.organization=ktenman -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN
     - mvn org.owasp:dependency-check-maven:check
+  only:
+    - main

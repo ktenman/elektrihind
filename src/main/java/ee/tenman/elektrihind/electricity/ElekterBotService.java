@@ -1,8 +1,7 @@
-package ee.tenman.elektrihind;
+package ee.tenman.elektrihind.electricity;
 
+import ee.tenman.elektrihind.ElektrihindApplication;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
-import ee.tenman.elektrihind.electricity.ElectricityPrice;
-import ee.tenman.elektrihind.electricity.ElectricityPricesService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +29,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @Slf4j
@@ -98,6 +99,8 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
             if (message.hasText()) {
                 String messageText = message.getText();
+                Pattern durationPattern = Pattern.compile("parim hind (\\d+)min", Pattern.CASE_INSENSITIVE);
+                Matcher matcher = durationPattern.matcher(messageText);
 
                 if (messageText.equals("/start")) {
                     sendMessage(chatId, "Hello! I am an electricity bill calculator bot. Please send me a CSV file.");
@@ -105,7 +108,23 @@ public class ElekterBotService extends TelegramLongPollingBot {
                     List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices();
                     Double currentPrice = currentPrice(electricityPrices);
                     sendMessage(chatId, "Current electricity price is " + currentPrice + " cents/kWh.");
+                } else if (matcher.find()) {
+                    // Extract the number of minutes from the message
+                    int durationInMinutes = Integer.parseInt(matcher.group(1));
+                    List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices();
+                    // Assume that findBestPriceForDuration is a method that calculates the best starting time
+                    // and total price for the given duration. You would need to implement this.
+                    BestPriceResult bestPrice = findBestPriceForDuration(electricityPrices, durationInMinutes);
+                    if (bestPrice != null) {
+                        sendMessage(chatId, "Best time to start is " + bestPrice.getStartTime() +
+                                " with a total cost of " + bestPrice.getTotalCost() + " cents.");
+                    } else {
+                        sendMessage(chatId, "Could not calculate the best time to start your washing machine.");
+                    }
+                } else {
+                    // Handle other text messages that do not match the expected pattern
                 }
+
             } else if (message.hasDocument()) {
                 // Check if the document is a CSV file
                 Document document = message.getDocument();
@@ -119,6 +138,27 @@ public class ElekterBotService extends TelegramLongPollingBot {
             }
         }
     }
+
+    private BestPriceResult findBestPriceForDuration(List<ElectricityPrice> electricityPrices, int durationInMinutes) {
+        BestPriceResult bestPriceResult = null;
+        Double lowestTotalCost = Double.MAX_VALUE;
+        String bestStartTime = null;
+
+        // Assuming that electricityPrices are sorted by time.
+        for (int i = 0; i < electricityPrices.size() - durationInMinutes; i++) {
+            double totalCost = 0;
+            for (int j = i; j < i + durationInMinutes; j++) {
+                totalCost += electricityPrices.get(j).getPrice();
+            }
+            if (totalCost < lowestTotalCost) {
+                lowestTotalCost = totalCost;
+                bestStartTime = electricityPrices.get(i).getDate().toString();
+                bestPriceResult = new BestPriceResult(bestStartTime, lowestTotalCost);
+            }
+        }
+        return bestPriceResult;
+    }
+
 
     private Double currentPrice(List<ElectricityPrice> electricityPrices) {
         LocalDateTime now = LocalDateTime.now(clock);

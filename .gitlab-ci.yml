@@ -1,4 +1,4 @@
-image: docker:24.0.7-dind
+image: docker:24.0.7
 
 services:
   - docker:24.0.7-dind
@@ -6,6 +6,8 @@ services:
 variables:
   DOCKER_DRIVER: overlay2
   IMAGE_TAG: $CI_REGISTRY_IMAGE/maven-jdk-21:latest
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_TLS_CERTDIR: ""
 
 stages:
   - diagnostics
@@ -28,6 +30,8 @@ diagnostics:
     - ps aux | grep docker || true
 
 before_script:
+  - echo "Waiting for Docker to start..."
+  - sleep 10
   - echo "Logging into GitLab Registry..."
   - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
 
@@ -47,6 +51,12 @@ cache:
 build:
   stage: build
   image: "$IMAGE_TAG"
+  services: []
+  before_script:
+    - echo "Installing Docker client..."
+    - apk add --no-cache docker-cli
+    - echo "Logging into GitLab Registry within the build image..."
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     - echo "Compiling the project..."
     - mvn compile
@@ -56,6 +66,7 @@ build:
 test:
   stage: test
   image: "$IMAGE_TAG"
+  services: []
   script:
     - echo "Running tests..."
     - mvn test

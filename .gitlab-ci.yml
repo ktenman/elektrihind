@@ -75,7 +75,7 @@ deploy:
     - docker pull "$IMAGE_TAG" || true  # This will pull using the host's Docker daemon
     - docker stop elektrihind-app-container || true
     - docker rm elektrihind-app-container || true
-    - docker run -d -p 8080:8080 --restart always --name elektrihind-app-container "$IMAGE_TAG"
+    - docker run -d -p 8080:8080 --restart always --name elektrihind-app-container -e TELEGRAM_ELEKTRITEEMU_TOKEN="$TELEGRAM_ELEKTRITEEMU_TOKEN" -e TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN" -e OMDB_API_KEY="$OMDB_API_KEY" "$IMAGE_TAG"
   only:
     - main
   tags:

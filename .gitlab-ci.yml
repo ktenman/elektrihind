@@ -33,8 +33,10 @@ cache:
 test:
   stage: test
   image: maven:3.9.5-eclipse-temurin-21-alpine
+  variables:
+    MAVEN_OPTS: "-Dmaven.surefire.parallel=methods -Dmaven.surefire.threadCount=4"
   script:
-    - echo "Running tests..."
+    - echo "Running tests in parallel..."
     - mvn test
 
 deploy:

@@ -80,7 +80,8 @@ deploy:
     DOCKER_TLS_CERTDIR: ""
   script:
     - echo "Deploying the application..."
-    - docker pull "$IMAGE_TAG" || true  # Ensure the latest image is pulled
+    - echo "$CI_JOB_TOKEN" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker pull "$IMAGE_TAG" || true  # Now it should authenticate properly
     - docker stop elektrihind-app-container || true
     - docker rm elektrihind-app-container || true
     - docker run -d -p 8080:8080 --restart always --name elektrihind-app-container "$IMAGE_TAG"

@@ -69,7 +69,8 @@ deploy:
   stage: deploy
   image: ubuntu:latest  # Use the latest Ubuntu image or specify a specific version.
   script:
-    - apt-get update
+    - rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin
+    - apt-get update -y
     - apt-get install -y docker.io  # Install Docker
     - echo "Stopping and removing the existing container, if it exists..."
     - docker rm -f elektrihind-app-container || true  # You can remove this line since you won't be using Docker.

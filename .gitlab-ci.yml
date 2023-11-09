@@ -10,7 +10,9 @@ variables:
   DOCKER_TLS_CERTDIR: ""  # Disabling TLS for simplicity, be aware of security implications in a production environment
 
 stages:
+  - diagnostics
   - build_image
+  - build
   - test
   - deploy
 

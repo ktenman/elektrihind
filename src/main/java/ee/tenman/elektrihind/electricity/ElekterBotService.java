@@ -115,7 +115,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
                             .filter(electricityPrice -> electricityPrice.getDate().isAfter(LocalDateTime.now(clock))).toList();
                     // Assume that findBestPriceForDuration is a method that calculates the best starting time
                     // and total price for the given duration. You would need to implement this.
-                    BestPriceResult bestPrice = findBestPriceForDuration(electricityPrices, durationInMinutes);
+                    BestPriceResult bestPrice = PriceFinder.findBestPriceForDuration(electricityPrices, durationInMinutes);
                     if (bestPrice != null) {
                         sendMessage(chatId, "Best time to start is " + bestPrice.getStartTime() + "with average price of " + bestPrice.getAveragePrice() + " cents/kWh. " +
                                 "Total cost is " + bestPrice.getTotalCost() + " EUR.");
@@ -138,47 +138,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 }
             }
         }
-    }
-
-    BestPriceResult findBestPriceForDuration(List<ElectricityPrice> electricityPrices, int durationInMinutes) {
-        BestPriceResult bestPriceResult = null;
-        double lowestTotalCost = Double.MAX_VALUE;
-        LocalDateTime bestStartTime = null;
-
-        // Convert durationInMinutes to hours and remaining minutes
-        int fullHours = durationInMinutes / 60;
-        int remainingMinutes = durationInMinutes % 60;
-
-        // Loop through the list, considering partial hours
-        for (int i = 0; i <= electricityPrices.size() - fullHours - 1; i++) {
-            double totalCost = 0;
-
-            // Add full hour costs
-            for (int j = i; j < i + fullHours; j++) {
-                totalCost += electricityPrices.get(j).getPrice();
-            }
-
-            // Prorate the cost of the remaining minutes in the last hour
-            double partialHourCost = (electricityPrices.get(i + fullHours).getPrice() / 60) * remainingMinutes;
-            totalCost += partialHourCost;
-
-            // Check if the calculated cost is the new lowest
-            if (totalCost < lowestTotalCost) {
-                lowestTotalCost = totalCost;
-                bestStartTime = electricityPrices.get(i).getDate();
-                bestPriceResult = new BestPriceResult(bestStartTime.toString(), lowestTotalCost, durationInMinutes);
-            }
-        }
-
-        // If the best start time is in the last hour, adjust it to the minute
-        if (bestStartTime != null && remainingMinutes > 0) {
-            // Calculate how many minutes into the hour the machine should start
-            int startMinute = 60 - remainingMinutes;
-            bestStartTime = bestStartTime.plusMinutes(startMinute);
-            bestPriceResult = new BestPriceResult(bestStartTime.toString(), lowestTotalCost, durationInMinutes);
-        }
-
-        return bestPriceResult;
     }
 
 

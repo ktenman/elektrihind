@@ -69,7 +69,7 @@ deploy:
   stage: deploy
   image: docker:24.0.7  # Use a stable version of the Docker image
   before_script:
-    - docker info # This will now show info about the host's Docker daemon
+    - docker info # Shows info about the host's Docker daemon
   script:
     - echo "Deploying the application..."
     - echo "$CI_JOB_TOKEN" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
@@ -81,6 +81,7 @@ deploy:
     - main
   tags:
     - production
+
 
 
 

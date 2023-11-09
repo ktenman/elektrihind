@@ -1,0 +1,17 @@
+telegram:
+  botToken: ${TELEGRAM_BOT_TOKEN}
+  monitoringChatId: -1001645546677
+  privateChatId: 116578187
+  elektriteemu:
+    token: ${TELEGRAM_ELEKTRITEEMU_TOKEN}
+    username: ElektriTeemu
+
+electricity-prices-api:
+  url: https://elektrihind.ee/api
+
+omdb-api:
+  url: http://www.omdbapi.com
+  key: ${OMDB_API_KEY}
+
+imdb-api:
+  url: https://imdb-api.projects.thetuhin.com

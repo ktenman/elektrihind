@@ -7,7 +7,6 @@ services:
 variables:
   DOCKER_DRIVER: overlay2
   IMAGE_TAG: $CI_REGISTRY_IMAGE/maven-jdk-21:latest
-  # DOCKER_HOST is not needed if using the default unix socket
   DOCKER_TLS_CERTDIR: ""  # Disabling TLS for simplicity, be aware of security implications in a production environment
 
 stages:

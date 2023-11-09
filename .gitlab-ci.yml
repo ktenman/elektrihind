@@ -15,6 +15,7 @@ stages:
   - build_image
   - build
   - test
+  - deploy
 
 diagnostics:
   stage: diagnostics
@@ -79,3 +80,26 @@ test:
   script:
     - echo "Running tests..."
     - mvn test
+
+deploy:
+  stage: deploy
+  image: docker:24.0.7
+  services:
+    - docker:24.0.7-dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - echo "Pulling the latest changes from the main branch..."
+    - git pull origin main
+    - echo "Stopping and removing the existing container, if it exists..."
+    - docker rm -f elektrihind-app-container || true
+    - echo "Building the new Docker image without cache..."
+    - docker build --no-cache -t elektrihind-app .
+    - echo "Running the new container..."
+    - docker run -d -p 8080:8080 --restart always --name elektrihind-app-container elektrihind-app
+    - echo "Removing dangling Docker images to free up space..."
+    - docker rmi $(docker images -f "dangling=true" -q) || true
+  only:
+    - main
+  tags:
+    - production

@@ -61,38 +61,18 @@ class ElekterBotServiceTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(clock.instant()).thenReturn(Instant.now());
-        lenient().when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        lenient().when(clock.instant()).thenReturn(Instant.parse("2023-11-09T23:45:14.00Z"));
+        lenient().when(clock.getZone()).thenReturn(UTC);
         lenient().when(update.getMessage()).thenReturn(message);
         lenient().when(message.getChatId()).thenReturn(12345L);
     }
 
     @Test
     void currentPrice_ShouldReturnCorrectPrice_WhenPriceIsAvailable() {
-        List<ElectricityPrice> prices = List.of(
-                new ElectricityPrice(LocalDateTime.now(clock).minusHours(1), 10.0),
-                new ElectricityPrice(LocalDateTime.now(clock), 20.0),
-                new ElectricityPrice(LocalDateTime.now(clock).plusHours(1), 30.0)
-        );
-
-        Double price = botService.currentPrice(prices);
-
-        assertThat(price).isEqualTo(30.0);
-    }
-
-    @Test
-    void currentPrice_ShouldReturnCorrectPrice_WhenPriceIsAvailable2() {
-
-        when(clock.instant()).thenReturn(Instant.parse("2023-11-09T23:45:14.00Z"));
-        when(clock.getZone()).thenReturn(UTC);
-
-        List<ElectricityPrice> prices = ELECTRICITY_PRICES;
-
-        Double price = botService.currentPrice(prices);
+        Double price = botService.currentPrice(ELECTRICITY_PRICES);
 
         assertThat(price).isEqualTo(10.08);
     }
-
 
     @Test
     void calculateTotalCost_ShouldCalculateCostsCorrectly() {
@@ -169,7 +149,7 @@ class ElekterBotServiceTest {
         when(update.hasMessage()).thenReturn(true);
         when(message.hasText()).thenReturn(true);
         when(message.getText()).thenReturn("elektrihind");
-        when(electricityPricesService.fetchDailyPrices()).thenReturn(List.of(new ElectricityPrice(LocalDateTime.now(), 10.0)));
+        when(electricityPricesService.fetchDailyPrices()).thenReturn(ELECTRICITY_PRICES);
 
         ElekterBotService spyBotService = spy(botService);
         spyBotService.onUpdateReceived(update);
@@ -177,7 +157,7 @@ class ElekterBotServiceTest {
         verify(spyBotService).execute(sendMessageCaptor.capture());
         SendMessage sentMessage = sendMessageCaptor.getValue();
         assertThat(sentMessage.getChatId()).isEqualTo(String.valueOf(message.getChatId()));
-        assertThat(sentMessage.getText()).contains("Current electricity price is 10.0 cents/kWh.");
+        assertThat(sentMessage.getText()).contains("Current electricity price is 10.08 cents/kWh.");
     }
 
     @Test

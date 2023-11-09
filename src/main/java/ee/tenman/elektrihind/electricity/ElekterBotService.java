@@ -146,7 +146,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 now.toLocalTime().withHour(now.getHour()).withMinute(0).withSecond(0).withNano(0));
         return electricityPrices.stream().filter(d -> d.getDate().equals(key))
                 .findFirst().map(ElectricityPrice::getPrice)
-                .orElseThrow(() -> new RuntimeException("No price found"));
+                .orElse(null);
     }
 
     void sendMessage(long chatId, String text) {

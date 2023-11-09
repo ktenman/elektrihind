@@ -1,6 +1,5 @@
 package ee.tenman.elektrihind.electricity;
 
-import ee.tenman.elektrihind.ElektrihindApplication;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
@@ -53,7 +52,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
     @Value("${telegram.elektriteemu.username}")
     private String username;
 
-    private static List<String[]> readCsv(String filePath) {
+    List<String[]> readCsv(String filePath) {
         List<String[]> data = new ArrayList<>();
         try {
             List<String> lines = Files.readAllLines(Paths.get(filePath));
@@ -141,7 +140,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
     }
 
-    private BestPriceResult findBestPriceForDuration(List<ElectricityPrice> electricityPrices, int durationInMinutes) {
+    BestPriceResult findBestPriceForDuration(List<ElectricityPrice> electricityPrices, int durationInMinutes) {
         BestPriceResult bestPriceResult = null;
         double lowestTotalCost = Double.MAX_VALUE;
         LocalDateTime bestStartTime = null;
@@ -183,7 +182,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
     }
 
 
-    private Double currentPrice(List<ElectricityPrice> electricityPrices) {
+    Double currentPrice(List<ElectricityPrice> electricityPrices) {
         LocalDateTime now = LocalDateTime.now(clock);
 
         return electricityPrices.stream()
@@ -193,7 +192,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 .orElse(null);
     }
 
-    private void sendMessage(long chatId, String text) {
+    void sendMessage(long chatId, String text) {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
         message.setText(text);
@@ -205,7 +204,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
     }
 
-    private void handleCsvDocument(Document document, long chatId) {
+    void handleCsvDocument(Document document, long chatId) {
         String filePath = null;
         try {
             String fileId = document.getFileId();
@@ -215,7 +214,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
             // Process the CSV file (You'll need to implement readCsv and calculateTotalCost)
             List<String[]> data = readCsv(filePath);
-            ElektrihindApplication.CostCalculationResult result = calculateTotalCost(data.subList(7, data.size())); // Assuming first 7 rows are headers
+            CostCalculationResult result = calculateTotalCost(data.subList(7, data.size())); // Assuming first 7 rows are headers
 
             // Construct the response message
             String response = String.format(
@@ -243,7 +242,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
     }
 
-    public ElektrihindApplication.CostCalculationResult calculateTotalCost(List<String[]> data) {
+    public CostCalculationResult calculateTotalCost(List<String[]> data) {
         List<BigDecimal> totalKwhList = new ArrayList<>();
         List<BigDecimal> totalCostList = new ArrayList<>();
         List<BigDecimal> dayCostList = new ArrayList<>();
@@ -322,11 +321,11 @@ public class ElekterBotService extends TelegramLongPollingBot {
         totalCost = totalCost.add(totalRenewableEnergyFee).add(vorguteenus);
         totalCost = totalCost.multiply(salesTax);
 
-        return new ElektrihindApplication.CostCalculationResult(totalKwh, totalCost, totalDayKwh, totalNightKwh);
+        return new CostCalculationResult(totalKwh, totalCost, totalDayKwh, totalNightKwh);
     }
 
 
-    private java.io.File downloadTelegramFile(String fileId) throws TelegramApiException {
+    java.io.File downloadTelegramFile(String fileId) throws TelegramApiException {
         GetFile getFileMethod = new GetFile();
         getFileMethod.setFileId(fileId);
         org.telegram.telegrambots.meta.api.objects.File file = execute(getFileMethod);

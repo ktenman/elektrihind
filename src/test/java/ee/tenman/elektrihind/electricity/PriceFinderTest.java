@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 class PriceFinderTest {
 
     private static final String JSON_RESOURCE_PATH = "/electricityPrices.json";
-    private static final List<ElectricityPrice> ELECTRICITY_PRICES = loadElectricityPrices();
+    public static final List<ElectricityPrice> ELECTRICITY_PRICES = loadElectricityPrices();
 
     public static List<ElectricityPrice> loadElectricityPrices() {
         ObjectMapper objectMapper = new ObjectMapper();

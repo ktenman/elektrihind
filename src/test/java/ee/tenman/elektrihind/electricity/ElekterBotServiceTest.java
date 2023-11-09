@@ -24,6 +24,8 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
+import static ee.tenman.elektrihind.electricity.PriceFinderTest.ELECTRICITY_PRICES;
+import static java.time.ZoneOffset.UTC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -77,6 +79,20 @@ class ElekterBotServiceTest {
 
         assertThat(price).isEqualTo(30.0);
     }
+
+    @Test
+    void currentPrice_ShouldReturnCorrectPrice_WhenPriceIsAvailable2() {
+
+        when(clock.instant()).thenReturn(Instant.parse("2023-11-09T23:45:14.00Z"));
+        when(clock.getZone()).thenReturn(UTC);
+
+        List<ElectricityPrice> prices = ELECTRICITY_PRICES;
+
+        Double price = botService.currentPrice(prices);
+
+        assertThat(price).isEqualTo(10.08);
+    }
+
 
     @Test
     void calculateTotalCost_ShouldCalculateCostsCorrectly() {

@@ -140,15 +140,13 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
     }
 
-
     Double currentPrice(List<ElectricityPrice> electricityPrices) {
         LocalDateTime now = LocalDateTime.now(clock);
-
-        return electricityPrices.stream()
-                .filter(electricityPrice -> electricityPrice.getDate().isAfter(now))
-                .findFirst()
-                .map(ElectricityPrice::getPrice)
-                .orElse(null);
+        LocalDateTime key = LocalDateTime.of(now.toLocalDate(),
+                now.toLocalTime().withHour(now.getHour()).withMinute(0).withSecond(0).withNano(0));
+        return electricityPrices.stream().filter(d -> d.getDate().equals(key))
+                .findFirst().map(ElectricityPrice::getPrice)
+                .orElseThrow(() -> new RuntimeException("No price found"));
     }
 
     void sendMessage(long chatId, String text) {

@@ -67,24 +67,19 @@ test:
 
 deploy:
   stage: deploy
-  image: ubuntu:latest  # Use the latest Ubuntu image or specify a specific version.
+  image: docker:19.03  # Use a stable version of the Docker image
+  services:
+    - docker:19.03-dind
   script:
-    - rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin
-    - apt-get update -y
-    - apt-get install -y docker.io  # Install Docker
-    - echo "Stopping and removing the existing container, if it exists..."
-    - docker rm -f elektrihind-app-container || true  # You can remove this line since you won't be using Docker.
-    - echo "Building the new Docker image without cache..."
-    # Modify this part to build your Docker image or perform other deployment actions directly.
-    # For example, you can install Docker on the Ubuntu image and build and run your container.
-    # Example:
-    - docker build --no-cache -t elektrihind-app .
-    - docker run -d -p 8080:8080 --restart always --name elektrihind-app-container elektrihind-app
-    - echo "Removing dangling Docker images to free up space..."
-    - docker rmi $(docker images -f "dangling=true" -q) || true
+    - echo "Deploying the application..."
+    - docker pull "$IMAGE_TAG" || true  # Ensure the latest image is pulled
+    - docker stop elektrihind-app-container || true
+    - docker rm elektrihind-app-container || true
+    - docker run -d -p 8080:8080 --restart always --name elektrihind-app-container "$IMAGE_TAG"
   only:
     - main
   tags:
     - production
+
 
 

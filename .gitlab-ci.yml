@@ -70,6 +70,12 @@ test:
   stage: test
   image: "$IMAGE_TAG"
   services: []
+  before_script:
+    - echo "Installing Docker client..."
+    - apt-get update -y && apt-get install -y docker.io
+    - echo "Logging into GitLab Registry within the build image..."
+    # Again, using password stdin for login
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - echo "Running tests..."
     - mvn test

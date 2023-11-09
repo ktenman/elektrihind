@@ -67,20 +67,14 @@ test:
 
 deploy:
   stage: deploy
-  image: docker:24.0.7
-  services:
-    - docker:24.0.7-dind
-  variables:
-    DOCKER_TLS_CERTDIR: ""
-    DOCKER_HOST: "tcp://docker:2375"
+  image: debian:stable-slim  # Use the Debian slim image for a lightweight base.
   script:
-    - echo "Checking if Docker service is responsive..."
-    - until docker info; do echo "Waiting for Docker..."; sleep 5; done
+    - apt-get update
+    - apt-get install -y docker.io  # Install Docker
     - echo "Stopping and removing the existing container, if it exists..."
-    - docker rm -f elektrihind-app-container || true
+    - docker rm -f elektrihind-app-container || true  # You can remove this line since you won't be using Docker.
     - echo "Building the new Docker image without cache..."
     - docker build --no-cache -t elektrihind-app .
-    - echo "Running the new container..."
     - docker run -d -p 8080:8080 --restart always --name elektrihind-app-container elektrihind-app
     - echo "Removing dangling Docker images to free up space..."
     - docker rmi $(docker images -f "dangling=true" -q) || true
@@ -88,3 +82,4 @@ deploy:
     - main
   tags:
     - production
+

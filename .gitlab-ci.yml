@@ -11,7 +11,6 @@ variables:
 
 stages:
   - build_image
-  - build
   - test
   - deploy
 
@@ -30,14 +29,6 @@ cache:
   key: "$CI_COMMIT_REF_NAME"
   paths:
     - .m2/repository
-
-build:
-  stage: build
-  image: maven:3.9.5-eclipse-temurin-21-alpine
-  script:
-    - echo "Compiling the project..."
-    - mvn compile -T1C  # Run Maven in threaded mode
-    - ls -la ~/.m2/repository/ || true
 
 test:
   stage: test

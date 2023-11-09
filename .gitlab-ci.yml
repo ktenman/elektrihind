@@ -31,15 +31,13 @@ diagnostics:
     - echo "Checking if Docker service is up..."
     - ps aux | grep docker || true
 
-before_script:
-  - echo "Waiting for Docker to start..."
-  - sleep 10
-  # Logging in securely using password stdin
-  - echo "Logging into GitLab Registry..."
-  - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-
 build_image:
   stage: build_image
+  before_script:
+    - echo "Waiting for Docker to start..."
+    - sleep 10
+    - echo "Logging into GitLab Registry..."
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - echo "Building the Docker image..."
     - docker build --pull -t "$IMAGE_TAG" .
@@ -54,13 +52,6 @@ cache:
 build:
   stage: build
   image: "$IMAGE_TAG"
-  services: []
-  before_script:
-    - echo "Installing Docker client..."
-    - apt-get update -y && apt-get install -y docker.io
-    - echo "Logging into GitLab Registry within the build image..."
-    # Again, using password stdin for login
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - echo "Compiling the project..."
     - mvn compile
@@ -70,13 +61,6 @@ build:
 test:
   stage: test
   image: "$IMAGE_TAG"
-  services: []
-  before_script:
-    - echo "Installing Docker client..."
-    - apt-get update -y && apt-get install -y docker.io
-    - echo "Logging into GitLab Registry within the build image..."
-    # Again, using password stdin for login
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - echo "Running tests..."
     - mvn test
@@ -88,7 +72,6 @@ deploy:
     - docker:24.0.7-dind
   variables:
     DOCKER_TLS_CERTDIR: ""
-    DOCKER_HOST: tcp://docker:2375 # Explicitly define DOCKER_HOST
   script:
     - echo "Stopping and removing the existing container, if it exists..."
     - docker rm -f elektrihind-app-container || true

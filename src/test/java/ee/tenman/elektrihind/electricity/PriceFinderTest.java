@@ -2,6 +2,7 @@ package ee.tenman.elektrihind.electricity;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
+@Slf4j
 class PriceFinderTest {
 
     private static final String JSON_RESOURCE_PATH = "/electricityPrices.json";
@@ -32,7 +34,7 @@ class PriceFinderTest {
             return objectMapper.readValue(is, new TypeReference<>() {
             });
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Failed to load electricity prices", e);
             return null;
         }
     }
@@ -40,7 +42,7 @@ class PriceFinderTest {
     @Test
     void testEmptyPriceList() {
         List<ElectricityPrice> emptyList = Collections.emptyList();
-        int duration = 30; // 30 minutes
+        int duration = 30;
 
         Throwable thrown = catchThrowable(() -> PriceFinder.findBestPriceForDuration(emptyList, duration));
 
@@ -51,6 +53,7 @@ class PriceFinderTest {
     @Test
     void testDurationExceedsListSize() {
         List<ElectricityPrice> prices = ELECTRICITY_PRICES;
+        assert prices != null;
         int duration = prices.size() * 60 + 30; // Exceeds size of list in minutes
 
         BestPriceResult result = PriceFinder.findBestPriceForDuration(prices, duration);
@@ -59,7 +62,7 @@ class PriceFinderTest {
     }
 
     @Test
-    public void testSinglePriceEntry() {
+    void testSinglePriceEntry() {
         LocalDateTime fixedTime = LocalDateTime.now(); // Fixed time for comparison
         List<ElectricityPrice> prices = Collections.singletonList(new ElectricityPrice(fixedTime, 10.0));
         int duration = 60; // 1 hour
@@ -72,7 +75,7 @@ class PriceFinderTest {
     }
 
     @Test
-    public void testBestStartTimeInLastHour() {
+    void testBestStartTimeInLastHour() {
         // Use a fixed base time for both prices
         LocalDateTime baseTime = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES); // Truncate to avoid second/millisecond discrepancies
         List<ElectricityPrice> prices = Arrays.asList(

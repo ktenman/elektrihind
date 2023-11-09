@@ -22,6 +22,7 @@ import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -117,14 +118,13 @@ public class ElekterBotService extends TelegramLongPollingBot {
                     // and total price for the given duration. You would need to implement this.
                     BestPriceResult bestPrice = PriceFinder.findBestPriceForDuration(electricityPrices, durationInMinutes);
                     if (bestPrice != null) {
-                        sendMessage(chatId, "Best time to start is " + bestPrice.getStartTime() + "with average price of " + bestPrice.getAveragePrice() + " cents/kWh. " +
-                                "Total cost is " + bestPrice.getTotalCost() + " EUR.");
+                        sendMessage(chatId, "Best time to start is " + bestPrice.getStartTime() + " with average price of " + bestPrice.getAveragePrice() + " cents/kWh. " +
+                                "Total cost is " + bestPrice.getTotalCost() + " EUR. In  " + Duration.between(LocalDateTime.now(clock), bestPrice.getStartTime()).toHours() + " hours.");
                     } else {
                         sendMessage(chatId, "Could not calculate the best time to start your washing machine.");
                     }
-                } else {
-                    // Handle other text messages that do not match the expected pattern
-                }
+                }  // Handle other text messages that do not match the expected pattern
+
 
             } else if (message.hasDocument()) {
                 // Check if the document is a CSV file

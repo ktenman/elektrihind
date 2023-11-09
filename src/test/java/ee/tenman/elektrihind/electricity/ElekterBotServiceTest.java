@@ -187,7 +187,7 @@ class ElekterBotServiceTest {
         when(electricityPricesService.fetchDailyPrices()).thenReturn(mockPrices);
 
         BestPriceResult mockBestPriceResult = BestPriceResult.builder()
-                .startTime(futureTime.toString())
+                .startTime(futureTime)
                 .totalCost(2.25)
                 .averagePrice(4.5) // Normally, you would calculate this based on the duration and cost
                 .build();

@@ -14,7 +14,7 @@ public class PriceFinder {
 
         BestPriceResult bestPriceResult = null;
         double lowestTotalCost = Double.MAX_VALUE;
-        LocalDateTime bestStartTime = null;
+        LocalDateTime bestStartTime;
 
         // Loop through every minute as a potential start time
         for (int startMinute = 0; startMinute < electricityPrices.size() * MINUTES_IN_HOUR; startMinute++) {
@@ -38,7 +38,7 @@ public class PriceFinder {
             if (minutesCounted == durationInMinutes && totalCost < lowestTotalCost) {
                 lowestTotalCost = totalCost;
                 bestStartTime = electricityPrices.get(startMinute / MINUTES_IN_HOUR).getDate().plusMinutes(startMinute % MINUTES_IN_HOUR);
-                bestPriceResult = new BestPriceResult(bestStartTime.toString(), lowestTotalCost, durationInMinutes);
+                bestPriceResult = new BestPriceResult(bestStartTime, lowestTotalCost, durationInMinutes);
             }
         }
 

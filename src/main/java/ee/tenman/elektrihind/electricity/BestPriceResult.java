@@ -7,17 +7,18 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class BestPriceResult {
-    private String startTime;
+    private LocalDateTime startTime;
     private Double totalCost;
     private Double averagePrice;
 
-    public BestPriceResult(String startTime, Double totalCost, int durationInMinutes) {
+    public BestPriceResult(LocalDateTime startTime, Double totalCost, int durationInMinutes) {
         this.startTime = startTime;
         this.totalCost = BigDecimal.valueOf(totalCost)
                 .setScale(2, RoundingMode.HALF_UP)

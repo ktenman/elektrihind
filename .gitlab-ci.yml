@@ -67,13 +67,16 @@ test:
 
 deploy:
   stage: deploy
-  image: debian:stable-slim  # Use the Debian slim image for a lightweight base.
+  image: ubuntu:latest  # Use the latest Ubuntu image or specify a specific version.
   script:
     - apt-get update
     - apt-get install -y docker.io  # Install Docker
     - echo "Stopping and removing the existing container, if it exists..."
     - docker rm -f elektrihind-app-container || true  # You can remove this line since you won't be using Docker.
     - echo "Building the new Docker image without cache..."
+    # Modify this part to build your Docker image or perform other deployment actions directly.
+    # For example, you can install Docker on the Ubuntu image and build and run your container.
+    # Example:
     - docker build --no-cache -t elektrihind-app .
     - docker run -d -p 8080:8080 --restart always --name elektrihind-app-container elektrihind-app
     - echo "Removing dangling Docker images to free up space..."
@@ -82,4 +85,5 @@ deploy:
     - main
   tags:
     - production
+
 

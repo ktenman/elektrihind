@@ -67,9 +67,17 @@ test:
 
 deploy:
   stage: deploy
-  image: docker:19.03  # Use a stable version of the Docker image
+  image: docker:24.0.7  # Use a stable version of the Docker image
   services:
-    - docker:19.03-dind
+    - docker:24.0.7-dind
+  before_script:
+    - >
+      for i in {1..5}; do
+        docker info && break || sleep 2;
+      done
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
   script:
     - echo "Deploying the application..."
     - docker pull "$IMAGE_TAG" || true  # Ensure the latest image is pulled

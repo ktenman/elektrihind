@@ -51,7 +51,7 @@ cache:
 
 build:
   stage: build
-  image: "$IMAGE_TAG"
+  image: maven:3.9.5-eclipse-temurin-21-alpine
   script:
     - echo "Compiling the project..."
     - mvn compile
@@ -60,7 +60,7 @@ build:
 
 test:
   stage: test
-  image: "$IMAGE_TAG"
+  image: maven:3.9.5-eclipse-temurin-21-alpine
   script:
     - echo "Running tests..."
     - mvn test

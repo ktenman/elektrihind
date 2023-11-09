@@ -3,7 +3,7 @@ FROM openjdk:21-jdk-slim as build
 
 # Install required tools including Git
 RUN apt-get update && \
-    apt-get install -y git curl tar bash procps && \
+    apt-get install -y curl tar bash && \
     curl -fsSL https://archive.apache.org/dist/maven/maven-3/3.9.5/binaries/apache-maven-3.9.5-bin.tar.gz | tar -xzC /opt && \
     ln -s /opt/apache-maven-3.9.5 /opt/maven && \
     ln -s /opt/maven/bin/mvn /usr/bin/mvn && \
@@ -34,9 +34,12 @@ ENV TZ=Europe/Tallinn
 
 # Install tzdata for setting timezone
 RUN apt-get update && \
-    apt-get install -y tzdata && \
+    apt-get install -y tzdata curl tar bash && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     dpkg-reconfigure -f noninteractive tzdata && \
+    curl -fsSL https://archive.apache.org/dist/maven/maven-3/3.9.5/binaries/apache-maven-3.9.5-bin.tar.gz | tar -xzC /opt && \
+    ln -s /opt/apache-maven-3.9.5 /opt/maven && \
+    ln -s /opt/maven/bin/mvn /usr/bin/mvn && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the working directory

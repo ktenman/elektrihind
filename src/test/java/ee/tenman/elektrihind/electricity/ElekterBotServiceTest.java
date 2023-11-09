@@ -238,4 +238,5 @@ class ElekterBotServiceTest {
 
         verify(spyBotService).handleCsvDocument(document, message.getChatId());
     }
+
 }

@@ -68,20 +68,12 @@ test:
 deploy:
   stage: deploy
   image: docker:24.0.7  # Use a stable version of the Docker image
-  services:
-    - docker:24.0.7-dind
   before_script:
-    - >
-      for i in {1..5}; do
-        docker info && break || sleep 2;
-      done
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
+    - docker info # This will now show info about the host's Docker daemon
   script:
     - echo "Deploying the application..."
-    - echo "$CI_JOB_TOKEN" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-    - docker pull "$IMAGE_TAG" || true  # Now it should authenticate properly
+    - echo "$CI_JOB_TOKEN" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker pull "$IMAGE_TAG" || true  # This will pull using the host's Docker daemon
     - docker stop elektrihind-app-container || true
     - docker rm elektrihind-app-container || true
     - docker run -d -p 8080:8080 --restart always --name elektrihind-app-container "$IMAGE_TAG"
@@ -89,6 +81,7 @@ deploy:
     - main
   tags:
     - production
+
 
 
 

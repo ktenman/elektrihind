@@ -1,13 +1,14 @@
 image: docker:24.0.7
 
 services:
-  - docker:24.0.7-dind
+  - name: docker:24.0.7-dind
+    alias: docker
 
 variables:
   DOCKER_DRIVER: overlay2
   IMAGE_TAG: $CI_REGISTRY_IMAGE/maven-jdk-21:latest
-  DOCKER_HOST: tcp://docker:2375/
-  DOCKER_TLS_CERTDIR: ""
+  # DOCKER_HOST is not needed if using the default unix socket
+  DOCKER_TLS_CERTDIR: ""  # Disabling TLS for simplicity, be aware of security implications in a production environment
 
 stages:
   - diagnostics
@@ -32,8 +33,9 @@ diagnostics:
 before_script:
   - echo "Waiting for Docker to start..."
   - sleep 10
+  # Logging in securely using password stdin
   - echo "Logging into GitLab Registry..."
-  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
 
 build_image:
   stage: build_image
@@ -56,7 +58,8 @@ build:
     - echo "Installing Docker client..."
     - apt-get update -y && apt-get install -y docker.io
     - echo "Logging into GitLab Registry within the build image..."
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    # Again, using password stdin for login
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - echo "Compiling the project..."
     - mvn compile

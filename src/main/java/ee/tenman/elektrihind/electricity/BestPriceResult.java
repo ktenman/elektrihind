@@ -7,9 +7,9 @@ import java.math.RoundingMode;
 
 @Getter
 public class BestPriceResult {
-    private String startTime;
-    private Double totalCost;
-    private Double averagePrice; // New field for average price
+    private final String startTime;
+    private final Double totalCost;
+    private final Double averagePrice;
 
     public BestPriceResult(String startTime, Double totalCost, int durationInMinutes) {
         this.startTime = startTime;
@@ -17,7 +17,6 @@ public class BestPriceResult {
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();
 
-        // Calculate the average price per minute
         this.averagePrice = BigDecimal.valueOf(this.totalCost / (durationInMinutes / 60.0))
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();

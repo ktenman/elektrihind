@@ -7,34 +7,17 @@ services:
 variables:
   DOCKER_DRIVER: overlay2
   IMAGE_TAG: $CI_REGISTRY_IMAGE/maven-jdk-21:latest
-  DOCKER_TLS_CERTDIR: ""  # Disabling TLS for simplicity, be aware of security implications in a production environment
+  DOCKER_TLS_CERTDIR: ""  # Consider security implications
 
 stages:
-  - diagnostics
   - build_image
   - build
   - test
   - deploy
 
-diagnostics:
-  stage: diagnostics
-  script:
-    - echo "Checking Docker version..."
-    - docker --version || true
-    - echo "Checking which Docker..."
-    - which docker || true
-    - echo "Checking PATH..."
-    - echo $PATH
-    - echo "Checking user permissions..."
-    - id
-    - echo "Checking if Docker service is up..."
-    - ps aux | grep docker || true
-
 build_image:
   stage: build_image
   before_script:
-    - echo "Waiting for Docker to start..."
-    - sleep 10
     - echo "Logging into GitLab Registry..."
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
@@ -53,8 +36,7 @@ build:
   image: maven:3.9.5-eclipse-temurin-21-alpine
   script:
     - echo "Compiling the project..."
-    - mvn compile
-    - echo "Listing contents of the Maven repository to ensure it's populated..."
+    - mvn compile -T1C  # Run Maven in threaded mode
     - ls -la ~/.m2/repository/ || true
 
 test:
@@ -66,13 +48,13 @@ test:
 
 deploy:
   stage: deploy
-  image: docker:24.0.7  # Use a stable version of the Docker image
+  image: docker:24.0.7
   before_script:
-    - docker info # Shows info about the host's Docker daemon
+    - docker info
   script:
     - echo "Deploying the application..."
     - echo "$CI_JOB_TOKEN" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-    - docker pull "$IMAGE_TAG" || true  # This will pull using the host's Docker daemon
+    - docker pull "$IMAGE_TAG" || true
     - docker stop elektrihind-app-container || true
     - docker rm elektrihind-app-container || true
     - docker run -d -p 8080:8080 --restart always --name elektrihind-app-container -e TELEGRAM_ELEKTRITEEMU_TOKEN="$TELEGRAM_ELEKTRITEEMU_TOKEN" -e TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN" -e OMDB_API_KEY="$OMDB_API_KEY" "$IMAGE_TAG"
@@ -80,8 +62,3 @@ deploy:
     - main
   tags:
     - production
-
-
-
-
-

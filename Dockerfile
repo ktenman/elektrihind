@@ -3,7 +3,7 @@ FROM openjdk:21-jdk-slim as build
 
 # Install required tools including Git
 RUN apt-get update && \
-    apt-get install -y curl tar bash && \
+    apt-get install -y git curl tar bash && \
     curl -fsSL https://archive.apache.org/dist/maven/maven-3/3.9.5/binaries/apache-maven-3.9.5-bin.tar.gz | tar -xzC /opt && \
     ln -s /opt/apache-maven-3.9.5 /opt/maven && \
     ln -s /opt/maven/bin/mvn /usr/bin/mvn && \

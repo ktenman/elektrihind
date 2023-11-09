@@ -72,7 +72,10 @@ deploy:
     - docker:24.0.7-dind
   variables:
     DOCKER_TLS_CERTDIR: ""
+    DOCKER_HOST: "tcp://docker:2375"
   script:
+    - echo "Checking if Docker service is responsive..."
+    - until docker info; do echo "Waiting for Docker..."; sleep 5; done
     - echo "Stopping and removing the existing container, if it exists..."
     - docker rm -f elektrihind-app-container || true
     - echo "Building the new Docker image without cache..."

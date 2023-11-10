@@ -47,7 +47,7 @@ class PriceFinderTest {
         Throwable thrown = catchThrowable(() -> PriceFinder.findBestPriceForDuration(emptyList, duration));
 
         assertThat(thrown).isNotNull().isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Invalid input");
+                .hasMessage("Electricity prices list cannot be null or empty.");
     }
 
     @Test

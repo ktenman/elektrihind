@@ -10,41 +10,59 @@ public class PriceFinder {
 
     private static final int MINUTES_IN_HOUR = 60;
 
-    public static BestPriceResult findBestPriceForDuration(List<ElectricityPrice> electricityPrices, int durationInMinutes) {
-        if (electricityPrices == null || electricityPrices.isEmpty() || durationInMinutes <= 0) {
-            throw new IllegalArgumentException("Invalid input");
+    private static void validateInput(List<ElectricityPrice> electricityPrices, int durationInMinutes) {
+        if (electricityPrices == null || electricityPrices.isEmpty()) {
+            throw new IllegalArgumentException("Electricity prices list cannot be null or empty.");
         }
+        if (durationInMinutes <= 0) {
+            throw new IllegalArgumentException("Duration must be greater than 0.");
+        }
+    }
+
+    public static BestPriceResult findBestPriceForDuration(List<ElectricityPrice> electricityPrices, int durationInMinutes) {
+        validateInput(electricityPrices, durationInMinutes);
 
         BestPriceResult bestPriceResult = null;
         double lowestTotalCost = Double.MAX_VALUE;
-        LocalDateTime bestStartTime;
 
-        // Loop through every minute as a potential start time
-        for (int startMinute = 0; startMinute < electricityPrices.size() * MINUTES_IN_HOUR; startMinute++) {
-            double totalCost = 0.0;
-            int minutesCounted = 0;
-            int index = startMinute / MINUTES_IN_HOUR; // Find the index in the prices list
-            int minuteOfHour = startMinute % MINUTES_IN_HOUR; // Find the minute within the hour
+        for (int startMinuteIndex = 0; startMinuteIndex <= electricityPrices.size() * MINUTES_IN_HOUR - durationInMinutes; startMinuteIndex++) {
+            double currentIntervalCost = calculateCostForInterval(electricityPrices, startMinuteIndex, durationInMinutes);
+            LocalDateTime currentStartTime = getStartTime(electricityPrices, startMinuteIndex);
 
-            while (minutesCounted < durationInMinutes && index < electricityPrices.size()) {
-                double hourlyPrice = electricityPrices.get(index).getPrice();
-                // Calculate the cost for the remaining part of the current hour or the remaining duration
-                int minutesToCalculate = Math.min(MINUTES_IN_HOUR - minuteOfHour, durationInMinutes - minutesCounted);
-                totalCost += (hourlyPrice / MINUTES_IN_HOUR) * minutesToCalculate;
-                minutesCounted += minutesToCalculate;
+            boolean isNewLowestCost = currentIntervalCost < lowestTotalCost;
+            boolean isSameCostButEarlierStart = currentIntervalCost == lowestTotalCost &&
+                    (bestPriceResult == null || currentStartTime.isBefore(bestPriceResult.getStartTime()));
 
-                // Move to the next hour
-                index++;
-                minuteOfHour = 0; // Reset minute of hour after moving to next hour
-            }
-
-            if (minutesCounted == durationInMinutes && totalCost < lowestTotalCost) {
-                lowestTotalCost = totalCost;
-                bestStartTime = electricityPrices.get(startMinute / MINUTES_IN_HOUR).getDate().plusMinutes(startMinute % MINUTES_IN_HOUR);
-                bestPriceResult = new BestPriceResult(bestStartTime, lowestTotalCost, durationInMinutes);
+            if (isNewLowestCost || isSameCostButEarlierStart) {
+                lowestTotalCost = currentIntervalCost;
+                bestPriceResult = new BestPriceResult(currentStartTime, lowestTotalCost, durationInMinutes);
             }
         }
 
         return bestPriceResult;
     }
+
+    private static double calculateCostForInterval(List<ElectricityPrice> electricityPrices, int startMinute, int durationInMinutes) {
+        double totalCost = 0.0;
+        int currentMinute = startMinute;
+        while (durationInMinutes > 0) {
+            int hourIndex = currentMinute / MINUTES_IN_HOUR;
+            int minuteOfHour = currentMinute % MINUTES_IN_HOUR;
+            ElectricityPrice currentPrice = electricityPrices.get(hourIndex);
+
+            int minutesInCurrentHour = Math.min(MINUTES_IN_HOUR - minuteOfHour, durationInMinutes);
+            totalCost += (currentPrice.getPrice() / MINUTES_IN_HOUR) * minutesInCurrentHour;
+
+            durationInMinutes -= minutesInCurrentHour;
+            currentMinute += minutesInCurrentHour;
+        }
+        return totalCost;
+    }
+
+    private static LocalDateTime getStartTime(List<ElectricityPrice> electricityPrices, int startMinute) {
+        int startHourIndex = startMinute / MINUTES_IN_HOUR;
+        int minuteOffset = startMinute % MINUTES_IN_HOUR;
+        return electricityPrices.get(startHourIndex).getDate().plusMinutes(minuteOffset);
+    }
+
 }

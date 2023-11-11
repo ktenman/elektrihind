@@ -119,7 +119,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
                     BestPriceResult bestPrice = PriceFinder.findBestPriceForDuration(electricityPrices, durationInMinutes);
                     if (bestPrice != null) {
                         sendMessage(chatId, "Best time to start is " + bestPrice.getStartTime() + " with average price of " + bestPrice.getAveragePrice() + " cents/kWh. " +
-                                "Total cost is " + bestPrice.getTotalCost() + " EUR. In  " + Duration.between(LocalDateTime.now(clock), bestPrice.getStartTime()).toHours() + " hours.");
+                                "Total cost is " + bestPrice.getTotalCost() + " EUR. In " + Duration.between(LocalDateTime.now(clock), bestPrice.getStartTime()).toHours() + " hours.");
                     } else {
                         sendMessage(chatId, "Could not calculate the best time to start your washing machine.");
                     }

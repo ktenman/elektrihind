@@ -13,7 +13,7 @@ COPY src /app/src
 RUN mvn package -DskipTests
 
 # Switch to a new stage and use AdoptOpenJDK for the runtime
-FROM bellsoft/liberica-runtime-container:jdk-21-slim-musl
+FROM bellsoft/liberica-runtime-container:jre-21-slim-musl
 
 # Set the current working directory inside the container
 WORKDIR /app

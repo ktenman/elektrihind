@@ -7,7 +7,8 @@ on:
 
 env:
   DOCKER_IMAGE_NAME: ktenman/elektrihind
-  DOCKER_IMAGE_TAG: ${{ github.sha }}
+  #  DOCKER_IMAGE_TAG: ${{ github.sha }}
+  DOCKER_IMAGE_TAG: latest
 
 jobs:
   test:
@@ -49,8 +50,8 @@ jobs:
 
       - run: |
           ssh githubuser@tenman.ee "docker pull '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG' || true"
-          ssh githubuser@tenman.ee "docker stop my-container || true"
-          ssh githubuser@tenman.ee "docker rm my-container || true"
+          ssh githubuser@tenman.ee "docker stop elektrihind-app-container || true"
+          ssh githubuser@tenman.ee "docker rm elektrihind-app-container || true"
           ssh githubuser@tenman.ee "docker run -d -p 8080:8080 --restart always --name my-container '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG'"
           ssh githubuser@tenman.ee "echo 'Pruning unused Docker images...'"
           ssh githubuser@tenman.ee "docker image prune -af"

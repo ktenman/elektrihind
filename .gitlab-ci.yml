@@ -12,12 +12,11 @@ stages:
   - build_and_test
   - deploy
 
-before_script:
-  - echo "Logging into GitLab Registry..."
-  - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-
 build_image:
   stage: build_and_test
+  before_script:
+    - echo "Logging into GitLab Registry..."
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - echo "Building the Docker image..."
     - docker build -t "$IMAGE_TAG" .
@@ -39,6 +38,9 @@ test:
 deploy:
   stage: deploy
   image: docker:24.0.7
+  before_script:
+    - echo "Logging into GitLab Registry..."
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - echo "Deploying the application..."
     - docker pull "$IMAGE_TAG" || true

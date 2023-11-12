@@ -92,52 +92,73 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        // We check if the update has a message
-        if (update.hasMessage()) {
-            Message message = update.getMessage();
-            long chatId = message.getChatId();
-
-            if (message.hasText()) {
-                String messageText = message.getText();
-                Pattern durationPattern = Pattern.compile("parim hind (\\d+) min", Pattern.CASE_INSENSITIVE);
-                Matcher matcher = durationPattern.matcher(messageText);
-
-                if (messageText.equals("/start")) {
-                    sendMessage(chatId, "Hello! I am an electricity bill calculator bot. Please send me a CSV file.");
-                } else if (messageText.toLowerCase().contains("elektrihind")) {
-                    List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices();
-                    Double currentPrice = currentPrice(electricityPrices);
-                    sendMessage(chatId, "Current electricity price is " + currentPrice + " cents/kWh.");
-                } else if (matcher.find()) {
-                    // Extract the number of minutes from the message
-                    int durationInMinutes = Integer.parseInt(matcher.group(1));
-                    List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices()
-                            .stream()
-                            .filter(electricityPrice -> electricityPrice.getDate().isAfter(LocalDateTime.now(clock))).toList();
-                    // Assume that findBestPriceForDuration is a method that calculates the best starting time
-                    // and total price for the given duration. You would need to implement this.
-                    BestPriceResult bestPrice = PriceFinder.findBestPriceForDuration(electricityPrices, durationInMinutes);
-                    if (bestPrice != null) {
-                        sendMessage(chatId, "Best time to start is " + bestPrice.getStartTime() + " with average price of " + bestPrice.getAveragePrice() + " cents/kWh. " +
-                                "Total cost is " + bestPrice.getTotalCost() + " EUR. In " + Duration.between(LocalDateTime.now(clock), bestPrice.getStartTime()).toHours() + " hours.");
-                    } else {
-                        sendMessage(chatId, "Could not calculate the best time to start your washing machine.");
-                    }
-                }  // Handle other text messages that do not match the expected pattern
-
-
-            } else if (message.hasDocument()) {
-                // Check if the document is a CSV file
-                Document document = message.getDocument();
-                String fileName = document.getFileName();
-                if (fileName != null && fileName.endsWith(".csv")) {
-                    // Handle the CSV file
-                    handleCsvDocument(document, chatId);
-                } else {
-                    sendMessage(chatId, "Please send a CSV file.");
-                }
-            }
+        if (!update.hasMessage()) {
+            return;
         }
+
+        Message message = update.getMessage();
+        long chatId = message.getChatId();
+
+        if (message.hasText()) {
+            handleTextMessage(message, chatId);
+        } else if (message.hasDocument()) {
+            handleDocumentMessage(message, chatId);
+        }
+    }
+
+    private void handleTextMessage(Message message, long chatId) {
+        String messageText = message.getText();
+        Pattern durationPattern = Pattern.compile("parim hind (\\d+) min", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = durationPattern.matcher(messageText);
+
+        if ("/start".equals(messageText)) {
+            sendMessage(chatId, "Hello! I am an electricity bill calculator bot. Please send me a CSV file.");
+        } else if (messageText.toLowerCase().contains("elektrihind")) {
+            handleElectricityPrice(chatId);
+        } else if (matcher.find()) {
+            handleDurationMessage(matcher, chatId);
+        } // Consider adding an else block for unhandled text messages
+    }
+
+    private void handleDocumentMessage(Message message, long chatId) {
+        Document document = message.getDocument();
+        String fileName = document.getFileName();
+        if (fileName != null && fileName.endsWith(".csv")) {
+            handleCsvDocument(document, chatId);
+        } else {
+            sendMessage(chatId, "Please send a CSV file.");
+        }
+    }
+
+    private void handleElectricityPrice(long chatId) {
+        List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices();
+        Double currentPrice = currentPrice(electricityPrices); // Assume currentPrice is a method to calculate current price
+        String response = "Current electricity price is " + currentPrice + " cents/kWh.";
+        sendMessage(chatId, response);
+    }
+
+
+    private void handleDurationMessage(Matcher matcher, long chatId) {
+        int durationInMinutes = Integer.parseInt(matcher.group(1));
+        List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices()
+                .stream()
+                .filter(electricityPrice -> electricityPrice.getDate().isAfter(LocalDateTime.now(clock)))
+                .toList();
+        BestPriceResult bestPrice = PriceFinder.findBestPriceForDuration(electricityPrices, durationInMinutes);
+
+        if (bestPrice != null) {
+            String response = formatBestPriceResponse(bestPrice);
+            sendMessage(chatId, response);
+        } else {
+            sendMessage(chatId, "Could not calculate the best time to start your washing machine.");
+        }
+    }
+
+    String formatBestPriceResponse(BestPriceResult bestPrice) {
+        return "Best time to start is " + bestPrice.getStartTime() +
+                " with average price of " + bestPrice.getAveragePrice() + " cents/kWh. " +
+                "Total cost is " + bestPrice.getTotalCost() + " EUR. In " +
+                Duration.between(LocalDateTime.now(clock), bestPrice.getStartTime()).toHours() + " hours.";
     }
 
     Double currentPrice(List<ElectricityPrice> electricityPrices) {

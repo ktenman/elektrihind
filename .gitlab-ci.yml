@@ -33,11 +33,7 @@ test:
   image: maven:3.9-eclipse-temurin-21-alpine
   script:
     - echo "Running tests and SonarCloud analysis..."
-    - mvn -T 1C --batch-mode clean verify sonar:sonar \
-      -Dsonar.projectKey=ktenman_elektrihind \
-      -Dsonar.organization=ktenman \
-      -Dsonar.host.url=https://sonarcloud.io \
-      -Dsonar.login=$SONAR_TOKEN
+    - mvn -T 1C --batch-mode clean verify sonar:sonar -Dsonar.projectKey=ktenman_elektrihind -Dsonar.organization=ktenman -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN
   artifacts:
     reports:
       junit: target/surefire-reports/*.xml

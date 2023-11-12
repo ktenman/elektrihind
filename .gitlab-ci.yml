@@ -21,14 +21,16 @@ build_base_image:
     - echo "Logging into GitLab Registry..."
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
     - echo "Checking if the base Docker image already exists..."
-    - if docker pull "$BASE_IMAGE_TAG"; then
-      echo "Base image found in registry. Skipping build...";
+    - |
+      if docker pull "$BASE_IMAGE_TAG"; then
+        echo "Base image found in registry. Skipping build..."
       else
-      echo "Base image not found. Building the base Docker image...";
-      docker build -f Dockerfile.base -t "$BASE_IMAGE_TAG" .
-      echo "Pushing the base image to the registry...";
-      docker push "$BASE_IMAGE_TAG";
+        echo "Base image not found. Building the base Docker image..."
+        docker build -f Dockerfile.base -t "$BASE_IMAGE_TAG" .
+        echo "Pushing the base image to the registry..."
+        docker push "$BASE_IMAGE_TAG"
       fi
+
 
 build_image:
   stage: build_image

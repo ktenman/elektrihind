@@ -18,6 +18,8 @@ stages:
 build_base_image:
   stage: build_base_image
   script:
+    - echo "Logging into GitLab Registry..."
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
     - echo "Checking if the base Docker image already exists..."
     - if docker pull "$BASE_IMAGE_TAG"; then
       echo "Base image found in registry. Skipping build...";

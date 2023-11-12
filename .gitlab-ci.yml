@@ -30,10 +30,14 @@ build_base_image:
         echo "Pushing the base image to the registry..."
         docker push "$BASE_IMAGE_TAG"
       fi
-
+  only:
+    - schedules
 
 build_image:
   stage: build_image
+  before_script:
+    - echo "Logging into GitLab Registry..."
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
   script:
     - echo "Building the Docker image..."
     - docker build -t "$APP_IMAGE_TAG" .

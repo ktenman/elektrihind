@@ -52,6 +52,6 @@ jobs:
           ssh githubuser@tenman.ee "docker pull '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG' || true"
           ssh githubuser@tenman.ee "docker stop elektrihind-app-container || true"
           ssh githubuser@tenman.ee "docker rm elektrihind-app-container || true"
-          ssh githubuser@tenman.ee "docker run -d -p 8080:8080 --restart always --name my-container '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG'"
+          ssh githubuser@tenman.ee "docker run -d -p 8080:8080 --restart always --name elektrihind-app-container '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG'"
           ssh githubuser@tenman.ee "echo 'Pruning unused Docker images...'"
           ssh githubuser@tenman.ee "docker image prune -af"

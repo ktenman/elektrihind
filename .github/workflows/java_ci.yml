@@ -42,6 +42,11 @@ jobs:
       - uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add SSH key of tenman.ee to known hosts
+        run: |
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+
       - run: |
           ssh githubuser@tenman.ee 'docker pull "$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG" || true'
           ssh githubuser@tenman.ee 'docker stop my-container || true'

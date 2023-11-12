@@ -16,9 +16,9 @@ RUN mvn package -DskipTests
 FROM bellsoft/liberica-runtime-container:jdk-21-slim-musl
 
 # Set the time zone
-ENV TZ=Europe/Tallinn
-RUN apk add --no-cache tzdata \
-    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+#ENV TZ=Europe/Tallinn
+#RUN apk add --no-cache tzdata \
+#    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Set the current working directory inside the container
 WORKDIR /app

@@ -6,7 +6,7 @@ services:
 
 variables:
   DOCKER_DRIVER: overlay2
-  IMAGE_TAG: $CI_REGISTRY_IMAGE/elektrihind:latest
+  IMAGE_TAG: $CI_REGISTRY_IMAGE/my-app:latest
 
 stages:
   - build_and_test

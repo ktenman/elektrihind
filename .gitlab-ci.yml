@@ -9,6 +9,10 @@ variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE/maven-jdk-21:latest
   BASE_IMAGE_TAG: $CI_REGISTRY_IMAGE/base-maven-jdk-21:latest
 
+before_script:
+  - echo "Logging into GitLab Registry..."
+  - echo "$CI_JOB_TOKEN" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+
 stages:
   - build_base_image
   - build_image
@@ -18,8 +22,6 @@ stages:
 build_base_image:
   stage: build_base_image
   script:
-    - echo "Logging into GitLab Registry..."
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
     - echo "Checking if the base Docker image already exists..."
     - |
       if docker pull "$BASE_IMAGE_TAG"; then
@@ -35,11 +37,6 @@ build_base_image:
 
 build_image:
   stage: build_image
-  before_script:
-    - if [ -z $(docker images -q $IMAGE_TAG) ]; then
-      echo "Logging into GitLab Registry...";
-      echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY;
-      fi
   script:
     - echo "Building the Docker image..."
     - docker build -t "$IMAGE_TAG" .
@@ -64,8 +61,6 @@ deploy:
   before_script:
     - docker info
   script:
-    - echo "Deploying the application..."
-    - echo "$CI_JOB_TOKEN" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
     - docker pull "$IMAGE_TAG" || true
     - docker stop elektrihind-app-container || true
     - docker rm elektrihind-app-container || true

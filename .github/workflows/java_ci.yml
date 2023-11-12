@@ -52,6 +52,6 @@ jobs:
           ssh githubuser@tenman.ee "docker pull '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG' || true"
           ssh githubuser@tenman.ee "docker stop elektrihind-app-container || true"
           ssh githubuser@tenman.ee "docker rm elektrihind-app-container || true"
-          ssh githubuser@tenman.ee "docker run -d -p 8080:8080 --restart always --name my-container -e TELEGRAM_ELEKTRITEEMU_TOKEN='${{ secrets.TELEGRAM_ELEKTRITEEMU_TOKEN }}' -e TELEGRAM_BOT_TOKEN='${{ secrets.TELEGRAM_BOT_TOKEN }}' -e OMDB_API_KEY='${{ secrets.OMDB_API_KEY }}' '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG'"
+          ssh githubuser@tenman.ee "docker run -d -p 8080:8080 --restart always --name elektrihind-app-container -e TELEGRAM_ELEKTRITEEMU_TOKEN='${{ secrets.TELEGRAM_ELEKTRITEEMU_TOKEN }}' -e TELEGRAM_BOT_TOKEN='${{ secrets.TELEGRAM_BOT_TOKEN }}' -e OMDB_API_KEY='${{ secrets.OMDB_API_KEY }}' '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG'"
           ssh githubuser@tenman.ee "echo 'Pruning unused Docker images...'"
           ssh githubuser@tenman.ee "docker image prune -af"

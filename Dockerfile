@@ -1,5 +1,5 @@
 # Set the base image to Maven with Java 21
-FROM maven:3.9-eclipse-temurin-21-alpine AS build
+FROM registry.gitlab.com/tenman/elektrihind/base-maven-jdk-21:latest
 
 # Set the current working directory inside the container
 WORKDIR /app

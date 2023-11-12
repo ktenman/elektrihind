@@ -7,11 +7,31 @@ services:
 variables:
   DOCKER_DRIVER: overlay2
   IMAGE_TAG: $CI_REGISTRY_IMAGE/maven-jdk-21:latest
+  BASE_IMAGE_TAG: $CI_REGISTRY_IMAGE/base-maven-jdk-21:latest
 
 stages:
+  - build_base_image
   - build_image
   - test
   - deploy
+
+build_base_image:
+  stage: build_base_image
+  script:
+    - echo "Logging into GitLab Registry..."
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - echo "Checking if the base Docker image already exists..."
+    - |
+      if docker pull "$BASE_IMAGE_TAG"; then
+        echo "Base image found in registry. Skipping build..."
+      else
+        echo "Base image not found. Building the base Docker image..."
+        docker build -f Dockerfile.base -t "$BASE_IMAGE_TAG" .
+        echo "Pushing the base image to the registry..."
+        docker push "$BASE_IMAGE_TAG"
+      fi
+  only:
+    - schedules
 
 build_image:
   stage: build_image
@@ -33,7 +53,7 @@ cache:
 
 test:
   stage: test
-  image: maven:3.9-eclipse-temurin-21-alpine
+  image: $CI_REGISTRY/base-maven-jdk-21:latest
   script:
     - echo "Running tests..."
     - mvn test

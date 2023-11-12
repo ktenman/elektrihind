@@ -4,40 +4,27 @@ on:
   push:
     branches:
       - main
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: maven:3.9-eclipse-temurin-21-alpine
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Convert shallow clone to full clone
-        run: git fetch --unshallow
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v2
+      - name: Cache Maven packages
+        uses: actions/cache@v2
         with:
-          java-version: '21'
-          distribution: 'adopt'
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
 
-      - name: Set up Maven 3.9.5
-        env:
-          MAVEN_VERSION: 3.9.5
+      - name: Build with Maven, Run Sonar Analysis, and OWASP Dependency Check
         run: |
-          wget https://downloads.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.zip
-          unzip apache-maven-${MAVEN_VERSION}-bin.zip
-          sudo mv apache-maven-${MAVEN_VERSION} /opt/
-          sudo ln -sf /opt/apache-maven-${MAVEN_VERSION}/bin/mvn /usr/bin/mvn
-
-      - name: Build with Maven and Run Sonar Analysis
-        run: |
-          mvn clean install sonar:sonar -X \
+          mvn clean install sonar:sonar org.owasp:dependency-check-maven:check -X \
             -Dsonar.projectKey=ktenman_elektrihind \
             -Dsonar.organization=ktenman \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
-
-      - name: OWASP Dependency Check
-        run: mvn org.owasp:dependency-check-maven:check

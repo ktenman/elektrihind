@@ -7,7 +7,7 @@ services:
 variables:
   DOCKER_DRIVER: overlay2
   BASE_IMAGE_TAG: $CI_REGISTRY_IMAGE/base-maven-jdk-21:latest
-  APP_IMAGE_TAG: $CI_REGISTRY_IMAGE/my-app:latest
+  IMAGE_TAG: $CI_REGISTRY_IMAGE/my-app:latest
 
 stages:
   - build_base_image
@@ -40,9 +40,9 @@ build_image:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
   script:
     - echo "Building the Docker image..."
-    - docker build -t "$APP_IMAGE_TAG" .
+    - docker build -t "$IMAGE_TAG" .
     - echo "Pushing the app image to the registry..."
-    - docker push "$APP_IMAGE_TAG"
+    - docker push "$IMAGE_TAG"
 
 cache:
   key: "$CI_COMMIT_REF_NAME"
@@ -59,9 +59,12 @@ test:
 deploy:
   stage: deploy
   image: docker:24.0.7
+  before_script:
+    - docker info
   script:
     - echo "Deploying the application..."
-    - docker pull "$APP_IMAGE_TAG"
+    - echo "$CI_JOB_TOKEN" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker pull "$IMAGE_TAG" || true
     - docker stop elektrihind-app-container || true
     - docker rm elektrihind-app-container || true
     - docker run -d -p 8080:8080 --restart always --name elektrihind-app-container -e TELEGRAM_ELEKTRITEEMU_TOKEN="$TELEGRAM_ELEKTRITEEMU_TOKEN" -e TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN" -e OMDB_API_KEY="$OMDB_API_KEY" "$IMAGE_TAG"

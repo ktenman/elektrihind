@@ -1,13 +1,14 @@
-# Stage 1: Install Git and Curl in an Alpine-based image
+# Stage 1: Install Git, Curl, and CA Certificates in an Alpine-based image
 FROM alpine:latest as installer
-RUN apk add --no-cache git curl
+RUN apk add --no-cache git curl ca-certificates
 
 # Stage 2: Use the BellSoft Liberica container with JDK 21 slim
 FROM bellsoft/liberica-runtime-container:jdk-21-slim-musl
 
-# Copy Git and Curl and their dependencies from the Alpine-based image
+# Copy Git, Curl, and CA Certificates and their dependencies from the Alpine-based image
 COPY --from=installer /usr/bin/git /usr/bin/git
 COPY --from=installer /usr/bin/curl /usr/bin/curl
+COPY --from=installer /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=installer /usr/lib/lib* /usr/lib/
 COPY --from=installer /lib/ld-musl* /lib/
 

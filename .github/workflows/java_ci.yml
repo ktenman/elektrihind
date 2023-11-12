@@ -27,7 +27,6 @@ jobs:
 
   build_and_push:
     runs-on: ubuntu-latest
-    container: debian:stable-slim
     steps:
       - uses: actions/checkout@v4.1.1
         with:

@@ -27,8 +27,6 @@ build_base_image:
       echo "Pushing the base image to the registry...";
       docker push "$BASE_IMAGE_TAG";
       fi
-  only:
-    - schedules
 
 build_image:
   stage: build_image
@@ -56,9 +54,9 @@ deploy:
   script:
     - echo "Deploying the application..."
     - docker pull "$APP_IMAGE_TAG"
-    - docker stop my-app-container || true
-    - docker rm my-app-container || true
-    - docker run -d -p 8080:8080 --name my-app-container "$APP_IMAGE_TAG"
+    - docker stop elektrihind-app-container || true
+    - docker rm elektrihind-app-container || true
+    - docker run -d -p 8080:8080 --restart always --name elektrihind-app-container -e TELEGRAM_ELEKTRITEEMU_TOKEN="$TELEGRAM_ELEKTRITEEMU_TOKEN" -e TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN" -e OMDB_API_KEY="$OMDB_API_KEY" "$IMAGE_TAG"
   only:
     - main
   tags:

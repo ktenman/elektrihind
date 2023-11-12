@@ -23,7 +23,7 @@ jobs:
 
       - name: Build with Maven, Run Sonar Analysis, and OWASP Dependency Check
         run: |
-          mvn clean install sonar:sonar org.owasp:dependency-check-maven:check -X \
+          mvn -T 1C --batch-mode clean install sonar:sonar org.owasp:dependency-check-maven:check -X \
             -Dsonar.projectKey=ktenman_elektrihind \
             -Dsonar.organization=ktenman \
             -Dsonar.host.url=https://sonarcloud.io \

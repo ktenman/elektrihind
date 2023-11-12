@@ -1,10 +1,31 @@
-# Set the base image to Maven with Java 21
-FROM maven:3.9.5-eclipse-temurin-21-alpine AS build
+# Stage 1: Install Git in an Alpine-based image
+FROM alpine:latest as git-installer
+RUN apk add --no-cache git
 
-# Set the current working directory inside the container
+# Stage 2: Use the BellSoft Liberica container with JDK 21 slim
+FROM bellsoft/liberica-runtime-container:jdk-21-slim-musl
+
+# Copy Git and its dependencies from the Alpine-based image
+COPY --from=git-installer /usr/bin/git /usr/bin/git
+COPY --from=git-installer /usr/lib/lib* /usr/lib/
+COPY --from=git-installer /lib/ld-musl* /lib/
+
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the Maven POM file and download the dependencies, so they will be cached
+# Set the Maven version and home directory
+ARG MAVEN_VERSION=3.9.5
+ARG MAVEN_HOME=/usr/share/maven
+
+# Download and install Maven
+RUN mkdir -p ${MAVEN_HOME} ${MAVEN_HOME}/ref \
+    && curl -fsSL https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
+    | tar -xzC ${MAVEN_HOME} --strip-components=1 \
+    && ln -s ${MAVEN_HOME}/bin/mvn /usr/bin/mvn
+
+ENV MAVEN_CONFIG "/root/.m2"
+
+# Copy the Maven POM file and download the dependencies
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
@@ -12,21 +33,7 @@ RUN mvn dependency:go-offline -B
 COPY src /app/src
 RUN mvn package -DskipTests
 
-# Switch to a new stage and use AdoptOpenJDK for the runtime
-FROM bellsoft/liberica-runtime-container:jdk-21-slim-musl
-
-# Set the time zone
-ENV TZ=Europe/Tallinn
-RUN apk add --no-cache tzdata \
-    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-# Set the current working directory inside the container
-WORKDIR /app
-
-# Copy the JAR file from the build stage
-COPY --from=build /app/target/*.jar app.jar
-
-# Set the timezone for the JVM
+# Set the timezone for the JVM (This is a workaround for not being able to set the timezone via tzdata)
 ENV JAVA_OPTS="-Duser.timezone=Europe/Tallinn"
 
 # Set the command to run your application with JAVA_OPTS

@@ -9,7 +9,7 @@ COPY pom.xml .
 
 # Copy the project files and build the project
 COPY src /app/src
-RUN mvn package -DskipTests
+RUN mvn -T 1C package -DskipTests
 
 FROM bellsoft/liberica-runtime-container:jre-21-slim-musl
 

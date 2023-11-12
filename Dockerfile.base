@@ -1,0 +1,15 @@
+# Dockerfile.base
+FROM bellsoft/liberica-runtime-container:jdk-21-slim-musl
+
+RUN apk add --no-cache git curl ca-certificates
+
+ENV MAVEN_VERSION=3.9.5 \
+    MAVEN_HOME=/usr/share/maven \
+    MAVEN_CONFIG="/root/.m2"
+
+RUN mkdir -p ${MAVEN_HOME} ${MAVEN_HOME}/ref \
+    && curl -fsSL https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
+    | tar -xzC ${MAVEN_HOME} --strip-components=1 \
+    && ln -s ${MAVEN_HOME}/bin/mvn /usr/bin/mvn
+
+WORKDIR /app

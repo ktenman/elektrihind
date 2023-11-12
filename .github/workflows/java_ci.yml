@@ -1,4 +1,4 @@
-name: Java CI
+name: Java CI with Docker
 
 on:
   push:
@@ -6,11 +6,11 @@ on:
       - main
 
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/my-app
-  IMAGE_TAG: ${{ github.sha }}
+  DOCKER_IMAGE_NAME: ktenman/elektrihind
+  DOCKER_IMAGE_TAG: ${{ github.sha }}
 
 jobs:
-  test:
+  build_and_test:
     runs-on: ubuntu-latest
     container: maven:3.9-eclipse-temurin-21-alpine
 
@@ -29,33 +29,29 @@ jobs:
       - name: Test with Maven
         run: mvn -T 1C --batch-mode test
 
-  build_image:
-    runs-on: ubuntu-latest
+      - name: Build Docker image
+        run: docker build -t $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG .
 
+  push_to_docker_hub:
+    runs-on: ubuntu-latest
+    needs: build_and_test
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Build Docker image
-        run: docker build -t $IMAGE_NAME:$IMAGE_TAG .
-
-      - name: Log in to GitHub Container Registry
+      - name: Log in to Docker Hub
         uses: docker/login-action@v1
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
 
-      - name: Push Docker image
-        run: docker push $IMAGE_NAME:$IMAGE_TAG
+      - name: Push Docker image to Docker Hub
+        run: docker push $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
 
   deploy:
     runs-on: ubuntu-latest
-    needs: [ test, build_image ]
+    needs: push_to_docker_hub
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.5.3
         with:
@@ -63,7 +59,7 @@ jobs:
 
       - name: Deploy to remote server
         run: |
-          ssh githubuser@tenman.ee 'docker pull "$IMAGE_NAME:$IMAGE_TAG" || true'
+          ssh githubuser@tenman.ee 'docker pull "$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG" || true'
           ssh githubuser@tenman.ee 'docker stop my-container || true'
           ssh githubuser@tenman.ee 'docker rm my-container || true'
-          ssh githubuser@tenman.ee 'docker run -d -p 8080:8080 --restart always --name my-container "$IMAGE_NAME:$IMAGE_TAG"'
+          ssh githubuser@tenman.ee 'docker run -d -p 8080:8080 --restart always --name my-container "$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG"'

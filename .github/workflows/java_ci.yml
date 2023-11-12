@@ -48,7 +48,9 @@ jobs:
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
 
       - run: |
-          ssh githubuser@tenman.ee 'docker pull "$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG" || true'
-          ssh githubuser@tenman.ee 'docker stop my-container || true'
-          ssh githubuser@tenman.ee 'docker rm my-container || true'
-          ssh githubuser@tenman.ee 'docker run -d -p 8080:8080 --restart always --name my-container "$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG"'
+          ssh githubuser@tenman.ee "docker pull '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG' || true"
+          ssh githubuser@tenman.ee "docker stop my-container || true"
+          ssh githubuser@tenman.ee "docker rm my-container || true"
+          ssh githubuser@tenman.ee "docker run -d -p 8080:8080 --restart always --name my-container '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG'"
+          ssh githubuser@tenman.ee "echo 'Pruning unused Docker images...'"
+          ssh githubuser@tenman.ee "docker image prune -af"

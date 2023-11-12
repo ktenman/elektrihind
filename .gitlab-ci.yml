@@ -47,6 +47,8 @@ deploy:
     - docker stop elektrihind-app-container || true
     - docker rm elektrihind-app-container || true
     - docker run -d -p 8080:8080 --restart always --name elektrihind-app-container -e TELEGRAM_ELEKTRITEEMU_TOKEN="$TELEGRAM_ELEKTRITEEMU_TOKEN" -e TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN" -e OMDB_API_KEY="$OMDB_API_KEY" "$IMAGE_TAG"
+    - echo "Pruning unused Docker images..."
+    - docker image prune -af
   only:
     - main
   tags:

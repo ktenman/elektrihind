@@ -1,5 +1,5 @@
 # Set the base image to Maven with Java 21
-FROM maven:3.9.5-eclipse-temurin-21-alpine AS build
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
 
 # Set the current working directory inside the container
 WORKDIR /app
@@ -14,11 +14,6 @@ RUN mvn package -DskipTests
 
 # Switch to a new stage and use AdoptOpenJDK for the runtime
 FROM bellsoft/liberica-runtime-container:jdk-21-slim-musl
-
-# Set the time zone
-#ENV TZ=Europe/Tallinn
-#RUN apk add --no-cache tzdata \
-#    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Set the current working directory inside the container
 WORKDIR /app

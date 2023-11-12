@@ -4,8 +4,13 @@ on:
   push:
     branches:
       - main
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/my-app
+  IMAGE_TAG: ${{ github.sha }}
+
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     container: maven:3.9-eclipse-temurin-21-alpine
 
@@ -21,13 +26,44 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-m2-
 
-      #      - name: Build with Maven, Run Sonar Analysis, and OWASP Dependency Check
-      #        run: |
-      #          mvn -T 1C --batch-mode clean install sonar:sonar org.owasp:dependency-check-maven:check -X \
-      #            -Dsonar.projectKey=ktenman_elektrihind \
-      #            -Dsonar.organization=ktenman \
-      #            -Dsonar.host.url=https://sonarcloud.io \
-      #            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
-
       - name: Test with Maven
         run: mvn -T 1C --batch-mode test
+
+  build_image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build Docker image
+        run: docker build -t $IMAGE_NAME:$IMAGE_TAG .
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Docker image
+        run: docker push $IMAGE_NAME:$IMAGE_TAG
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [ test, build_image ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy to remote server
+        run: |
+          ssh githubuser@tenman.ee 'docker pull "$IMAGE_NAME:$IMAGE_TAG" || true'
+          ssh githubuser@tenman.ee 'docker stop my-container || true'
+          ssh githubuser@tenman.ee 'docker rm my-container || true'
+          ssh githubuser@tenman.ee 'docker run -d -p 8080:8080 --restart always --name my-container "$IMAGE_NAME:$IMAGE_TAG"'

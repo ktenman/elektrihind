@@ -34,6 +34,9 @@ test:
   script:
     - echo "Running tests..."
     - mvn -T 1C --batch-mode test
+  artifacts:
+    reports:
+      junit: target/surefire-reports/*.xml
 
 deploy:
   stage: deploy

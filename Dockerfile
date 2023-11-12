@@ -6,14 +6,12 @@ WORKDIR /app
 
 # Copy the Maven POM file and download the dependencies, so they will be cached
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
 
 # Copy the project files and build the project
 COPY src /app/src
 RUN mvn package -DskipTests
 
-# Switch to a new stage and use AdoptOpenJDK for the runtime
-FROM bellsoft/liberica-runtime-container:jdk-21-slim-musl
+FROM bellsoft/liberica-runtime-container:jre-21-slim-musl
 
 # Set the current working directory inside the container
 WORKDIR /app

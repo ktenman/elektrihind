@@ -244,7 +244,7 @@ class ElekterBotServiceTest {
 
         String expected = "Best time to start is " + startTime +
                 " with average price of 5.75 cents/kWh. " +
-                "Total cost is 20.5 EUR. In 36 hours.";
+                "Total cost is 20.5 EUR. In 36 hours!";
         assertThat(response).isEqualTo(expected);
     }
 

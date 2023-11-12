@@ -157,7 +157,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         return "Best time to start is " + bestPrice.getStartTime() +
                 " with average price of " + bestPrice.getAveragePrice() + " cents/kWh. " +
                 "Total cost is " + bestPrice.getTotalCost() + " EUR. In " +
-                Duration.between(LocalDateTime.now(clock), bestPrice.getStartTime()).toHours() + " hours.";
+                Duration.between(LocalDateTime.now(clock), bestPrice.getStartTime()).toHours() + " hours!";
     }
 
     Double currentPrice(List<ElectricityPrice> electricityPrices) {

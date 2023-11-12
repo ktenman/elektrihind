@@ -33,7 +33,7 @@ test:
   image: maven:3.9-eclipse-temurin-21-alpine
   script:
     - echo "Running tests..."
-    - mvn -T 1C --batch-mode --quiet test
+    - mvn -T 1C --batch-mode test
 
 deploy:
   stage: deploy

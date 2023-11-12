@@ -235,4 +235,17 @@ class ElekterBotServiceTest {
         verify(spyBotService).handleCsvDocument(document, message.getChatId());
     }
 
+    @Test
+    void testFormatBestPriceResponse() {
+        LocalDateTime startTime = LocalDateTime.of(2023, 11, 11, 12, 0);
+        BestPriceResult bestPrice = new BestPriceResult(startTime, 20.5, 5.75);
+
+        String response = botService.formatBestPriceResponse(bestPrice);
+
+        String expected = "Best time to start is " + startTime +
+                " with average price of 5.75 cents/kWh. " +
+                "Total cost is 20.5 EUR. In 36 hours.";
+        assertThat(response).isEqualTo(expected);
+    }
+
 }

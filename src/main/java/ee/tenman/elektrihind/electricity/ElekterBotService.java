@@ -137,7 +137,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
         sendMessage(chatId, response);
     }
 
-
     private void handleDurationMessage(Matcher matcher, long chatId) {
         int durationInMinutes = Integer.parseInt(matcher.group(1));
         List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices()

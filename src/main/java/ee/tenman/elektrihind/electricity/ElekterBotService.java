@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 public class ElekterBotService extends TelegramLongPollingBot {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-    public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)? min", Pattern.CASE_INSENSITIVE);
+    public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
 
     @Resource
     private HolidaysConfiguration holidaysConfiguration;

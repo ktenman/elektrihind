@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 public class ElekterBotService extends TelegramLongPollingBot {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)? min", Pattern.CASE_INSENSITIVE);
 
     @Resource
     private HolidaysConfiguration holidaysConfiguration;
@@ -108,8 +109,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     private void handleTextMessage(Message message, long chatId) {
         String messageText = message.getText();
-        Pattern durationPattern = Pattern.compile("parim hind (\\d+) min", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = durationPattern.matcher(messageText);
+        Matcher matcher = DURATION_PATTERN.matcher(messageText);
 
         if ("/start".equals(messageText)) {
             sendMessage(chatId, "Hello! I am an electricity bill calculator bot. Please send me a CSV file.");
@@ -138,19 +138,34 @@ public class ElekterBotService extends TelegramLongPollingBot {
     }
 
     private void handleDurationMessage(Matcher matcher, long chatId) {
-        int durationInMinutes = Integer.parseInt(matcher.group(1));
+        int durationInMinutes = durationInMinutes(matcher);
         List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices()
                 .stream()
                 .filter(electricityPrice -> electricityPrice.getDate().isAfter(LocalDateTime.now(clock)))
                 .toList();
         BestPriceResult bestPrice = PriceFinder.findBestPriceForDuration(electricityPrices, durationInMinutes);
 
-        if (bestPrice != null) {
-            String response = formatBestPriceResponse(bestPrice);
-            sendMessage(chatId, response);
-        } else {
+        if (bestPrice == null) {
             sendMessage(chatId, "Could not calculate the best time to start your washing machine.");
+            return;
         }
+
+        String response = formatBestPriceResponse(bestPrice);
+        sendMessage(chatId, response);
+    }
+
+    int durationInMinutes(Matcher matcher) {
+        int hours = 0;
+        int minutes;
+
+        int firstNumber = Integer.parseInt(matcher.group(1));
+        if (matcher.group(2) != null) {
+            hours = firstNumber;
+            minutes = Integer.parseInt(matcher.group(2));
+        } else {
+            minutes = firstNumber;
+        }
+        return hours * 60 + minutes;
     }
 
     String formatBestPriceResponse(BestPriceResult bestPrice) {

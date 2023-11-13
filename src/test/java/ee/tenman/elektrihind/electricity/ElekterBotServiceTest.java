@@ -4,6 +4,8 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -23,7 +25,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 
+import static ee.tenman.elektrihind.electricity.ElekterBotService.DURATION_PATTERN;
 import static ee.tenman.elektrihind.electricity.PriceFinderTest.ELECTRICITY_PRICES;
 import static java.time.ZoneOffset.UTC;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -246,6 +250,22 @@ class ElekterBotServiceTest {
                 " with average price of 5.75 cents/kWh. " +
                 "Total cost is 20.5 EUR. In 36 hours!";
         assertThat(response).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "parim hind 200 min, 200",
+            "parim hind 3 h 27 min, 207",
+            "parim hind 3:27 min, 207",
+    })
+    void testDurationInMinutes(String input, int expectedDurationInMinutes) {
+        ElekterBotService service = new ElekterBotService();
+        Matcher matcher = DURATION_PATTERN.matcher(input);
+        matcher.find();
+
+        int result = service.durationInMinutes(matcher);
+
+        assertThat(result).isEqualTo(expectedDurationInMinutes);
     }
 
 }

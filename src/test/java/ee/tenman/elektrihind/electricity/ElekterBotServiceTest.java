@@ -255,6 +255,7 @@ class ElekterBotServiceTest {
     @ParameterizedTest
     @CsvSource({
             "parim hind 200 min, 200",
+            "parim hind 180min, 180",
             "parim hind 3 h 27 min, 207",
             "parim hind 3:27, 207",
     })

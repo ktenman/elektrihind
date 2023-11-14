@@ -1,6 +1,6 @@
 package ee.tenman.elektrihind.electricity;
 
-import ee.tenman.elektrihind.SchedulingService;
+import ee.tenman.elektrihind.CacheService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,11 +53,11 @@ class ElekterBotServiceTest {
     @Mock
     private Message message;
 
+    @Mock
+    private CacheService cacheService;
+
     @Captor
     private ArgumentCaptor<SendMessage> sendMessageCaptor;
-
-    @Mock
-    private SchedulingService schedulingService;
 
     @Mock
     private Clock clock;
@@ -155,7 +155,7 @@ class ElekterBotServiceTest {
         when(update.hasMessage()).thenReturn(true);
         when(message.hasText()).thenReturn(true);
         when(message.getText()).thenReturn("elektrihind");
-        when(schedulingService.getLatestPrices()).thenReturn(ELECTRICITY_PRICES);
+        when(cacheService.getLatestPrices()).thenReturn(ELECTRICITY_PRICES);
 
         ElekterBotService spyBotService = spy(botService);
         spyBotService.onUpdateReceived(update);
@@ -184,13 +184,7 @@ class ElekterBotServiceTest {
                         .price(4.0)
                         .build()
         );
-        when(schedulingService.getLatestPrices()).thenReturn(mockPrices);
-
-        BestPriceResult mockBestPriceResult = BestPriceResult.builder()
-                .startTime(futureTime)
-                .totalCost(2.25)
-                .averagePrice(4.5) // Normally, you would calculate this based on the duration and cost
-                .build();
+        when(cacheService.getLatestPrices()).thenReturn(mockPrices);
 
         ElekterBotService spyBotService = Mockito.spy(botService);
 

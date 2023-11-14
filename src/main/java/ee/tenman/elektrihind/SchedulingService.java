@@ -1,34 +1,22 @@
 package ee.tenman.elektrihind;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
 import ee.tenman.elektrihind.telegram.TelegramService;
-import ee.tenman.elektrihind.util.GlobalConstants;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
 public class SchedulingService {
-
-    static final int DAILY_MESSAGE_LIMIT = 2;
 
     @Resource
     private ElectricityPricesService electricityPricesService;
@@ -37,33 +25,10 @@ public class SchedulingService {
     private TelegramService telegramService;
 
     @Resource
-    private Clock clock;
+    private CacheService cacheService;
 
     @Resource
-    private Environment environment;
-    @Setter
-    @Getter
-    private List<ElectricityPrice> latestPrices = new ArrayList<>();
-
-
-    @Getter
-    private final Cache<LocalDate, Integer> messageCountPerDay = CacheBuilder.newBuilder()
-            .expireAfterWrite(7, TimeUnit.DAYS)
-            .build();
-
-    @PostConstruct
-    public void init() {
-        if (List.of(environment.getActiveProfiles()).contains(GlobalConstants.TEST_PROFILE)) {
-            log.info("Skipping initialization in test profile");
-            return;
-        }
-
-        if (!latestPrices.isEmpty()) {
-            return;
-        }
-
-        latestPrices = electricityPricesService.fetchDailyPrices();
-    }
+    private Clock clock;
 
     @Scheduled(cron = "0 59 * * * ?") // Runs every 60 minutes
     public void fetchAndSendPrices() {
@@ -80,43 +45,24 @@ public class SchedulingService {
         List<ElectricityPrice> filteredPrices = filterPricesForNext24Hours(electricityPrices);
         String formattedPrices = formatPricesForTelegram(filteredPrices);
 
-        if (canSendMessageToday()) {
+        if (cacheService.canSendMessageToday()) {
             sendMessageAndIncrementCount(formattedPrices);
             log.info("Message sent successfully.");
         } else {
             log.info("Message sending limit reached for today.");
         }
 
-        latestPrices = new ArrayList<>(electricityPrices);
+        cacheService.setLatestPrices(electricityPrices);
     }
 
     void sendMessageAndIncrementCount(String formattedPrices) {
         telegramService.sendToTelegram(formattedPrices);
-        incrementMessageCountForToday();
+        cacheService.incrementMessageCountForToday();
         log.debug("Message count for today incremented.");
     }
 
     boolean isNewPricesAvailable(List<ElectricityPrice> electricityPrices) {
-        return !electricityPrices.equals(latestPrices);
-    }
-
-    int getMessageCount(LocalDate date) {
-        Integer count = messageCountPerDay.getIfPresent(date);
-        if (count == null) {
-            return 0;
-        }
-        return count;
-    }
-
-    boolean canSendMessageToday() {
-        LocalDate today = LocalDate.now(clock);
-        return getMessageCount(today) < DAILY_MESSAGE_LIMIT;
-    }
-
-    void incrementMessageCountForToday() {
-        LocalDate today = LocalDate.now(clock);
-        int currentCount = getMessageCount(today);
-        messageCountPerDay.put(today, currentCount + 1);
+        return !electricityPrices.equals(cacheService.getLatestPrices());
     }
 
     public List<ElectricityPrice> filterPricesForNext24Hours(List<ElectricityPrice> electricityPrices) {

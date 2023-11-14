@@ -14,10 +14,17 @@ import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -25,6 +32,8 @@ import java.util.concurrent.TimeUnit;
 public class CacheService {
 
     static final int DAILY_MESSAGE_LIMIT = 2;
+    private static final String CACHE_FILE_PATH = "/app/cache/cache_file.dat";
+
     @Getter
     private final Cache<LocalDate, Integer> messageCountPerDay = CacheBuilder.newBuilder()
             .expireAfterWrite(7, TimeUnit.DAYS)
@@ -57,6 +66,8 @@ public class CacheService {
         }
 
         log.info("CacheService initialization completed");
+        loadCacheFromFile();
+        log.info("Cache loaded from file");
     }
 
     public int getMessageCount(LocalDate date) {
@@ -81,5 +92,26 @@ public class CacheService {
         int currentCount = getMessageCount(today);
         messageCountPerDay.put(today, currentCount + 1);
         log.info("Message count for today incremented. Current count: {}", currentCount + 1);
+        saveCacheToFile();
+        log.info("Cache saved to file");
+    }
+
+    private void loadCacheFromFile() {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(CACHE_FILE_PATH))) {
+            Map<LocalDate, Integer> loadedMap = (Map<LocalDate, Integer>) ois.readObject();
+            messageCountPerDay.putAll(loadedMap);
+        } catch (FileNotFoundException e) {
+            log.warn("Cache file not found, starting with empty cache");
+        } catch (IOException | ClassNotFoundException e) {
+            log.error("Error loading cache from file", e);
+        }
+    }
+
+    private void saveCacheToFile() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(CACHE_FILE_PATH))) {
+            oos.writeObject(messageCountPerDay.asMap());
+        } catch (IOException e) {
+            log.error("Error saving cache to file", e);
+        }
     }
 }

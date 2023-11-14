@@ -19,7 +19,7 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 # Set the timezone for the JVM
-ENV JAVA_OPTS="-Xmx256m -Xms128m -Duser.timezone=Europe/Tallinn"
+ENV JAVA_OPTS="-Xmx400m -Xms200m -Duser.timezone=Europe/Tallinn"
 
 # Set the command to run your application with JAVA_OPTS
 CMD ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.electricity;
 
+import ee.tenman.elektrihind.SchedulingService;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
@@ -46,7 +47,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
     private Clock clock;
 
     @Resource
-    private ElectricityPricesService electricityPricesService;
+    private SchedulingService schedulingService;
 
     @Value("${telegram.elektriteemu.token}")
     private String token;
@@ -131,7 +132,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
     }
 
     private void handleElectricityPrice(long chatId) {
-        List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices();
+        List<ElectricityPrice> electricityPrices = schedulingService.getLatestPrices();
         Double currentPrice = currentPrice(electricityPrices); // Assume currentPrice is a method to calculate current price
         String response = "Current electricity price is " + currentPrice + " cents/kWh.";
         sendMessage(chatId, response);
@@ -139,7 +140,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     private void handleDurationMessage(Matcher matcher, long chatId) {
         int durationInMinutes = durationInMinutes(matcher);
-        List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices()
+        List<ElectricityPrice> electricityPrices = schedulingService.getLatestPrices()
                 .stream()
                 .filter(electricityPrice -> electricityPrice.getDate().isAfter(LocalDateTime.now(clock)))
                 .toList();

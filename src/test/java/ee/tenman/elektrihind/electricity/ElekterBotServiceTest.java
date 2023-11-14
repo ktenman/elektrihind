@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.electricity;
 
+import ee.tenman.elektrihind.SchedulingService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,7 +56,7 @@ class ElekterBotServiceTest {
     private ArgumentCaptor<SendMessage> sendMessageCaptor;
 
     @Mock
-    private ElectricityPricesService electricityPricesService;
+    private SchedulingService schedulingService;
 
     @Mock
     private Clock clock;
@@ -153,7 +154,7 @@ class ElekterBotServiceTest {
         when(update.hasMessage()).thenReturn(true);
         when(message.hasText()).thenReturn(true);
         when(message.getText()).thenReturn("elektrihind");
-        when(electricityPricesService.fetchDailyPrices()).thenReturn(ELECTRICITY_PRICES);
+        when(schedulingService.getLatestPrices()).thenReturn(ELECTRICITY_PRICES);
 
         ElekterBotService spyBotService = spy(botService);
         spyBotService.onUpdateReceived(update);
@@ -184,7 +185,7 @@ class ElekterBotServiceTest {
                         .price(4.0)
                         .build()
         );
-        when(electricityPricesService.fetchDailyPrices()).thenReturn(mockPrices);
+        when(schedulingService.getLatestPrices()).thenReturn(mockPrices);
 
         BestPriceResult mockBestPriceResult = BestPriceResult.builder()
                 .startTime(futureTime)

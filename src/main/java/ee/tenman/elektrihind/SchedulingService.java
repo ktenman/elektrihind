@@ -42,6 +42,7 @@ public class SchedulingService {
             .build();
 
     @Setter
+    @Getter
     private List<ElectricityPrice> latestPrices = new ArrayList<>();
 
     @Scheduled(cron = "0 59 * * * ?") // Runs every 60 minutes

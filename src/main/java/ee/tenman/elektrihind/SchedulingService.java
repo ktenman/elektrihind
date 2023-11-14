@@ -5,10 +5,13 @@ import com.google.common.cache.CacheBuilder;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
 import ee.tenman.elektrihind.telegram.TelegramService;
+import ee.tenman.elektrihind.util.GlobalConstants;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -36,19 +39,30 @@ public class SchedulingService {
     @Resource
     private Clock clock;
 
+    @Resource
+    private Environment environment;
+    @Setter
+    @Getter
+    private List<ElectricityPrice> latestPrices = new ArrayList<>();
+
+
     @Getter
     private final Cache<LocalDate, Integer> messageCountPerDay = CacheBuilder.newBuilder()
             .expireAfterWrite(7, TimeUnit.DAYS)
             .build();
 
-    @Setter
-    private List<ElectricityPrice> latestPrices = new ArrayList<>();
-
-    public List<ElectricityPrice> getLatestPrices() {
-        if (latestPrices.isEmpty()) {
-            latestPrices = electricityPricesService.fetchDailyPrices();
+    @PostConstruct
+    public void init() {
+        if (List.of(environment.getActiveProfiles()).contains(GlobalConstants.TEST_PROFILE)) {
+            log.info("Skipping initialization in test profile");
+            return;
         }
-        return latestPrices;
+
+        if (!latestPrices.isEmpty()) {
+            return;
+        }
+
+        latestPrices = electricityPricesService.fetchDailyPrices();
     }
 
     @Scheduled(cron = "0 59 * * * ?") // Runs every 60 minutes

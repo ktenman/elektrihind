@@ -5,7 +5,6 @@ import com.google.common.cache.CacheBuilder;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
 import ee.tenman.elektrihind.telegram.TelegramService;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.Getter;
 import lombok.Setter;
@@ -43,14 +42,13 @@ public class SchedulingService {
             .build();
 
     @Setter
-    @Getter
     private List<ElectricityPrice> latestPrices = new ArrayList<>();
 
-    @PostConstruct
-    public void init() {
+    public List<ElectricityPrice> getLatestPrices() {
         if (latestPrices.isEmpty()) {
             latestPrices = electricityPricesService.fetchDailyPrices();
         }
+        return latestPrices;
     }
 
     @Scheduled(cron = "0 59 * * * ?") // Runs every 60 minutes

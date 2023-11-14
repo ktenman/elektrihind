@@ -49,12 +49,15 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - name: Add SSH key of tenman.ee to known hosts
-        run: |
-          echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+        run: echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
       - run: |
-          ssh githubuser@tenman.ee "docker pull '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG' || true"
-          ssh githubuser@tenman.ee "docker-compose down || true"
-          ssh githubuser@tenman.ee "docker-compose up -d"
-          ssh githubuser@tenman.ee "echo 'Pruning unused Docker images...'"
-          ssh githubuser@tenman.ee "docker image prune -af"
+          ssh githubuser@tenman.ee "\
+            docker pull '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG' || true && \
+            docker-compose down || true && \
+            export TELEGRAM_ELEKTRITEEMU_TOKEN=${{ secrets.TELEGRAM_ELEKTRITEEMU_TOKEN }} && \
+            export TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }} && \
+            export OMDB_API_KEY=${{ secrets.OMDB_API_KEY }} && \
+            docker-compose up -d && \
+            echo 'Pruning unused Docker images...' && \
+            docker image prune -af"
 

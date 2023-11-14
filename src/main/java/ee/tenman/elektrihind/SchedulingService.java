@@ -56,6 +56,7 @@ public class SchedulingService {
     }
 
     void sendMessageAndIncrementCount(String formattedPrices) {
+        log.debug("Sending message: {}", formattedPrices);
         telegramService.sendToTelegram(formattedPrices);
         cacheService.incrementMessageCountForToday();
         log.debug("Message count for today incremented.");

@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 
 import static ee.tenman.elektrihind.electricity.ElekterBotService.DURATION_PATTERN;
@@ -74,9 +75,9 @@ class ElekterBotServiceTest {
 
     @Test
     void currentPrice_ShouldReturnCorrectPrice_WhenPriceIsAvailable() {
-        Double price = botService.currentPrice(ELECTRICITY_PRICES);
+        Optional<Double> price = botService.currentPrice(ELECTRICITY_PRICES);
 
-        assertThat(price).isEqualTo(10.08);
+        assertThat(price.orElseThrow()).isEqualTo(10.08);
     }
 
     @Test
@@ -103,9 +104,9 @@ class ElekterBotServiceTest {
                 new ElectricityPrice(LocalDateTime.now(clock).minusHours(1), 20.0)
         );
 
-        Double price = botService.currentPrice(prices);
+        Optional<Double> price = botService.currentPrice(prices);
 
-        assertThat(price).isNull();
+        assertThat(price).isEmpty();
     }
 
     @Test
@@ -168,11 +169,9 @@ class ElekterBotServiceTest {
     @Test
     @SneakyThrows(TelegramApiException.class)
     void whenMessageHasDurationPattern_thenReplyWithBestPrice() {
-        // Arrange
         when(update.hasMessage()).thenReturn(true);
         when(message.hasText()).thenReturn(true);
         when(message.getText()).thenReturn("parim hind 30 min");
-        long chatId = message.getChatId();
 
         LocalDateTime futureTime = LocalDateTime.now(clock).plusMinutes(30);
         List<ElectricityPrice> mockPrices = List.of(
@@ -195,14 +194,12 @@ class ElekterBotServiceTest {
 
         ElekterBotService spyBotService = Mockito.spy(botService);
 
-        // Act
         spyBotService.onUpdateReceived(update);
 
-        // Assert
-        String expectedMessage = "Best time to start is " + mockBestPriceResult.getStartTime() +
-                " with average price of " + mockBestPriceResult.getAveragePrice() +
-                " cents/kWh. Total cost is " + mockBestPriceResult.getTotalCost() + " EUR.";
+        String expectedMessage = "Best time to start is 2023-11-10T00:45:14 with average price of 4.0 cents/kWh. " +
+                "Total cost is 2.0 EUR. In 1 hours!";
         verify(spyBotService).execute(sendMessageCaptor.capture()); // This should probably be realBotService
+        assertThat(sendMessageCaptor.getValue().getText()).isEqualTo(expectedMessage);
     }
 
     @Test

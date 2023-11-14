@@ -29,9 +29,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static ee.tenman.elektrihind.util.DateTimeConstants.DATE_TIME_FORMATTER;
 
 @Service
 @Slf4j
@@ -115,7 +119,8 @@ public class ElekterBotService extends TelegramLongPollingBot {
         if ("/start".equals(messageText)) {
             sendMessage(chatId, "Hello! I am an electricity bill calculator bot. Please send me a CSV file.");
         } else if (messageText.toLowerCase().contains("elektrihind")) {
-            handleElectricityPrice(chatId);
+            String response = getElectricityPriceResponse();
+            sendMessage(chatId, response);
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId);
         } // Consider adding an else block for unhandled text messages
@@ -131,11 +136,31 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
     }
 
-    private void handleElectricityPrice(long chatId) {
+    String getElectricityPriceResponse() {
         List<ElectricityPrice> electricityPrices = schedulingService.getLatestPrices();
-        Double currentPrice = currentPrice(electricityPrices); // Assume currentPrice is a method to calculate current price
-        String response = "Current electricity price is " + currentPrice + " cents/kWh.";
-        sendMessage(chatId, response);
+        Optional<Double> currentPrice = currentPrice(electricityPrices);
+        if (currentPrice.isEmpty()) {
+            log.warn("Could not find current electricity price.");
+            return null;
+        }
+        String response = "Current electricity price is " + currentPrice.get() + " cents/kWh.\n";
+
+        LocalDateTime now = LocalDateTime.now(clock);
+        List<ElectricityPrice> upcomingPrices = electricityPrices.stream()
+                .filter(price -> price.getDate().isAfter(now))
+                .sorted(Comparator.comparing(ElectricityPrice::getDate))
+                .toList();
+
+        if (upcomingPrices.isEmpty()) {
+            response += "No upcoming price data available.";
+        } else {
+            response += "Upcoming prices:\n";
+            for (ElectricityPrice price : upcomingPrices) {
+                response += price.getDate().format(DATE_TIME_FORMATTER) + " - " +
+                        price.getPrice() + "\n";
+            }
+        }
+        return response;
     }
 
     private void handleDurationMessage(Matcher matcher, long chatId) {
@@ -176,16 +201,19 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 Duration.between(LocalDateTime.now(clock), bestPrice.getStartTime()).toHours() + " hours!";
     }
 
-    Double currentPrice(List<ElectricityPrice> electricityPrices) {
+    Optional<Double> currentPrice(List<ElectricityPrice> electricityPrices) {
         LocalDateTime now = LocalDateTime.now(clock);
         LocalDateTime key = LocalDateTime.of(now.toLocalDate(),
                 now.toLocalTime().withHour(now.getHour()).withMinute(0).withSecond(0).withNano(0));
         return electricityPrices.stream().filter(d -> d.getDate().equals(key))
-                .findFirst().map(ElectricityPrice::getPrice)
-                .orElse(null);
+                .findFirst().map(ElectricityPrice::getPrice);
     }
 
     void sendMessage(long chatId, String text) {
+        if (text == null) {
+            log.warn("Not sending null message to chat: {}", chatId);
+            return;
+        }
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
         message.setText(text);

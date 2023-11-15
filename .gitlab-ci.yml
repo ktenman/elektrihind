@@ -46,14 +46,20 @@ deploy:
     - echo "Logging into GitLab Registry..."
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - echo "Deploying the application..."
-    - docker pull "$IMAGE_TAG" || true
-    - docker stop elektrihind-app-container || true
-    - docker rm elektrihind-app-container || true
-    - docker run -d -p 8080:8080 --restart always --name elektrihind-app-container -e TELEGRAM_ELEKTRITEEMU_TOKEN="$TELEGRAM_ELEKTRITEEMU_TOKEN" -e TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN" -e OMDB_API_KEY="$OMDB_API_KEY" "$IMAGE_TAG"
+    - echo "Creating temporary .env file..."
+    - echo TELEGRAM_ELEKTRITEEMU_TOKEN="$TELEGRAM_ELEKTRITEEMU_TOKEN" > .env
+    - echo TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN" >> .env
+    - echo OMDB_API_KEY="$OMDB_API_KEY" >> .env
+    - echo "Deploying the application using Docker Compose..."
+    - docker-compose pull || true
+    - docker-compose down || true
+    - docker-compose up -d
     - echo "Pruning unused Docker images..."
     - docker image prune -af
+    - echo "Cleaning up temporary files..."
+    - rm .env
   only:
     - main
   tags:
     - production
+

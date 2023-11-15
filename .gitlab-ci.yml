@@ -53,7 +53,7 @@ deploy:
     - echo "Deploying the application using Docker Compose..."
     - docker-compose pull || true
     - docker ps --filter "publish=8080" -q | xargs -r docker rm -f || true
-    - docker-compose down --rmi all -v || true
+    - docker-compose down --rmi all || true
     - docker-compose down --remove-orphans || true
     - docker-compose up -d
     - echo "Pruning unused Docker images..."

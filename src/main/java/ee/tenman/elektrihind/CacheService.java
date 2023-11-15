@@ -24,6 +24,7 @@ import java.io.ObjectOutputStream;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -97,6 +98,15 @@ public class CacheService {
         saveCacheToFile();
     }
 
+    private void saveCacheToFile() {
+        try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(cacheFilePath))) {
+            objectOutputStream.writeObject(new HashMap<>(messageCountPerDay.asMap()));
+            log.debug("Cache saved to file");
+        } catch (IOException e) {
+            log.error("Error saving cache to file", e);
+        }
+    }
+
     private void loadCacheFromFile() {
         try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(cacheFilePath))) {
             Map<LocalDate, Integer> loadedMap = (Map<LocalDate, Integer>) objectInputStream.readObject();
@@ -109,12 +119,4 @@ public class CacheService {
         }
     }
 
-    private void saveCacheToFile() {
-        try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(cacheFilePath))) {
-            objectOutputStream.writeObject(messageCountPerDay.asMap());
-            log.debug("Cache saved to file");
-        } catch (IOException e) {
-            log.error("Error saving cache to file", e);
-        }
-    }
 }

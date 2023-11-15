@@ -67,7 +67,6 @@ public class CacheService {
 
         log.info("CacheService initialization completed");
         loadCacheFromFile();
-        log.info("Cache loaded from file");
     }
 
     public int getMessageCount(LocalDate date) {
@@ -93,13 +92,13 @@ public class CacheService {
         messageCountPerDay.put(today, currentCount + 1);
         log.info("Message count for today incremented. Current count: {}", currentCount + 1);
         saveCacheToFile();
-        log.info("Cache saved to file");
     }
 
     private void loadCacheFromFile() {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(CACHE_FILE_PATH))) {
             Map<LocalDate, Integer> loadedMap = (Map<LocalDate, Integer>) ois.readObject();
             messageCountPerDay.putAll(loadedMap);
+            log.debug("Cache loaded from file");
         } catch (FileNotFoundException e) {
             log.warn("Cache file not found, starting with empty cache");
         } catch (IOException | ClassNotFoundException e) {
@@ -110,6 +109,7 @@ public class CacheService {
     private void saveCacheToFile() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(CACHE_FILE_PATH))) {
             oos.writeObject(messageCountPerDay.asMap());
+            log.debug("Cache saved to file");
         } catch (IOException e) {
             log.error("Error saving cache to file", e);
         }

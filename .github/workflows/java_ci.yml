@@ -45,19 +45,35 @@ jobs:
     needs: [ test, build_and_push ]
     steps:
       - uses: actions/checkout@v4.1.1
+
       - uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
       - name: Add SSH key of tenman.ee to known hosts
         run: echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
-      - run: |
+
+      - name: Create .env file
+        run: |
+          echo "TELEGRAM_ELEKTRITEEMU_TOKEN=${{ secrets.TELEGRAM_ELEKTRITEEMU_TOKEN }}" > .env
+          echo "TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}" >> .env
+          echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env
+
+      - name: Copy .env and docker-compose.yml files to server
+        run: |
+          scp .env docker-compose.yml githubuser@tenman.ee:~/  # Copying to the home directory of githubuser
+
+      - name: Deploy with Docker Compose
+        run: |
           ssh githubuser@tenman.ee "\
             docker pull '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG' || true && \
             docker-compose down || true && \
-            export TELEGRAM_ELEKTRITEEMU_TOKEN=${{ secrets.TELEGRAM_ELEKTRITEEMU_TOKEN }} && \
-            export TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }} && \
-            export OMDB_API_KEY=${{ secrets.OMDB_API_KEY }} && \
             docker-compose up -d && \
             echo 'Pruning unused Docker images...' && \
             docker image prune -af"
 
+      - name: Cleanup on server
+        run: ssh githubuser@tenman.ee "rm ~/docker-compose.yml ~/ .env"
+
+      - name: Cleanup on runner
+        run: rm .env

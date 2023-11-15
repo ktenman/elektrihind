@@ -12,7 +12,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
@@ -88,7 +87,6 @@ public class CacheService {
         return getMessageCount(today) < DAILY_MESSAGE_LIMIT;
     }
 
-    @Async
     public void incrementMessageCountForToday() {
         log.info("Incrementing message count for today...");
         LocalDate today = LocalDate.now(clock);

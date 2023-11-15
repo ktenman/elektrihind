@@ -5,6 +5,12 @@
     <logger name="org.springframework" level="INFO"/>
     <logger name="org.hibernate" level="WARN"/>
 
+    <logger name="ee.tenman.elektrihind" level="DEBUG"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
     </root>

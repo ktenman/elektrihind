@@ -10,9 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -43,7 +41,7 @@ public class SchedulingService {
         }
 
         List<ElectricityPrice> filteredPrices = filterPricesForNext24Hours(electricityPrices);
-        String formattedPrices = formatPricesForTelegram(filteredPrices);
+        String formattedPrices = telegramService.formatPricesForTelegram(filteredPrices);
 
         if (cacheService.canSendMessageToday()) {
             sendMessageAndIncrementCount(formattedPrices);
@@ -72,36 +70,5 @@ public class SchedulingService {
         return electricityPrices.stream()
                 .filter(price -> !price.getDate().isBefore(now) && price.getDate().isBefore(twentyFourHoursLater))
                 .toList();
-    }
-
-    public String formatPricesForTelegram(List<ElectricityPrice> filteredPrices) {
-        StringBuilder builder = new StringBuilder();
-        filteredPrices.forEach(builder::append);
-
-        Optional<ElectricityPrice> mostExpensiveHour = filteredPrices.stream().max(Comparator.comparingDouble(ElectricityPrice::getPrice));
-        Optional<ElectricityPrice> cheapestHour = filteredPrices.stream().min(Comparator.comparingDouble(ElectricityPrice::getPrice));
-
-        builder.append("\n");
-        mostExpensiveHour.ifPresent(p -> {
-            builder.append(priceDateLabel(p.getDate())).append("the most expensive: ").append(p);
-            log.debug("Most expensive price: {}", p);
-        });
-        cheapestHour.ifPresent(p -> {
-            builder.append(priceDateLabel(p.getDate())).append("the cheapest: ").append(p);
-            log.debug("Cheapest price: {}", p);
-        });
-
-        return builder.toString();
-    }
-
-    String priceDateLabel(LocalDateTime dateTime) {
-        LocalDateTime now = LocalDateTime.now(clock);
-        if (dateTime.toLocalDate().isEqual(now.toLocalDate())) {
-            return "Today, ";
-        } else if (dateTime.toLocalDate().isEqual(now.plusDays(1).toLocalDate())) {
-            return "Tomorrow, ";
-        } else {
-            return "";
-        }
     }
 }

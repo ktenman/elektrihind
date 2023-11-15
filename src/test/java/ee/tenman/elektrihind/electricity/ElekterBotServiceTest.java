@@ -1,6 +1,7 @@
 package ee.tenman.elektrihind.electricity;
 
 import ee.tenman.elektrihind.CacheService;
+import ee.tenman.elektrihind.telegram.TelegramService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,9 @@ class ElekterBotServiceTest {
     @Mock
     private CacheService cacheService;
 
+    @Mock
+    private TelegramService telegramService;
+
     @Captor
     private ArgumentCaptor<SendMessage> sendMessageCaptor;
 
@@ -75,9 +79,10 @@ class ElekterBotServiceTest {
 
     @Test
     void currentPrice_ShouldReturnCorrectPrice_WhenPriceIsAvailable() {
-        Optional<Double> price = botService.currentPrice(ELECTRICITY_PRICES);
+        Optional<ElectricityPrice> price = botService.currentPrice(ELECTRICITY_PRICES);
 
-        assertThat(price.orElseThrow()).isEqualTo(10.08);
+        assertThat(price).isPresent()
+                .isEqualTo(Optional.of(ELECTRICITY_PRICES.get(47)));
     }
 
     @Test
@@ -104,7 +109,7 @@ class ElekterBotServiceTest {
                 new ElectricityPrice(LocalDateTime.now(clock).minusHours(1), 20.0)
         );
 
-        Optional<Double> price = botService.currentPrice(prices);
+        Optional<ElectricityPrice> price = botService.currentPrice(prices);
 
         assertThat(price).isEmpty();
     }
@@ -156,6 +161,7 @@ class ElekterBotServiceTest {
         when(message.hasText()).thenReturn(true);
         when(message.getText()).thenReturn("elektrihind");
         when(cacheService.getLatestPrices()).thenReturn(ELECTRICITY_PRICES);
+        when(telegramService.formatPricesForTelegram(any())).thenReturn("Sample Formatted Prices");
 
         ElekterBotService spyBotService = spy(botService);
         spyBotService.onUpdateReceived(update);
@@ -164,6 +170,10 @@ class ElekterBotServiceTest {
         SendMessage sentMessage = sendMessageCaptor.getValue();
         assertThat(sentMessage.getChatId()).isEqualTo(String.valueOf(message.getChatId()));
         assertThat(sentMessage.getText()).contains("Current electricity price is 10.08 cents/kWh.");
+        assertThat(sentMessage.getText()).contains("Upcoming prices:");
+        assertThat(sentMessage.getText()).contains("2023-11-10 00:00 - 4.8");
+        assertThat(sentMessage.getText()).contains("2023-11-11 00:00 - 4.81");
+        assertThat(sentMessage.getText()).contains("Sample Formatted Prices");
     }
 
     @Test

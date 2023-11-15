@@ -12,7 +12,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
@@ -53,6 +52,7 @@ class SchedulingServiceTest {
         mockFetchDailyPrices(createSamplePrices());
         when(cacheService.canSendMessageToday()).thenReturn(true);
         when(cacheService.getLatestPrices()).thenReturn(List.of());
+        when(telegramService.formatPricesForTelegram(createSamplePrices())).thenReturn("Sample Formatted Prices");
 
         schedulingService.fetchAndSendPrices();
 
@@ -68,13 +68,6 @@ class SchedulingServiceTest {
         schedulingService.fetchAndSendPrices();
 
         verify(telegramService, never()).sendToTelegram(anyString());
-    }
-
-    @Test
-    void formatPricesForTelegram_givenPrices_shouldFormatCorrectly() {
-        String result = schedulingService.formatPricesForTelegram(createSamplePrices());
-
-        assertThat(result).contains("Tomorrow, the most expensive:", "Today, the cheapest:");
     }
 
     @Test
@@ -106,6 +99,7 @@ class SchedulingServiceTest {
         mockFetchDailyPrices(createSamplePrices());
         when(cacheService.getLatestPrices()).thenReturn(List.of());
         when(cacheService.canSendMessageToday()).thenReturn(true);
+        when(telegramService.formatPricesForTelegram(createSamplePrices())).thenReturn("Sample Formatted Prices");
 
         schedulingService.fetchAndSendPrices();
 
@@ -121,45 +115,6 @@ class SchedulingServiceTest {
         schedulingService.fetchAndSendPrices();
 
         verify(telegramService, never()).sendToTelegram(anyString());
-    }
-
-    @Test
-    void priceDateLabel_givenToday_shouldReturnTodayWithComma() {
-        Instant now = Instant.parse("2023-10-27T10:00:00.00Z");
-        when(clock.instant()).thenReturn(now);
-        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
-
-        LocalDateTime dateTime = LocalDateTime.of(2023, 10, 27, 15, 0);
-
-        String result = schedulingService.priceDateLabel(dateTime);
-
-        assertThat(result).isEqualTo("Today, ");
-    }
-
-    @Test
-    void priceDateLabel_givenTomorrow_shouldReturnTomorrowWithComma() {
-        Instant now = Instant.parse("2023-10-27T10:00:00.00Z");
-        when(clock.instant()).thenReturn(now);
-        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
-
-        LocalDateTime dateTime = LocalDateTime.of(2023, 10, 28, 15, 0);
-
-        String result = schedulingService.priceDateLabel(dateTime);
-
-        assertThat(result).isEqualTo("Tomorrow, ");
-    }
-
-    @Test
-    void priceDateLabel_givenNeitherTodayNorTomorrow_shouldReturnEmptyString() {
-        Instant now = Instant.parse("2023-10-27T10:00:00.00Z");
-        when(clock.instant()).thenReturn(now);
-        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
-
-        LocalDateTime dateTime = LocalDateTime.of(2023, 10, 29, 15, 0);
-
-        String result = schedulingService.priceDateLabel(dateTime);
-
-        assertThat(result).isEqualTo("");
     }
 
     private List<ElectricityPrice> createSamplePrices() {

@@ -9,6 +9,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -23,19 +24,20 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 class PriceFinderTest {
 
     private static final String JSON_RESOURCE_PATH = "/electricityPrices.json";
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static final List<ElectricityPrice> ELECTRICITY_PRICES = loadElectricityPrices();
 
     public static List<ElectricityPrice> loadElectricityPrices() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try (InputStream is = PriceFinderTest.class.getResourceAsStream(JSON_RESOURCE_PATH)) {
+        try (InputStream is = PriceFinder.class.getResourceAsStream(JSON_RESOURCE_PATH)) {
             if (is == null) {
+                log.error("Resource not found: {}", JSON_RESOURCE_PATH);
                 throw new IllegalArgumentException("Resource not found: " + JSON_RESOURCE_PATH);
             }
-            return objectMapper.readValue(is, new TypeReference<>() {
+            return OBJECT_MAPPER.readValue(is, new TypeReference<>() {
             });
         } catch (IOException e) {
             log.error("Failed to load electricity prices", e);
-            return null;
+            throw new UncheckedIOException("Failed to load electricity prices", e);
         }
     }
 

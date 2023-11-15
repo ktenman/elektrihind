@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -42,6 +43,7 @@ class CacheServiceTest {
     void setUp() {
         lenient().when(clock.instant()).thenReturn(Instant.parse("2023-10-27T10:00:00.00Z"));
         lenient().when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        ReflectionTestUtils.setField(cacheService, "cacheFilePath", "/app/cache/cache_file.dat");
     }
 
     @Test

@@ -2,6 +2,7 @@ package ee.tenman.elektrihind.electricity;
 
 import ee.tenman.elektrihind.CacheService;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
+import ee.tenman.elektrihind.telegram.TelegramService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static ee.tenman.elektrihind.util.DateTimeConstants.DATE_TIME_FORMATTER;
 
@@ -52,6 +54,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     @Resource
     private CacheService cacheService;
+
+    @Resource
+    private TelegramService telegramService;
 
     @Value("${telegram.elektriteemu.token}")
     private String token;
@@ -138,18 +143,18 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     String getElectricityPriceResponse() {
         List<ElectricityPrice> electricityPrices = cacheService.getLatestPrices();
-        Optional<Double> currentPrice = currentPrice(electricityPrices);
+        Optional<ElectricityPrice> currentPrice = currentPrice(electricityPrices);
         if (currentPrice.isEmpty()) {
             log.warn("Could not find current electricity price.");
             return null;
         }
-        String response = "Current electricity price is " + currentPrice.get() + " cents/kWh.\n";
+        String response = "Current electricity price is " + currentPrice.map(ElectricityPrice::getPrice).orElseThrow() + " cents/kWh.\n";
 
         LocalDateTime now = LocalDateTime.now(clock);
         List<ElectricityPrice> upcomingPrices = electricityPrices.stream()
                 .filter(price -> price.getDate().isAfter(now))
                 .sorted(Comparator.comparing(ElectricityPrice::getDate))
-                .toList();
+                .collect(Collectors.toList());
 
         if (upcomingPrices.isEmpty()) {
             response += "No upcoming price data available.";
@@ -159,6 +164,8 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 response += price.getDate().format(DATE_TIME_FORMATTER) + " - " +
                         price.getPrice() + "\n";
             }
+            upcomingPrices.add(0, currentPrice.get());
+            response += telegramService.formatPricesForTelegram(upcomingPrices);
         }
         return response;
     }
@@ -201,12 +208,12 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 Duration.between(LocalDateTime.now(clock), bestPrice.getStartTime()).toHours() + " hours!";
     }
 
-    Optional<Double> currentPrice(List<ElectricityPrice> electricityPrices) {
+    Optional<ElectricityPrice> currentPrice(List<ElectricityPrice> electricityPrices) {
         LocalDateTime now = LocalDateTime.now(clock);
         LocalDateTime key = LocalDateTime.of(now.toLocalDate(),
                 now.toLocalTime().withHour(now.getHour()).withMinute(0).withSecond(0).withNano(0));
         return electricityPrices.stream().filter(d -> d.getDate().equals(key))
-                .findFirst().map(ElectricityPrice::getPrice);
+                .findFirst();
     }
 
     void sendMessage(long chatId, String text) {

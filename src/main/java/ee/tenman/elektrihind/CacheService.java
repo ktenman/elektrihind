@@ -10,6 +10,7 @@ import jakarta.annotation.Resource;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 public class CacheService {
 
     static final int DAILY_MESSAGE_LIMIT = 2;
-    private static final String CACHE_FILE_PATH = "/app/cache/cache_file.dat";
 
     @Getter
     private final Cache<LocalDate, Integer> messageCountPerDay = CacheBuilder.newBuilder()
@@ -47,6 +47,9 @@ public class CacheService {
     @Setter
     @Getter
     private List<ElectricityPrice> latestPrices = new ArrayList<>();
+
+    @Value("${cache.file.path:/app/cache/cache_file.dat}")
+    private String cacheFilePath;
 
     @PostConstruct
     public void init() {
@@ -95,8 +98,8 @@ public class CacheService {
     }
 
     private void loadCacheFromFile() {
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(CACHE_FILE_PATH))) {
-            Map<LocalDate, Integer> loadedMap = (Map<LocalDate, Integer>) ois.readObject();
+        try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(cacheFilePath))) {
+            Map<LocalDate, Integer> loadedMap = (Map<LocalDate, Integer>) objectInputStream.readObject();
             messageCountPerDay.putAll(loadedMap);
             log.debug("Cache loaded from file");
         } catch (FileNotFoundException e) {
@@ -107,8 +110,8 @@ public class CacheService {
     }
 
     private void saveCacheToFile() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(CACHE_FILE_PATH))) {
-            oos.writeObject(messageCountPerDay.asMap());
+        try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(cacheFilePath))) {
+            objectOutputStream.writeObject(messageCountPerDay.asMap());
             log.debug("Cache saved to file");
         } catch (IOException e) {
             log.error("Error saving cache to file", e);

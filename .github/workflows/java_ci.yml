@@ -24,7 +24,7 @@ jobs:
             !~/.m2/repository/ee/tenman
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2-
-      - run: mvn -T 1C --quiet -Dparallel=methods -DthreadCount=4 --batch-mode test
+      - run: mvn -T 2C --quiet -Dparallel=methods -DthreadCount=4 --batch-mode test
 
   build_and_push:
     runs-on: ubuntu-latest

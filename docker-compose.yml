@@ -1,6 +1,7 @@
 version: '3.8'
 services:
   elektrihind-app:
+    container_name: elektrihind_main
     image: ktenman/elektrihind:latest
     ports:
       - "8080:8080"

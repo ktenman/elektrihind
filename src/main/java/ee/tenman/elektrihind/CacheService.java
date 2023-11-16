@@ -70,8 +70,8 @@ public class CacheService {
             log.error("Error during initialization: {}", e.getMessage(), e);
         }
 
-        log.info("CacheService initialization completed");
         loadCacheFromFile();
+        log.info("CacheService initialization completed");
     }
 
     public int getMessageCount(LocalDate date) {

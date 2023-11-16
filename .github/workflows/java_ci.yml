@@ -46,11 +46,11 @@ jobs:
           tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }},${{ env.DOCKER_IMAGE_NAME }}:latest
           cache-from: type=registry,ref=${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
           cache-to: type=inline
-  #      - name: Scan the Docker image
-  #        uses: anchore/scan-action@v3.3.6
-  #        with:
-  #          image: "${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}"
-  #          fail-build: false  # or false, depending on how you want to handle scan failures
+      - name: Scan the Docker image
+        uses: anchore/scan-action@v3.3.6
+        with:
+          image: "${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}"
+          fail-build: false  # or false, depending on how you want to handle scan failures
 
 
   deploy:

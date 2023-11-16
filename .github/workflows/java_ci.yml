@@ -40,8 +40,8 @@ jobs:
         with:
           context: .
           push: true
-          tags: $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG,$DOCKER_IMAGE_NAME:latest
-          cache-from: type=registry,ref=$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }},${{ env.DOCKER_IMAGE_NAME }}:latest
+          cache-from: type=registry,ref=${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
           cache-to: type=inline
       - name: Scan the Docker image
         uses: anchore/scan-action@v3.3.6

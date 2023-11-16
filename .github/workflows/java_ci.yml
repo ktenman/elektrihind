@@ -68,7 +68,7 @@ jobs:
           ssh githubuser@tenman.ee "\
             docker pull '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG' || true && \
             docker-compose down || true && \
-            docker-compose -p myelektrihind up -d && \
+            docker-compose up -d && \
             echo 'Pruning unused Docker images...' && \
             docker image prune -af"
 

@@ -7,8 +7,7 @@ on:
 
 env:
   DOCKER_IMAGE_NAME: ktenman/elektrihind
-  #  DOCKER_IMAGE_TAG: ${{ github.sha }}
-  DOCKER_IMAGE_TAG: latest
+  DOCKER_IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   test:
@@ -76,7 +75,7 @@ jobs:
       - name: Deploy with Docker Compose
         run: |
           ssh githubuser@tenman.ee "\
-            docker pull '$DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG' || true && \
+            docker pull '$DOCKER_IMAGE_NAME:latest' || true && \
             docker-compose down || true && \
             docker-compose up -d && \
             echo 'Pruning unused Docker images...' && \

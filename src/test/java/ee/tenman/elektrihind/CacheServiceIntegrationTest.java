@@ -98,5 +98,4 @@ class CacheServiceIntegrationTest {
         assertThat(cacheService.canSendMessageToday()).isTrue();
     }
 
-
 }

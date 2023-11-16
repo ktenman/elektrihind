@@ -35,9 +35,10 @@ public class CacheService {
     static final int DAILY_MESSAGE_LIMIT = 2;
 
     @Getter
-    private final Cache<LocalDate, Integer> messageCountPerDay = CacheBuilder.newBuilder()
+    private transient final Cache<LocalDate, Integer> messageCountPerDay = CacheBuilder.newBuilder()
             .expireAfterWrite(7, TimeUnit.DAYS)
             .build();
+
     @Resource
     private Clock clock;
     @Resource
@@ -98,7 +99,8 @@ public class CacheService {
 
     private void saveCacheToFile() {
         try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(cacheFilePath))) {
-            objectOutputStream.writeObject(new HashMap<>(messageCountPerDay.asMap()));
+            Map<LocalDate, Integer> cacheMap = new HashMap<>(messageCountPerDay.asMap());
+            objectOutputStream.writeObject(cacheMap);
             log.debug("Cache saved to file");
         } catch (IOException e) {
             log.error("Error saving cache to file", e);

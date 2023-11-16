@@ -1,0 +1,30 @@
+# First stage: Alpine-based image to use apk and install necessary packages
+FROM alpine:latest as builder
+
+# Install necessary packages
+RUN apk add --no-cache bash procps curl tar
+
+# Download and prepare Maven
+ARG MAVEN_VERSION=3.9.5
+ENV MAVEN_HOME /usr/share/maven
+RUN wget -q -O - https://www.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz | tar -xz -C /usr/share
+RUN ln -s /usr/share/apache-maven-${MAVEN_VERSION} ${MAVEN_HOME}
+RUN ln -s ${MAVEN_HOME}/bin/mvn /usr/bin/mvn
+
+# Second stage: Your original base image
+FROM bellsoft/liberica-runtime-container:jdk-21-slim-musl
+
+# Create the MAVEN_HOME directory
+ARG USER_HOME_DIR="/root"
+ENV MAVEN_HOME /usr/share/maven
+RUN mkdir -p ${MAVEN_HOME}
+
+# Copy Maven from the first stage
+COPY --from=builder ${MAVEN_HOME} ${MAVEN_HOME}
+COPY --from=builder /usr/bin/mvn /usr/bin/mvn
+
+ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
+
+# Set entrypoint and command
+ENTRYPOINT ["/usr/local/bin/mvn-entrypoint.sh"]
+CMD ["mvn"]

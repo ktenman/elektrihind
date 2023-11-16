@@ -37,7 +37,7 @@ class CacheServiceIntegrationTest {
     @BeforeEach
     void setUp() {
         cacheService.clearCache();
-        String tempCacheFilePath = tempDir.resolve("cache_file.dat").toString();
+        String tempCacheFilePath = tempDir.resolve("cache_file.json").toString();
         ReflectionTestUtils.setField(cacheService, "cacheFilePath", tempCacheFilePath);
         lenient().when(clock.instant()).thenReturn(Instant.parse("2023-10-27T10:00:00.00Z"));
         lenient().when(clock.getZone()).thenReturn(ZoneId.systemDefault());

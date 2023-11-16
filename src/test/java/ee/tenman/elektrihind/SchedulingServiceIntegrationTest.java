@@ -57,8 +57,6 @@ class SchedulingServiceIntegrationTest {
                 .withBodyFile(RESPONSE_FILE_DAILY_PRICES)));
 
         schedulingService.fetchAndSendPrices();
-
-
     }
 
 

@@ -35,7 +35,7 @@ public class CacheService {
     static final int DAILY_MESSAGE_LIMIT = 2;
 
     @Getter
-    private transient final Cache<LocalDate, Integer> messageCountPerDay = CacheBuilder.newBuilder()
+    private final Cache<LocalDate, Integer> messageCountPerDay = CacheBuilder.newBuilder()
             .expireAfterWrite(7, TimeUnit.DAYS)
             .build();
 
@@ -50,6 +50,7 @@ public class CacheService {
     private List<ElectricityPrice> latestPrices = new ArrayList<>();
 
     @Value("${cache.file.path:/app/cache/cache_file.dat}")
+    @Getter
     private String cacheFilePath;
 
     @PostConstruct
@@ -97,7 +98,7 @@ public class CacheService {
         saveCacheToFile();
     }
 
-    private void saveCacheToFile() {
+    void saveCacheToFile() {
         try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(cacheFilePath))) {
             Map<LocalDate, Integer> cacheMap = new HashMap<>(messageCountPerDay.asMap());
             objectOutputStream.writeObject(cacheMap);
@@ -107,7 +108,7 @@ public class CacheService {
         }
     }
 
-    private void loadCacheFromFile() {
+    void loadCacheFromFile() {
         try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(cacheFilePath))) {
             Map<LocalDate, Integer> loadedMap = (Map<LocalDate, Integer>) objectInputStream.readObject();
             messageCountPerDay.putAll(loadedMap);
@@ -117,6 +118,11 @@ public class CacheService {
         } catch (IOException | ClassNotFoundException e) {
             log.error("Error loading cache from file", e);
         }
+    }
+
+    public void clearCache() {
+        messageCountPerDay.invalidateAll();
+        log.info("Cache cleared successfully.");
     }
 
 }

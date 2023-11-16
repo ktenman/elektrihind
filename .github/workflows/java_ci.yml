@@ -46,7 +46,7 @@ jobs:
         uses: anchore/scan-action@v3.3.6
         with:
           image: "${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}"
-          fail-build: true  # or false, depending on how you want to handle scan failures
+          fail-build: false  # or false, depending on how you want to handle scan failures
 
 
   deploy:

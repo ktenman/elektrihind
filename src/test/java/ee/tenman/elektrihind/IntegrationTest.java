@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind.electricity;
+package ee.tenman.elektrihind;
 
 import ee.tenman.elektrihind.util.GlobalConstants;
 import org.springframework.boot.test.context.SpringBootTest;

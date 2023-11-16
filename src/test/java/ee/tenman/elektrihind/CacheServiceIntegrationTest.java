@@ -1,7 +1,6 @@
 package ee.tenman.elektrihind;
 
 import ee.tenman.elektrihind.electricity.ElekterBotService;
-import ee.tenman.elektrihind.electricity.IntegrationTest;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.electricity;
 
+import ee.tenman.elektrihind.IntegrationTest;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import wiremock.com.google.common.net.HttpHeaders;

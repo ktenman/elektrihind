@@ -1,7 +1,6 @@
 package ee.tenman.elektrihind;
 
 import ee.tenman.elektrihind.electricity.ElekterBotService;
-import ee.tenman.elektrihind.electricity.IntegrationTest;
 import ee.tenman.elektrihind.telegram.TelegramService;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.BeforeEach;

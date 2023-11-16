@@ -11,7 +11,7 @@ COPY pom.xml .
 COPY src /app/src
 RUN mvn -T 1C --batch-mode --quiet package -DskipTests
 
-FROM bellsoft/liberica-runtime-container:jdk-21-slim-musl
+FROM bellsoft/liberica-runtime-container:jre-21-slim-musl
 # Set the current working directory inside the container
 WORKDIR /app
 

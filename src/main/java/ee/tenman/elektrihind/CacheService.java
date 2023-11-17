@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class CacheService {
 
-    static final int DAILY_MESSAGE_LIMIT = 2;
+    static final int DAILY_MESSAGE_LIMIT = 1;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Getter

@@ -83,19 +83,11 @@ class CacheServiceIntegrationTest {
     void testCanSendMessageToday_whenFalse() {
         assertThat(cacheService.canSendMessageToday()).isTrue();
 
-        cacheService.incrementMessageCountForToday();
-        cacheService.incrementMessageCountForToday();
+        for (int i = 0; i < CacheService.DAILY_MESSAGE_LIMIT; i++) {
+            cacheService.incrementMessageCountForToday();
+        }
 
         assertThat(cacheService.canSendMessageToday()).isFalse();
-    }
-
-    @Test
-    void testCanSendMessageToday_whenTrue() {
-        assertThat(cacheService.canSendMessageToday()).isTrue();
-
-        cacheService.incrementMessageCountForToday();
-
-        assertThat(cacheService.canSendMessageToday()).isTrue();
     }
 
 }

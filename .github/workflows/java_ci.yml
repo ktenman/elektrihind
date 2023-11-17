@@ -80,8 +80,7 @@ jobs:
         run: |
           ssh githubuser@tenman.ee "\
             docker pull '$DOCKER_IMAGE_NAME:latest' || true && \
-            docker stop elektrihind-elektrihind-app-1 || true && \
-            docker rm elektrihind-elektrihind-app-1 || true && \
+            docker rm elektrihind-elektrihind-app-1 -f || true && \
             docker-compose down || true && \
             docker-compose up -d && \
             echo 'Pruning unused Docker images...' && \

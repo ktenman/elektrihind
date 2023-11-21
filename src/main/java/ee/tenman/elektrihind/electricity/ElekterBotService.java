@@ -171,10 +171,12 @@ public class ElekterBotService extends TelegramLongPollingBot {
     }
 
     private void handleDurationMessage(Matcher matcher, long chatId) {
+        LocalDateTime now = LocalDateTime.now(clock);
         int durationInMinutes = durationInMinutes(matcher);
-        List<ElectricityPrice> electricityPrices = cacheService.getLatestPrices()
+        List<ElectricityPrice> latestPrices = cacheService.getLatestPrices();
+        List<ElectricityPrice> electricityPrices = latestPrices
                 .stream()
-                .filter(electricityPrice -> electricityPrice.getDate().isAfter(LocalDateTime.now(clock)))
+                .filter(electricityPrice -> electricityPrice.getDate().isAfter(now))
                 .toList();
         BestPriceResult bestPrice = PriceFinder.findBestPriceForDuration(electricityPrices, durationInMinutes);
 
@@ -183,8 +185,52 @@ public class ElekterBotService extends TelegramLongPollingBot {
             return;
         }
 
+        BigDecimal calculatedImmediateCost = calculateImmediateCost(latestPrices, durationInMinutes);
+        BestPriceResult currentBestPriceResult = new BestPriceResult(now, calculatedImmediateCost.doubleValue(), durationInMinutes);
+
         String response = formatBestPriceResponse(bestPrice);
+        response += formatBestPriceResponseForCurrent(currentBestPriceResult);
+
         sendMessage(chatId, response);
+    }
+
+    private String formatBestPriceResponseForCurrent(BestPriceResult currentBestPriceResult) {
+        return "\nStart consuming immediately at " + LocalDateTime.now(clock).format(DATE_TIME_FORMATTER) + ". " +
+                "Total cost is " + currentBestPriceResult.getTotalCost() + " cents with average price of " + currentBestPriceResult.getAveragePrice() + " cents/kWh.";
+    }
+
+    private BigDecimal calculateImmediateCost(List<ElectricityPrice> prices, int durationInMinutes) {
+        LocalDateTime startTime = LocalDateTime.now(clock);
+        LocalDateTime endTime = startTime.plusMinutes(durationInMinutes);
+        BigDecimal totalCost = BigDecimal.ZERO;
+
+        for (ElectricityPrice price : prices) {
+            // Check if the price's time is before the start time and the next price (or end time) is after the start time
+            boolean isCurrentPrice = !price.getDate().isAfter(startTime) &&
+                    (prices.indexOf(price) == prices.size() - 1 || prices.get(prices.indexOf(price) + 1).getDate().isAfter(startTime));
+
+            if (isCurrentPrice || (price.getDate().isAfter(startTime) && price.getDate().isBefore(endTime))) {
+                // Determine the end of the current price period (either the start of the next price or the end time)
+                LocalDateTime currentPriceEndTime = prices.indexOf(price) == prices.size() - 1 ? endTime : prices.get(prices.indexOf(price) + 1).getDate();
+                currentPriceEndTime = currentPriceEndTime.isBefore(endTime) ? currentPriceEndTime : endTime;
+
+                // Calculate the number of minutes at the current price
+                long minutesAtPrice = Duration.between(startTime.isBefore(price.getDate()) ? price.getDate() : startTime, currentPriceEndTime).toMinutes();
+                BigDecimal costForInterval = BigDecimal.valueOf(price.getPrice()).divide(BigDecimal.valueOf(60), 10, RoundingMode.HALF_UP).multiply(new BigDecimal(minutesAtPrice));
+
+                totalCost = totalCost.add(costForInterval);
+
+                // Move the start time to the end of the current price period
+                startTime = currentPriceEndTime;
+
+                // If the end time is reached, break out of the loop
+                if (startTime.isEqual(endTime)) {
+                    break;
+                }
+            }
+        }
+
+        return totalCost.setScale(2, RoundingMode.HALF_UP);
     }
 
     int durationInMinutes(Matcher matcher) {
@@ -202,9 +248,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
     }
 
     String formatBestPriceResponse(BestPriceResult bestPrice) {
-        return "Best time to start is " + bestPrice.getStartTime() +
+        return "Best time to start is " + bestPrice.getStartTime().format(DATE_TIME_FORMATTER) +
                 " with average price of " + bestPrice.getAveragePrice() + " cents/kWh. " +
-                "Total cost is " + bestPrice.getTotalCost() + " EUR. In " +
+                "Total cost is " + bestPrice.getTotalCost() + " cents. In " +
                 Duration.between(LocalDateTime.now(clock), bestPrice.getStartTime()).toHours() + " hours!";
     }
 

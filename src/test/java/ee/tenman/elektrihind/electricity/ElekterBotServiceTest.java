@@ -71,7 +71,7 @@ class ElekterBotServiceTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(clock.instant()).thenReturn(Instant.parse("2023-11-09T23:45:14.00Z"));
+        lenient().when(clock.instant()).thenReturn(Instant.parse("2023-11-09T23:45:00.00Z"));
         lenient().when(clock.getZone()).thenReturn(UTC);
         lenient().when(update.getMessage()).thenReturn(message);
         lenient().when(message.getChatId()).thenReturn(12345L);
@@ -183,14 +183,19 @@ class ElekterBotServiceTest {
         when(message.hasText()).thenReturn(true);
         when(message.getText()).thenReturn("parim hind 30 min");
 
-        LocalDateTime futureTime = LocalDateTime.now(clock).plusMinutes(30);
+        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime firstHour = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), now.getHour(), 0);
         List<ElectricityPrice> mockPrices = List.of(
                 ElectricityPrice.builder()
-                        .date(futureTime)
+                        .date(firstHour)
+                        .price(56.0)
+                        .build(),
+                ElectricityPrice.builder()
+                        .date(firstHour.plusHours(1))
                         .price(5.0)
                         .build(),
                 ElectricityPrice.builder()
-                        .date(futureTime.plusMinutes(30))
+                        .date(firstHour.plusHours(2))
                         .price(4.0)
                         .build()
         );
@@ -200,10 +205,11 @@ class ElekterBotServiceTest {
 
         spyBotService.onUpdateReceived(update);
 
-        String expectedMessage = "Best time to start is 2023-11-10T00:45:14 with average price of 4.0 cents/kWh. " +
-                "Total cost is 2.0 EUR. In 1 hours!";
+        String expectedMessage = "Best time to start is 2023-11-10 01:00 with average price of 4.0 cents/kWh. Total cost is 2.0 cents. In 1 hours!\n" +
+                "  Start consuming immediately at 2023-11-09 23:45. Total cost is 15.25 cents with average price of 30.5 cents/kWh.".trim();
         verify(spyBotService).execute(sendMessageCaptor.capture()); // This should probably be realBotService
-        assertThat(sendMessageCaptor.getValue().getText()).isEqualTo(expectedMessage);
+        String actualMessage = sendMessageCaptor.getValue().getText().trim();
+        assertThat(actualMessage).isEqualTo(expectedMessage);
     }
 
     @Test
@@ -248,9 +254,7 @@ class ElekterBotServiceTest {
 
         String response = botService.formatBestPriceResponse(bestPrice);
 
-        String expected = "Best time to start is " + startTime +
-                " with average price of 5.75 cents/kWh. " +
-                "Total cost is 20.5 EUR. In 36 hours!";
+        String expected = "Best time to start is 2023-11-11 12:00 with average price of 5.75 cents/kWh. Total cost is 20.5 cents. In 36 hours!";
         assertThat(response).isEqualTo(expected);
     }
 

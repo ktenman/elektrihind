@@ -188,14 +188,12 @@ public class ElekterBotService extends TelegramLongPollingBot {
         BigDecimal calculatedImmediateCost = calculateImmediateCost(latestPrices, durationInMinutes);
         BestPriceResult currentBestPriceResult = new BestPriceResult(now, calculatedImmediateCost.doubleValue(), durationInMinutes);
 
-        StringBuilder response = new StringBuilder();
-
-        response.append(formatBestPriceResponse(bestPrice));
-        response.append(formatBestPriceResponseForCurrent(currentBestPriceResult));
+        String response = formatBestPriceResponse(bestPrice);
+        response += formatBestPriceResponseForCurrent(currentBestPriceResult);
         String difference = String.format("%.2f", currentBestPriceResult.getTotalCost() / bestPrice.getTotalCost()) + "x more expensive to start immediately.";
-        response.append(difference);
+        response += difference;
 
-        sendMessage(chatId, response.toString());
+        sendMessage(chatId, response);
     }
 
     private String formatBestPriceResponseForCurrent(BestPriceResult currentBestPriceResult) {

@@ -205,10 +205,12 @@ class ElekterBotServiceTest {
 
         spyBotService.onUpdateReceived(update);
 
-        String expectedMessage = "Best time to start is 2023-11-10 01:00 with average price of 4.0 cents/kWh. Total cost is 2.0 cents. In 1 hours!\n" +
-                "  Start consuming immediately at 2023-11-09 23:45. Total cost is 15.05 cents with average price of 30.1 cents/kWh.".trim();
+        String expectedMessage = ("Best time to start is 2023-11-10 01:00 with average price of 4.0 cents/kWh. " +
+                "Total cost is 2.0 cents. In 1 hours! Start consuming immediately at 2023-11-09 23:45. " +
+                "Total cost is 15.05 cents with average price of 30.1 cents/kWh.7.53x more expensive to start immediately.")
+                .replaceAll("\\s+", " ").trim();
         verify(spyBotService).execute(sendMessageCaptor.capture()); // This should probably be realBotService
-        String actualMessage = sendMessageCaptor.getValue().getText().trim();
+        String actualMessage = sendMessageCaptor.getValue().getText().replaceAll("\\s+", " ").trim();
         assertThat(actualMessage).isEqualTo(expectedMessage);
     }
 

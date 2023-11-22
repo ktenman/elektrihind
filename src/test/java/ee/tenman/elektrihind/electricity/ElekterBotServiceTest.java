@@ -71,7 +71,7 @@ class ElekterBotServiceTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(clock.instant()).thenReturn(Instant.parse("2023-11-09T23:45:00.00Z"));
+        lenient().when(clock.instant()).thenReturn(Instant.parse("2023-11-09T23:45:14.00Z"));
         lenient().when(clock.getZone()).thenReturn(UTC);
         lenient().when(update.getMessage()).thenReturn(message);
         lenient().when(message.getChatId()).thenReturn(12345L);
@@ -206,7 +206,7 @@ class ElekterBotServiceTest {
         spyBotService.onUpdateReceived(update);
 
         String expectedMessage = "Best time to start is 2023-11-10 01:00 with average price of 4.0 cents/kWh. Total cost is 2.0 cents. In 1 hours!\n" +
-                "  Start consuming immediately at 2023-11-09 23:45. Total cost is 15.25 cents with average price of 30.5 cents/kWh.".trim();
+                "  Start consuming immediately at 2023-11-09 23:45. Total cost is 15.05 cents with average price of 30.1 cents/kWh.".trim();
         verify(spyBotService).execute(sendMessageCaptor.capture()); // This should probably be realBotService
         String actualMessage = sendMessageCaptor.getValue().getText().trim();
         assertThat(actualMessage).isEqualTo(expectedMessage);

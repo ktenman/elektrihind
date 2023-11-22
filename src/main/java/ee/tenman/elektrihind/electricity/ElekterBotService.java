@@ -204,26 +204,16 @@ public class ElekterBotService extends TelegramLongPollingBot {
         LocalDateTime endTime = startTime.plusMinutes(durationInMinutes);
         BigDecimal totalCost = BigDecimal.ZERO;
 
-        for (ElectricityPrice price : prices) {
-            // Check if the price's time is before the start time and the next price (or end time) is after the start time
-            boolean isCurrentPrice = !price.getDate().isAfter(startTime) &&
-                    (prices.indexOf(price) == prices.size() - 1 || prices.get(prices.indexOf(price) + 1).getDate().isAfter(startTime));
+        for (int i = 0; i < prices.size(); i++) {
+            ElectricityPrice currentPrice = prices.get(i);
+            LocalDateTime nextPriceTime = (i < prices.size() - 1) ? prices.get(i + 1).getDate() : endTime;
 
-            if (isCurrentPrice || (price.getDate().isAfter(startTime) && price.getDate().isBefore(endTime))) {
-                // Determine the end of the current price period (either the start of the next price or the end time)
-                LocalDateTime currentPriceEndTime = prices.indexOf(price) == prices.size() - 1 ? endTime : prices.get(prices.indexOf(price) + 1).getDate();
-                currentPriceEndTime = currentPriceEndTime.isBefore(endTime) ? currentPriceEndTime : endTime;
+            if (isPriceApplicable(currentPrice, startTime, nextPriceTime)) {
+                LocalDateTime intervalEnd = nextPriceTime.isBefore(endTime) ? nextPriceTime : endTime;
+                BigDecimal calculatedCostForInterval = calculateCostForInterval(currentPrice, startTime, intervalEnd);
+                totalCost = totalCost.add(calculatedCostForInterval);
 
-                // Calculate the number of minutes at the current price
-                long minutesAtPrice = Duration.between(startTime.isBefore(price.getDate()) ? price.getDate() : startTime, currentPriceEndTime).toMinutes();
-                BigDecimal costForInterval = BigDecimal.valueOf(price.getPrice()).divide(BigDecimal.valueOf(60), 10, RoundingMode.HALF_UP).multiply(new BigDecimal(minutesAtPrice));
-
-                totalCost = totalCost.add(costForInterval);
-
-                // Move the start time to the end of the current price period
-                startTime = currentPriceEndTime;
-
-                // If the end time is reached, break out of the loop
+                startTime = intervalEnd;
                 if (startTime.isEqual(endTime)) {
                     break;
                 }
@@ -231,6 +221,17 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
 
         return totalCost.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private boolean isPriceApplicable(ElectricityPrice price, LocalDateTime startTime, LocalDateTime nextPriceTime) {
+        return !price.getDate().isAfter(startTime) && nextPriceTime.isAfter(startTime);
+    }
+
+    private BigDecimal calculateCostForInterval(ElectricityPrice price, LocalDateTime startTime, LocalDateTime intervalEnd) {
+        LocalDateTime effectiveStartTime = startTime.isBefore(price.getDate()) ? price.getDate() : startTime;
+        long secondsAtPrice = Duration.between(effectiveStartTime, intervalEnd).toSeconds();
+        BigDecimal hourlyRate = BigDecimal.valueOf(price.getPrice()).divide(BigDecimal.valueOf(3600), 10, RoundingMode.HALF_UP);
+        return hourlyRate.multiply(new BigDecimal(secondsAtPrice));
     }
 
     int durationInMinutes(Matcher matcher) {

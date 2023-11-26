@@ -2,7 +2,7 @@ package ee.tenman.elektrihind;
 
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
-import ee.tenman.elektrihind.util.GlobalConstants;
+import ee.tenman.elektrihind.utility.GlobalConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -103,6 +103,7 @@ class CacheServiceTest {
 
         verify(electricityPricesService, never()).fetchDailyPrices();
     }
+
     private void maxOutDailyMessageLimit() {
         for (int i = 0; i < CacheService.DAILY_MESSAGE_LIMIT; i++) {
             cacheService.incrementMessageCountForToday();

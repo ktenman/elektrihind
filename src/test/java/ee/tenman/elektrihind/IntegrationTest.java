@@ -1,6 +1,6 @@
 package ee.tenman.elektrihind;
 
-import ee.tenman.elektrihind.util.GlobalConstants;
+import ee.tenman.elektrihind.utility.GlobalConstants;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.ActiveProfiles;

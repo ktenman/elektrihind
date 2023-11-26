@@ -2,7 +2,7 @@ package ee.tenman.elektrihind.electricity;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import ee.tenman.elektrihind.config.CustomLocalDateTimeDeserializer;
-import ee.tenman.elektrihind.util.DateTimeConstants;
+import ee.tenman.elektrihind.utility.DateTimeConstants;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.electricity;
 
+import ee.tenman.elektrihind.utility.TimeUtility;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -27,7 +28,7 @@ public class PriceFinder {
 
         for (int startMinuteIndex = 0; startMinuteIndex <= electricityPrices.size() * MINUTES_IN_HOUR - durationInMinutes; startMinuteIndex++) {
             double currentIntervalCost = calculateCostForInterval(electricityPrices, startMinuteIndex, durationInMinutes);
-            LocalDateTime currentStartTime = getStartTime(electricityPrices, startMinuteIndex);
+            LocalDateTime currentStartTime = TimeUtility.getStartTime(electricityPrices, startMinuteIndex);
 
             boolean isNewLowestCost = currentIntervalCost < lowestTotalCost;
             boolean isSameCostButEarlierStart = currentIntervalCost == lowestTotalCost &&
@@ -58,11 +59,4 @@ public class PriceFinder {
         }
         return totalCost;
     }
-
-    private static LocalDateTime getStartTime(List<ElectricityPrice> electricityPrices, int startMinute) {
-        int startHourIndex = startMinute / MINUTES_IN_HOUR;
-        int minuteOffset = startMinute % MINUTES_IN_HOUR;
-        return electricityPrices.get(startHourIndex).getDate().plusMinutes(minuteOffset);
-    }
-
 }

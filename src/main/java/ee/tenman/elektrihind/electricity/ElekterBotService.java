@@ -37,7 +37,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static ee.tenman.elektrihind.util.DateTimeConstants.DATE_TIME_FORMATTER;
+import static ee.tenman.elektrihind.utility.DateTimeConstants.DATE_TIME_FORMATTER;
 
 @Service
 @Slf4j

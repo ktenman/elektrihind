@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind.util;
+package ee.tenman.elektrihind.utility;
 
 import lombok.NoArgsConstructor;
 

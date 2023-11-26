@@ -7,7 +7,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
-import ee.tenman.elektrihind.util.GlobalConstants;
+import ee.tenman.elektrihind.utility.GlobalConstants;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.Getter;

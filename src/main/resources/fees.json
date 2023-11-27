@@ -1,0 +1,10 @@
+{
+  "fixedSurcharge": "0.00458",
+  "monthlyFee": "1.658",
+  "dayDistributionFee": "0.0369",
+  "nightDistributionFee": "0.021",
+  "apartmentMonthlyFee": "6.39",
+  "renewableEnergyFee": "0.0113",
+  "electricityExciseTax": "0.001",
+  "salesTax": "1.2"
+}

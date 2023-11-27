@@ -1,6 +1,7 @@
 package ee.tenman.elektrihind.electricity;
 
 import ee.tenman.elektrihind.CacheService;
+import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.telegram.TelegramService;
 import jakarta.annotation.PostConstruct;
@@ -43,11 +44,14 @@ import static ee.tenman.elektrihind.utility.DateTimeConstants.DATE_TIME_FORMATTE
 @Slf4j
 public class ElekterBotService extends TelegramLongPollingBot {
 
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
 
     @Resource
     private HolidaysConfiguration holidaysConfiguration;
+
+    @Resource
+    private FeesConfiguration feesConfiguration;
 
     @Resource
     private Clock clock;
@@ -287,15 +291,15 @@ public class ElekterBotService extends TelegramLongPollingBot {
         List<BigDecimal> totalDayKwhList = new ArrayList<>();
         List<BigDecimal> totalNightKwhList = new ArrayList<>();
 
-        BigDecimal fixedSurcharge = new BigDecimal("0.00458");
-        BigDecimal monthlyFee = new BigDecimal("1.658");
+        BigDecimal fixedSurcharge = feesConfiguration.getFixedSurcharge();
+        BigDecimal monthlyFee = feesConfiguration.getMonthlyFee();
 
-        BigDecimal dayDistributionFee = new BigDecimal("0.0369");
-        BigDecimal nightDistributionFee = new BigDecimal("0.021");
-        BigDecimal apartmentMonthlyFee = new BigDecimal("6.39");
-        BigDecimal renewableEnergyFee = new BigDecimal("0.0113");
-        BigDecimal electricityExciseTax = new BigDecimal("0.001");
-        BigDecimal salesTax = new BigDecimal("1.2");
+        BigDecimal dayDistributionFee = feesConfiguration.getDayDistributionFee();
+        BigDecimal nightDistributionFee = feesConfiguration.getNightDistributionFee();
+        BigDecimal apartmentMonthlyFee = feesConfiguration.getApartmentMonthlyFee();
+        BigDecimal renewableEnergyFee = feesConfiguration.getRenewableEnergyFee();
+        BigDecimal electricityExciseTax = feesConfiguration.getElectricityExciseTax();
+        BigDecimal salesTax = feesConfiguration.getSalesTax();
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
@@ -312,12 +316,8 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
                 String startTime = row[0].trim();
                 LocalDateTime dateTime = LocalDateTime.parse(startTime, formatter);
-                int weekday = dateTime.getDayOfWeek().getValue();
-                int hour = dateTime.getHour();
-
-                boolean isWeekend = weekday == 6 || weekday == 7; // 6 for Saturday and 7 for Sunday
-                boolean isDaytime = (hour >= 7 && hour < 22) && !isWeekend && !isHoliday(dateTime.toLocalDate());
-                boolean isNighttime = (hour >= 22 || hour < 7) || isWeekend || isHoliday(dateTime.toLocalDate());
+                boolean isDaytime = isDayTime(dateTime);
+                boolean isNighttime = isNighttime(dateTime);
 
                 if (isDaytime) {
                     dayCostList.add(cost);
@@ -371,8 +371,24 @@ public class ElekterBotService extends TelegramLongPollingBot {
     }
 
     public boolean isHoliday(LocalDate date) {
-        String formattedDate = date.format(formatter);
+        String formattedDate = date.format(FORMATTER);
         return holidaysConfiguration.getHolidays().contains(formattedDate);
+    }
+
+    public boolean isDayTime(LocalDateTime localDateTime) {
+        int weekday = localDateTime.getDayOfWeek().getValue();
+        int hour = localDateTime.getHour();
+
+        boolean isWeekend = weekday == 6 || weekday == 7; // 6 for Saturday and 7 for Sunday
+        return (hour >= 7 && hour < 22) && !isWeekend && !isHoliday(localDateTime.toLocalDate());
+    }
+
+    public boolean isNighttime(LocalDateTime localDateTime) {
+        int weekday = localDateTime.getDayOfWeek().getValue();
+        int hour = localDateTime.getHour();
+
+        boolean isWeekend = weekday == 6 || weekday == 7; // 6 for Saturday and 7 for Sunday
+        return (hour >= 22 || hour < 7) || isWeekend || isHoliday(localDateTime.toLocalDate());
     }
 
 }

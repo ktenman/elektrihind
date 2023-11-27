@@ -1,6 +1,7 @@
 package ee.tenman.elektrihind.electricity;
 
 import ee.tenman.elektrihind.CacheService;
+import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.telegram.TelegramService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +53,9 @@ class ElekterBotServiceTest {
     private Update update;
 
     @Mock
+    private FeesConfiguration feesConfiguration;
+
+    @Mock
     private PriceFinderService priceFinderService;
 
     @Mock
@@ -78,6 +82,15 @@ class ElekterBotServiceTest {
         lenient().when(clock.getZone()).thenReturn(UTC);
         lenient().when(update.getMessage()).thenReturn(message);
         lenient().when(message.getChatId()).thenReturn(12345L);
+
+        lenient().when(feesConfiguration.getFixedSurcharge()).thenReturn(BigDecimal.valueOf(8.56));
+        lenient().when(feesConfiguration.getMonthlyFee()).thenReturn(BigDecimal.valueOf(1.23));
+        lenient().when(feesConfiguration.getDayDistributionFee()).thenReturn(BigDecimal.valueOf(0.52));
+        lenient().when(feesConfiguration.getNightDistributionFee()).thenReturn(BigDecimal.valueOf(0.11));
+        lenient().when(feesConfiguration.getApartmentMonthlyFee()).thenReturn(BigDecimal.valueOf(6.39));
+        lenient().when(feesConfiguration.getRenewableEnergyFee()).thenReturn(BigDecimal.valueOf(5.32));
+        lenient().when(feesConfiguration.getElectricityExciseTax()).thenReturn(BigDecimal.valueOf(0.021));
+        lenient().when(feesConfiguration.getSalesTax()).thenReturn(BigDecimal.valueOf(1.22));
     }
 
     @Test

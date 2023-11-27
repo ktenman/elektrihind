@@ -24,18 +24,18 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 
 import static ee.tenman.elektrihind.electricity.ElekterBotService.DURATION_PATTERN;
-import static ee.tenman.elektrihind.electricity.PriceFinderTest.ELECTRICITY_PRICES;
+import static ee.tenman.elektrihind.electricity.PriceFinderServiceTest.ELECTRICITY_PRICES;
 import static java.time.ZoneOffset.UTC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.lenient;
@@ -50,6 +50,9 @@ class ElekterBotServiceTest {
 
     @Mock
     private Update update;
+
+    @Mock
+    private PriceFinderService priceFinderService;
 
     @Mock
     private Message message;
@@ -78,14 +81,6 @@ class ElekterBotServiceTest {
     }
 
     @Test
-    void currentPrice_ShouldReturnCorrectPrice_WhenPriceIsAvailable() {
-        Optional<ElectricityPrice> price = botService.currentPrice(ELECTRICITY_PRICES);
-
-        assertThat(price).isPresent()
-                .isEqualTo(Optional.of(ELECTRICITY_PRICES.get(47)));
-    }
-
-    @Test
     void calculateTotalCost_ShouldCalculateCostsCorrectly() {
         List<String[]> data = List.of(
                 new String[]{"01.01.2023 00:00", "A", "100", "150.00"},
@@ -98,20 +93,6 @@ class ElekterBotServiceTest {
         assertThat(result.getTotalCost()).isPositive();
         assertThat(result.getTotalKwh()).isEqualByComparingTo(new BigDecimal("300.00"));
         assertThat(result.getTotalCost()).isGreaterThan(new BigDecimal("0.00"));
-    }
-
-    @Test
-    void currentPrice_ShouldReturnNull_WhenNoCurrentPriceIsAvailable() {
-        when(clock.instant()).thenReturn(Instant.now());
-        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
-        List<ElectricityPrice> prices = List.of(
-                new ElectricityPrice(LocalDateTime.now(clock).minusHours(2), 10.0),
-                new ElectricityPrice(LocalDateTime.now(clock).minusHours(1), 20.0)
-        );
-
-        Optional<ElectricityPrice> price = botService.currentPrice(prices);
-
-        assertThat(price).isEmpty();
     }
 
     @Test
@@ -162,6 +143,7 @@ class ElekterBotServiceTest {
         when(message.getText()).thenReturn("elektrihind");
         when(cacheService.getLatestPrices()).thenReturn(ELECTRICITY_PRICES);
         when(telegramService.formatPricesForTelegram(any())).thenReturn("Sample Formatted Prices");
+        when(priceFinderService.currentPrice(any())).thenReturn(Optional.of(ELECTRICITY_PRICES.get(47)));
 
         ElekterBotService spyBotService = spy(botService);
         spyBotService.onUpdateReceived(update);
@@ -200,6 +182,13 @@ class ElekterBotServiceTest {
                         .build()
         );
         when(cacheService.getLatestPrices()).thenReturn(mockPrices);
+        when(priceFinderService.findBestPriceForDuration(any(), anyInt())).thenReturn(BestPriceResult.builder()
+                .startTime(firstHour.plusHours(2))
+                .totalCost(2.0)
+                .averagePrice(4.0)
+                .build());
+        when(priceFinderService.calculateImmediateCost(any(), anyInt())).thenReturn(BigDecimal.valueOf(15.05));
+
 
         ElekterBotService spyBotService = Mockito.spy(botService);
 

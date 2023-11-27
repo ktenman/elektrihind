@@ -58,6 +58,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
     @Resource
     private TelegramService telegramService;
 
+    @Resource
+    private PriceFinderService priceFinderService;
+
     @Value("${telegram.elektriteemu.token}")
     private String token;
 
@@ -143,7 +146,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     String getElectricityPriceResponse() {
         List<ElectricityPrice> electricityPrices = cacheService.getLatestPrices();
-        Optional<ElectricityPrice> currentPrice = currentPrice(electricityPrices);
+        Optional<ElectricityPrice> currentPrice = priceFinderService.currentPrice(electricityPrices);
         if (currentPrice.isEmpty()) {
             log.warn("Could not find current electricity price.");
             return null;
@@ -178,14 +181,14 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 .stream()
                 .filter(electricityPrice -> electricityPrice.getDate().isAfter(now))
                 .toList();
-        BestPriceResult bestPrice = PriceFinder.findBestPriceForDuration(electricityPrices, durationInMinutes);
+        BestPriceResult bestPrice = priceFinderService.findBestPriceForDuration(electricityPrices, durationInMinutes);
 
         if (bestPrice == null) {
             sendMessage(chatId, "Could not calculate the best time to start your washing machine.");
             return;
         }
 
-        BigDecimal calculatedImmediateCost = calculateImmediateCost(latestPrices, durationInMinutes);
+        BigDecimal calculatedImmediateCost = priceFinderService.calculateImmediateCost(latestPrices, durationInMinutes);
         BestPriceResult currentBestPriceResult = new BestPriceResult(now, calculatedImmediateCost.doubleValue(), durationInMinutes);
 
         String response = formatBestPriceResponse(bestPrice);
@@ -199,41 +202,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
     private String formatBestPriceResponseForCurrent(BestPriceResult currentBestPriceResult) {
         return "\n\nStart consuming immediately at " + LocalDateTime.now(clock).format(DATE_TIME_FORMATTER) + ". " +
                 "Total cost is " + currentBestPriceResult.getTotalCost() + " cents with average price of " + currentBestPriceResult.getAveragePrice() + " cents/kWh.";
-    }
-
-    private BigDecimal calculateImmediateCost(List<ElectricityPrice> prices, int durationInMinutes) {
-        LocalDateTime startTime = LocalDateTime.now(clock);
-        LocalDateTime endTime = startTime.plusMinutes(durationInMinutes);
-        BigDecimal totalCost = BigDecimal.ZERO;
-
-        for (int i = 0; i < prices.size(); i++) {
-            ElectricityPrice currentPrice = prices.get(i);
-            LocalDateTime nextPriceTime = (i < prices.size() - 1) ? prices.get(i + 1).getDate() : endTime;
-
-            if (isPriceApplicable(currentPrice, startTime, nextPriceTime)) {
-                LocalDateTime intervalEnd = nextPriceTime.isBefore(endTime) ? nextPriceTime : endTime;
-                BigDecimal calculatedCostForInterval = calculateCostForInterval(currentPrice, startTime, intervalEnd);
-                totalCost = totalCost.add(calculatedCostForInterval);
-
-                startTime = intervalEnd;
-                if (startTime.isEqual(endTime)) {
-                    break;
-                }
-            }
-        }
-
-        return totalCost.setScale(2, RoundingMode.HALF_UP);
-    }
-
-    private boolean isPriceApplicable(ElectricityPrice price, LocalDateTime startTime, LocalDateTime nextPriceTime) {
-        return !price.getDate().isAfter(startTime) && nextPriceTime.isAfter(startTime);
-    }
-
-    private BigDecimal calculateCostForInterval(ElectricityPrice price, LocalDateTime startTime, LocalDateTime intervalEnd) {
-        LocalDateTime effectiveStartTime = startTime.isBefore(price.getDate()) ? price.getDate() : startTime;
-        long secondsAtPrice = Duration.between(effectiveStartTime, intervalEnd).toSeconds();
-        BigDecimal hourlyRate = BigDecimal.valueOf(price.getPrice()).divide(BigDecimal.valueOf(3600), 10, RoundingMode.HALF_UP);
-        return hourlyRate.multiply(new BigDecimal(secondsAtPrice));
     }
 
     int durationInMinutes(Matcher matcher) {
@@ -255,14 +223,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 " with average price of " + bestPrice.getAveragePrice() + " cents/kWh. " +
                 "Total cost is " + bestPrice.getTotalCost() + " cents. In " +
                 Duration.between(LocalDateTime.now(clock), bestPrice.getStartTime()).toHours() + " hours!";
-    }
-
-    Optional<ElectricityPrice> currentPrice(List<ElectricityPrice> electricityPrices) {
-        LocalDateTime now = LocalDateTime.now(clock);
-        LocalDateTime key = LocalDateTime.of(now.toLocalDate(),
-                now.toLocalTime().withHour(now.getHour()).withMinute(0).withSecond(0).withNano(0));
-        return electricityPrices.stream().filter(d -> d.getDate().equals(key))
-                .findFirst();
     }
 
     void sendMessage(long chatId, String text) {

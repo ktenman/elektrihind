@@ -3,32 +3,49 @@ package ee.tenman.elektrihind.electricity;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
+import static java.time.ZoneOffset.UTC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.Mockito.lenient;
 
 @Slf4j
-class PriceFinderTest {
+@ExtendWith(MockitoExtension.class)
+class PriceFinderServiceTest {
+
+    @Mock
+    private Clock clock;
+
+    @InjectMocks
+    private PriceFinderService priceFinderService;
 
     private static final String JSON_RESOURCE_PATH = "/electricityPrices.json";
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static final List<ElectricityPrice> ELECTRICITY_PRICES = loadElectricityPrices();
 
     public static List<ElectricityPrice> loadElectricityPrices() {
-        try (InputStream is = PriceFinder.class.getResourceAsStream(JSON_RESOURCE_PATH)) {
+        try (InputStream is = PriceFinderService.class.getResourceAsStream(JSON_RESOURCE_PATH)) {
             if (is == null) {
                 log.error("Resource not found: {}", JSON_RESOURCE_PATH);
                 throw new IllegalArgumentException("Resource not found: " + JSON_RESOURCE_PATH);
@@ -41,12 +58,18 @@ class PriceFinderTest {
         }
     }
 
+    @BeforeEach
+    void setUp() {
+        lenient().when(clock.instant()).thenReturn(Instant.parse("2023-11-09T23:45:14.00Z"));
+        lenient().when(clock.getZone()).thenReturn(UTC);
+    }
+
     @Test
     void testEmptyPriceList() {
         List<ElectricityPrice> emptyList = Collections.emptyList();
         int duration = 30;
 
-        Throwable thrown = catchThrowable(() -> PriceFinder.findBestPriceForDuration(emptyList, duration));
+        Throwable thrown = catchThrowable(() -> priceFinderService.findBestPriceForDuration(emptyList, duration));
 
         assertThat(thrown).isNotNull().isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Electricity prices list cannot be null or empty.");
@@ -58,7 +81,7 @@ class PriceFinderTest {
         assert prices != null;
         int duration = prices.size() * 60 + 30; // Exceeds size of list in minutes
 
-        BestPriceResult result = PriceFinder.findBestPriceForDuration(prices, duration);
+        BestPriceResult result = priceFinderService.findBestPriceForDuration(prices, duration);
 
         assertThat(result).isNull();
     }
@@ -69,7 +92,7 @@ class PriceFinderTest {
         List<ElectricityPrice> prices = Collections.singletonList(new ElectricityPrice(fixedTime, 10.0));
         int duration = 60; // 1 hour
 
-        BestPriceResult result = PriceFinder.findBestPriceForDuration(prices, duration);
+        BestPriceResult result = priceFinderService.findBestPriceForDuration(prices, duration);
 
         assertThat(result).isNotNull();
         assertThat(result.getTotalCost()).isEqualTo(10.0);
@@ -86,7 +109,7 @@ class PriceFinderTest {
         );
         int duration = 30; // 30 minutes
 
-        BestPriceResult result = PriceFinder.findBestPriceForDuration(prices, duration);
+        BestPriceResult result = priceFinderService.findBestPriceForDuration(prices, duration);
 
         // The expected start time should be the start of the second hour, not 30 minutes before
         assertThat(result).isNotNull();
@@ -106,7 +129,7 @@ class PriceFinderTest {
         }
         int duration = 120; // 2 hours
 
-        BestPriceResult result = PriceFinder.findBestPriceForDuration(prices, duration);
+        BestPriceResult result = priceFinderService.findBestPriceForDuration(prices, duration);
 
         assertThat(result).isNotNull();
         assertThat(result.getStartTime()).isEqualTo("2023-11-10T00:02");
@@ -122,7 +145,7 @@ class PriceFinderTest {
         }
         int duration = 180; // 3 hours
 
-        BestPriceResult result = PriceFinder.findBestPriceForDuration(prices, duration);
+        BestPriceResult result = priceFinderService.findBestPriceForDuration(prices, duration);
 
         assertThat(result).isNotNull();
         assertThat(result.getStartTime()).isEqualTo(prices.get(0).getDate().toString());
@@ -138,7 +161,7 @@ class PriceFinderTest {
         }
         int duration = 120; // 2 hours
 
-        BestPriceResult result = PriceFinder.findBestPriceForDuration(prices, duration);
+        BestPriceResult result = priceFinderService.findBestPriceForDuration(prices, duration);
 
         assertThat(result).isNotNull();
         assertThat(result.getStartTime()).isEqualTo(prices.get(3).getDate().toString());
@@ -155,7 +178,7 @@ class PriceFinderTest {
         }
         int duration = 90; // 1 hour and 30 minutes
 
-        BestPriceResult result = PriceFinder.findBestPriceForDuration(prices, duration);
+        BestPriceResult result = priceFinderService.findBestPriceForDuration(prices, duration);
 
         assertThat(result).isNotNull();
         // Here we expect the best start time to be at the first slot, since the price is lowest
@@ -175,7 +198,7 @@ class PriceFinderTest {
         prices.add(new ElectricityPrice(now.plusHours(3), 15.0));
         int duration = 120; // 2 hours
 
-        BestPriceResult result = PriceFinder.findBestPriceForDuration(prices, duration);
+        BestPriceResult result = priceFinderService.findBestPriceForDuration(prices, duration);
 
         assertThat(result).isNotNull();
         // We expect the earliest start time with the lowest total cost
@@ -190,10 +213,33 @@ class PriceFinderTest {
             "180, 2023-11-10T04:00"
     })
     void shouldReturnNotNullBestPriceResultWithCorrectStartTimeForGivenDuration(int duration, String expectedStartTime) {
-        BestPriceResult result = PriceFinder.findBestPriceForDuration(ELECTRICITY_PRICES, duration);
+        BestPriceResult result = priceFinderService.findBestPriceForDuration(ELECTRICITY_PRICES, duration);
 
         assertThat(result).isNotNull();
         assertThat(result.getStartTime()).isEqualTo(expectedStartTime);
+    }
+
+    @Test
+    void currentPrice_ShouldReturnNull_WhenNoCurrentPriceIsAvailable() {
+        LocalDateTime now = LocalDateTime.now();
+        List<ElectricityPrice> prices = List.of(
+                new ElectricityPrice(now.minusHours(2), 10.0),
+                new ElectricityPrice(now.minusHours(1), 20.0)
+        );
+
+        Optional<ElectricityPrice> price = priceFinderService.currentPrice(prices);
+
+        assertThat(price).isEmpty();
+    }
+
+    @Test
+    void currentPrice_ShouldReturnCorrectPrice_WhenPriceIsAvailable() {
+        ElectricityPrice current = ELECTRICITY_PRICES.get(47);
+
+        Optional<ElectricityPrice> price = priceFinderService.currentPrice(ELECTRICITY_PRICES);
+
+        assertThat(price).isPresent()
+                .isEqualTo(Optional.of(current));
     }
 
 }

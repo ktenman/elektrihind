@@ -30,6 +30,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -183,7 +184,11 @@ public class ElekterBotService extends TelegramLongPollingBot {
         List<ElectricityPrice> latestPrices = cacheService.getLatestPrices();
         List<ElectricityPrice> electricityPrices = latestPrices
                 .stream()
-                .filter(electricityPrice -> electricityPrice.getDate().isAfter(now))
+                .filter(electricityPrice -> {
+                    LocalDateTime priceDate = electricityPrice.getDate();
+                    LocalDateTime startOfCurrentHour = now.truncatedTo(ChronoUnit.HOURS);
+                    return !priceDate.isBefore(startOfCurrentHour);
+                })
                 .toList();
         BestPriceResult bestPrice = priceFinderService.findBestPriceForDuration(electricityPrices, durationInMinutes);
 

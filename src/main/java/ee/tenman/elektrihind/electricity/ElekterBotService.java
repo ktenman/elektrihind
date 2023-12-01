@@ -202,7 +202,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
         String response = formatBestPriceResponse(bestPrice);
         response += formatBestPriceResponseForCurrent(currentBestPriceResult);
-        String difference = String.format("%.2f", currentBestPriceResult.getTotalCost() / bestPrice.getTotalCost()) + "x more expensive to start immediately.";
+        String difference = String.format(" %.2f", currentBestPriceResult.getTotalCost() / bestPrice.getTotalCost()) + "x more expensive to start immediately.";
         response += difference;
 
         sendMessage(chatId, response);

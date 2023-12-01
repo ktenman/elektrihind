@@ -34,10 +34,17 @@ public class PriceFinderService {
 
         BestPriceResult bestPriceResult = null;
         double lowestTotalCost = Double.MAX_VALUE;
+        LocalDateTime now = LocalDateTime.now(clock);
 
         for (int startMinuteIndex = 0; startMinuteIndex <= electricityPrices.size() * MINUTES_IN_HOUR - durationInMinutes; startMinuteIndex++) {
-            double currentIntervalCost = calculateCostForInterval(electricityPrices, startMinuteIndex, durationInMinutes);
             LocalDateTime currentStartTime = TimeUtility.getStartTime(electricityPrices, startMinuteIndex);
+
+            // Skip if the start time is in the past
+            if (currentStartTime.isBefore(now)) {
+                continue;
+            }
+
+            double currentIntervalCost = calculateCostForInterval(electricityPrices, startMinuteIndex, durationInMinutes);
 
             boolean isNewLowestCost = currentIntervalCost < lowestTotalCost;
             boolean isSameCostButEarlierStart = currentIntervalCost == lowestTotalCost &&

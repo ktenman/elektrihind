@@ -76,6 +76,16 @@ class PriceFinderServiceTest {
     }
 
     @Test
+    void testBestStartTimeNotInPast() {
+        int durationInMinutes = 60;
+
+        BestPriceResult result = priceFinderService.findBestPriceForDuration(ELECTRICITY_PRICES, durationInMinutes);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getTotalCost()).isPositive();
+    }
+
+    @Test
     void testDurationExceedsListSize() {
         List<ElectricityPrice> prices = ELECTRICITY_PRICES;
         assert prices != null;

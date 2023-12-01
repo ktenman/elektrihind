@@ -39,7 +39,6 @@ public class PriceFinderService {
         for (int startMinuteIndex = 0; startMinuteIndex <= electricityPrices.size() * MINUTES_IN_HOUR - durationInMinutes; startMinuteIndex++) {
             LocalDateTime currentStartTime = TimeUtility.getStartTime(electricityPrices, startMinuteIndex);
 
-            // Skip if the start time is in the past
             if (currentStartTime.isBefore(now)) {
                 continue;
             }

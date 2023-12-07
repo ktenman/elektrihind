@@ -138,7 +138,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
             sendMessage(chatId, response);
         } else if (messageText.toLowerCase().contains("metric")) {
             String response = getMetricResponse();
-            sendMessage(chatId, response);
+            sendMessageCode(chatId, response);
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId);
         } // Consider adding an else block for unhandled text messages
@@ -148,9 +148,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
         double diskUsage = getDiskUsage(); // implement this
         double memoryUsage = getMemoryUsage(); // implement this
 
-        return "CPU: " + getProcessorUsage() + "%\n"
-                + "Disk Usage: " + diskUsage + "%\n"
-                + "Memory Usage: " + memoryUsage + "%";
+        return "`CPU: " + String.format("%.2f", getProcessorUsage()) + "%`\n"
+                + "`Disk Usage: " + String.format("%.2f", diskUsage) + "%`\n"
+                + "`Memory Usage: " + String.format("%.2f", memoryUsage) + "%`";
     }
 
     private double getProcessorUsage() {
@@ -278,6 +278,25 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
+        message.setText(text);
+
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error("Failed to send message: {}", text, e);
+        }
+    }
+
+    void sendMessageCode(long chatId, String text) {
+        if (text == null) {
+            log.warn("Not sending null message to chat: {}", chatId);
+            return;
+        }
+        SendMessage message = new SendMessage();
+        message.setParseMode("MarkdownV2");
+        message.enableMarkdown(true);
+        message.setChatId(String.valueOf(chatId));
+        message.setReplyToMessageId((int) chatId);
         message.setText(text);
 
         try {

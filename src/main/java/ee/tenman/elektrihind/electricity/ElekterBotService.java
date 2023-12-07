@@ -309,7 +309,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         message.setChatId(String.valueOf(chatId));
         message.setReplyToMessageId(replyToMessageId);
 
-        message.setText(text);
+        message.setText("```" + text + "```");
 
         try {
             execute(message);

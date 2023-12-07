@@ -53,6 +53,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
+    private long[] prevTicks;
 
     @Resource
     private HolidaysConfiguration holidaysConfiguration;
@@ -152,9 +153,15 @@ public class ElekterBotService extends TelegramLongPollingBot {
         SystemInfo si = new SystemInfo();
         HardwareAbstractionLayer hal = si.getHardware();
 
-        // CPU Load
         CentralProcessor processor = hal.getProcessor();
-        double cpuLoad = processor.getSystemCpuLoadBetweenTicks() * 100;
+
+        if (prevTicks == null) {
+            // Initialize prevTicks if it's the first call
+            prevTicks = processor.getSystemCpuLoadTicks();
+        }
+        double cpuLoad = processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100;
+        // Update prevTicks for the next call
+        prevTicks = processor.getSystemCpuLoadTicks();
 
         // Memory Usage
         GlobalMemory memory = hal.getMemory();
@@ -176,6 +183,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
         return String.format("CPU: %.2f %% %nDisk Usage: %.2f %% %nMemory Usage: %.2f %%", cpuLoad, diskUsage, memoryUsage);
     }
+
 
     private void handleDocumentMessage(Message message, long chatId) {
         Document document = message.getDocument();

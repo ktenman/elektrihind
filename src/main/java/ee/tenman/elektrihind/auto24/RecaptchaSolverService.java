@@ -15,6 +15,7 @@ public class RecaptchaSolverService {
     private static final String PAGE_URL = "https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring";
     @Resource
     private RecaptchaClient recaptchaClient;
+
     @Value("${twocaptcha.key}")
     private String apiKey;
 

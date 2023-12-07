@@ -13,5 +13,8 @@ omdb-api:
   url: http://localhost:${wiremock.server.port}
   key:
 
+twocaptcha:
+  key:
+
 imdb-api:
   url: http://localhost:${wiremock.server.port}

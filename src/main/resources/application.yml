@@ -13,5 +13,8 @@ omdb-api:
   url: http://www.omdbapi.com
   key: ${OMDB_API_KEY}
 
+twocaptcha:
+  key: ${TWO_CAPTCHA_API_KEY}
+
 imdb-api:
   url: https://imdb-api.projects.thetuhin.com

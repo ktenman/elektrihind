@@ -1,6 +1,7 @@
 package ee.tenman.elektrihind.electricity;
 
 import ee.tenman.elektrihind.CacheService;
+import ee.tenman.elektrihind.auto24.Auto24Service;
 import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.telegram.TelegramService;
@@ -40,6 +41,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -69,6 +71,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     @Resource
     private TelegramService telegramService;
+
+    @Resource
+    private Auto24Service auto24Service;
 
     @Resource
     private PriceFinderService priceFinderService;
@@ -146,6 +151,14 @@ public class ElekterBotService extends TelegramLongPollingBot {
             sendMessageCode(chatId, messageId, response);
         } else if (messageText.toLowerCase().contains("metric")) {
             String response = getSystemMetrics();
+            sendMessageCode(chatId, messageId, response);
+        } else if (messageText.toLowerCase().contains("ark")) {
+            String regNr = messageText.toUpperCase().split(" ")[1];
+            sendMessage(chatId, "Fetching car details for regNr: " + regNr);
+            Map<String, String> carDetails = auto24Service.carDetails(regNr);
+            String response = carDetails.entrySet().stream()
+                    .map(entry -> entry.getKey() + ": " + entry.getValue())
+                    .collect(Collectors.joining("\n"));
             sendMessageCode(chatId, messageId, response);
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);

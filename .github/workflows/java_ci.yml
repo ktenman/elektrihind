@@ -72,6 +72,7 @@ jobs:
           echo "TELEGRAM_ELEKTRITEEMU_TOKEN=${{ secrets.TELEGRAM_ELEKTRITEEMU_TOKEN }}" > .env
           echo "TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}" >> .env
           echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env
+          echo "TWO_CAPTCHA_API_KEY=${{ secrets.TWO_CAPTCHA_API_KEY }}" >> .env
 
       - name: Copy .env and docker-compose.yml files to server
         run: |

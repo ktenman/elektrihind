@@ -304,19 +304,19 @@ public class ElekterBotService extends TelegramLongPollingBot {
             return;
         }
 
-        if (chatId <= 0) {
-            log.warn("Invalid chat ID: {}", chatId);
-            return;
-        }
+//        if (chatId <= 0) {
+//            log.warn("Invalid chat ID: {}", chatId);
+//            return;
+//        }
 
         SendMessage message = new SendMessage();
         message.setParseMode("MarkdownV2");
         message.enableMarkdown(true);
         message.setChatId(String.valueOf(chatId));
 
-        if (replyToMessageId > 0) {
-            message.setReplyToMessageId(replyToMessageId);
-        }
+//        if (replyToMessageId > 0) {
+//            message.setReplyToMessageId(replyToMessageId);
+//        }
 
         message.setText(text);
 

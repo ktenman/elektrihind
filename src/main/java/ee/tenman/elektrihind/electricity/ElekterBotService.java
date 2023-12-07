@@ -138,12 +138,12 @@ public class ElekterBotService extends TelegramLongPollingBot {
             sendMessage(chatId, "Hello! I am an electricity bill calculator bot. Please send me a CSV file.");
         } else if (messageText.toLowerCase().contains("elektrihind")) {
             String response = getElectricityPriceResponse();
-            sendMessage(chatId, response);
+            sendMessageCode(chatId, messageId, response);
         } else if (messageText.toLowerCase().contains("metric")) {
             String response = getMetricResponse();
             sendMessageCode(chatId, messageId, response);
         } else if (matcher.find()) {
-            handleDurationMessage(matcher, chatId);
+            handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages
     }
 
@@ -218,7 +218,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         return response;
     }
 
-    private void handleDurationMessage(Matcher matcher, long chatId) {
+    private void handleDurationMessage(Matcher matcher, long chatId, int messageId) {
         LocalDateTime now = LocalDateTime.now(clock);
         int durationInMinutes = durationInMinutes(matcher);
         List<ElectricityPrice> latestPrices = cacheService.getLatestPrices();
@@ -233,7 +233,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         BestPriceResult bestPrice = priceFinderService.findBestPriceForDuration(electricityPrices, durationInMinutes);
 
         if (bestPrice == null) {
-            sendMessage(chatId, "Could not calculate the best time to start your washing machine.");
+            sendMessageCode(chatId, messageId, "Could not calculate the best time to start your washing machine.");
             return;
         }
 
@@ -245,7 +245,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         String difference = String.format(" %.2f", currentBestPriceResult.getTotalCost() / bestPrice.getTotalCost()) + "x more expensive to start immediately.";
         response += difference;
 
-        sendMessage(chatId, response);
+        sendMessageCode(chatId, messageId, response);
     }
 
     private String formatBestPriceResponseForCurrent(BestPriceResult currentBestPriceResult) {
@@ -298,25 +298,16 @@ public class ElekterBotService extends TelegramLongPollingBot {
      * @param text             The text of the message to send.
      */
     void sendMessageCode(long chatId, int replyToMessageId, String text) {
-        // Validate input parameters
         if (text == null) {
             log.warn("Not sending null message to chat: {}", chatId);
             return;
         }
 
-//        if (chatId <= 0) {
-//            log.warn("Invalid chat ID: {}", chatId);
-//            return;
-//        }
-
         SendMessage message = new SendMessage();
         message.setParseMode("MarkdownV2");
         message.enableMarkdown(true);
         message.setChatId(String.valueOf(chatId));
-
-//        if (replyToMessageId > 0) {
         message.setReplyToMessageId(replyToMessageId);
-//        }
 
         message.setText(text);
 

@@ -121,13 +121,16 @@ public class ElekterBotService extends TelegramLongPollingBot {
         long chatId = message.getChatId();
 
         if (message.hasText()) {
-            handleTextMessage(message, chatId);
+            handleTextMessage(message);
         } else if (message.hasDocument()) {
             handleDocumentMessage(message, chatId);
         }
     }
 
-    private void handleTextMessage(Message message, long chatId) {
+    private void handleTextMessage(Message message) {
+        long chatId = message.getChatId();
+        int messageId = message.getMessageId();
+
         String messageText = message.getText();
         Matcher matcher = DURATION_PATTERN.matcher(messageText);
 
@@ -138,7 +141,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
             sendMessage(chatId, response);
         } else if (messageText.toLowerCase().contains("metric")) {
             String response = getMetricResponse();
-            sendMessageCode(chatId, response);
+            sendMessageCode(chatId, messageId, response);
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId);
         } // Consider adding an else block for unhandled text messages
@@ -147,8 +150,8 @@ public class ElekterBotService extends TelegramLongPollingBot {
     private String getMetricResponse() {
         double diskUsage = getDiskUsage(); // implement this
         double memoryUsage = getMemoryUsage(); // implement this
-
-        return "`CPU: " + String.format("%.2f", getProcessorUsage()) + "%`\n"
+        double processorUsage = getProcessorUsage();
+        return "`CPU: " + String.format("%.2f", processorUsage) + "%`\n"
                 + "`Disk Usage: " + String.format("%.2f", diskUsage) + "%`\n"
                 + "`Memory Usage: " + String.format("%.2f", memoryUsage) + "%`";
     }
@@ -287,24 +290,43 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
     }
 
-    void sendMessageCode(long chatId, String text) {
+    /**
+     * Sends a message as a reply to a specific message in a Telegram chat.
+     *
+     * @param chatId           The chat ID to send the message to.
+     * @param replyToMessageId The ID of the message to reply to. If this is less than or equal to 0, the message won't be sent as a reply.
+     * @param text             The text of the message to send.
+     */
+    void sendMessageCode(long chatId, int replyToMessageId, String text) {
+        // Validate input parameters
         if (text == null) {
             log.warn("Not sending null message to chat: {}", chatId);
             return;
         }
+
+        if (chatId <= 0) {
+            log.warn("Invalid chat ID: {}", chatId);
+            return;
+        }
+
         SendMessage message = new SendMessage();
         message.setParseMode("MarkdownV2");
         message.enableMarkdown(true);
         message.setChatId(String.valueOf(chatId));
-        message.setReplyToMessageId((int) chatId);
+
+        if (replyToMessageId > 0) {
+            message.setReplyToMessageId(replyToMessageId);
+        }
+
         message.setText(text);
 
         try {
             execute(message);
         } catch (TelegramApiException e) {
-            log.error("Failed to send message: {}", text, e);
+            log.error("Failed to send message to chat: {} with text: {}", chatId, text, e);
         }
     }
+
 
     void handleCsvDocument(Document document, long chatId) {
         String filePath = null;

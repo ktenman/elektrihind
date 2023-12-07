@@ -18,13 +18,8 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
-import oshi.SystemInfo;
-import oshi.hardware.CentralProcessor;
-import oshi.hardware.GlobalMemory;
-import oshi.hardware.HardwareAbstractionLayer;
-import oshi.software.os.FileSystem;
-import oshi.software.os.OSFileStore;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -138,50 +133,46 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
         if ("/start".equals(messageText)) {
             sendMessage(chatId, "Hello! I am an electricity bill calculator bot. Please send me a CSV file.");
-        } else if (messageText.equalsIgnoreCase("metric")) {
-            String metrics = getSystemMetrics();
-            sendMessage(chatId, metrics);
         } else if (messageText.toLowerCase().contains("elektrihind")) {
             String response = getElectricityPriceResponse();
+            sendMessage(chatId, response);
+        } else if (messageText.toLowerCase().contains("metric")) {
+            String response = getMetricResponse();
             sendMessage(chatId, response);
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId);
         } // Consider adding an else block for unhandled text messages
     }
 
-    private String getSystemMetrics() {
-        SystemInfo si = new SystemInfo();
-        HardwareAbstractionLayer hal = si.getHardware();
+    private String getMetricResponse() {
+        double diskUsage = getDiskUsage(); // implement this
+        double memoryUsage = getMemoryUsage(); // implement this
 
-        CentralProcessor processor = hal.getProcessor();
+        return "CPU: " + getProcessorUsage() + "%\n"
+                + "Disk Usage: " + diskUsage + "%\n"
+                + "Memory Usage: " + memoryUsage + "%";
+    }
 
-        if (prevTicks == null) {
-            // Initialize prevTicks if it's the first call
-            prevTicks = processor.getSystemCpuLoadTicks();
-        }
-        double cpuLoad = processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100;
-        // Update prevTicks for the next call
-        prevTicks = processor.getSystemCpuLoadTicks();
+    private double getProcessorUsage() {
+        com.sun.management.OperatingSystemMXBean bean = (com.sun.management.OperatingSystemMXBean) java.lang.management.ManagementFactory
+                .getOperatingSystemMXBean();
 
-        // Memory Usage
-        GlobalMemory memory = hal.getMemory();
-        double memoryUsage = (double) (memory.getTotal() - memory.getAvailable()) / memory.getTotal() * 100;
+        return 100.0 * bean.getProcessCpuLoad();
+    }
 
-        // Disk Usage
-        FileSystem fileSystem = si.getOperatingSystem().getFileSystem();
-        List<OSFileStore> fsList = fileSystem.getFileStores();
-        long totalSpace = 0;
-        long usableSpace = 0;
-        for (OSFileStore fs : fsList) {
-            totalSpace += fs.getTotalSpace();
-            usableSpace += fs.getTotalSpace() - fs.getUsableSpace();
-        }
-        double diskUsage = 0.0;
-        if (totalSpace > 0) {
-            diskUsage = (double) usableSpace / totalSpace * 100;
-        }
+    private double getDiskUsage() {
+        File root = new File("/");
+        long totalSpace = root.getTotalSpace();
+        long usedSpace = root.getUsableSpace();
+        return 100.0 * (totalSpace - usedSpace) / totalSpace;
+    }
 
-        return String.format("CPU: %.2f %% %nDisk Usage: %.2f %% %nMemory Usage: %.2f %%", cpuLoad, diskUsage, memoryUsage);
+    private double getMemoryUsage() {
+        Runtime runtime = Runtime.getRuntime();
+        long maxMemory = runtime.maxMemory();
+        long allocatedMemory = runtime.totalMemory();
+        long freeMemory = runtime.freeMemory();
+        return 100.0 * (allocatedMemory - freeMemory) / maxMemory;
     }
 
 

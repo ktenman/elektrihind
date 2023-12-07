@@ -33,12 +33,12 @@
     </profiles>
 
     <dependencies>
-        <!-- https://mvnrepository.com/artifact/com.github.oshi/oshi-core -->
-        <dependency>
-            <groupId>com.github.oshi</groupId>
-            <artifactId>oshi-core</artifactId>
-            <version>6.4.8</version>
-        </dependency>
+        <!--        &lt;!&ndash; https://mvnrepository.com/artifact/com.github.oshi/oshi-core &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.github.oshi</groupId>-->
+        <!--            <artifactId>oshi-core</artifactId>-->
+        <!--            <version>6.4.8</version>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots</artifactId>

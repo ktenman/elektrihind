@@ -315,7 +315,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         message.setChatId(String.valueOf(chatId));
 
 //        if (replyToMessageId > 0) {
-//            message.setReplyToMessageId(replyToMessageId);
+        message.setReplyToMessageId(replyToMessageId);
 //        }
 
         message.setText(text);

@@ -49,12 +49,20 @@ public class Auto24PriceService {
         $("button[type='submit']").click();
         int count = 0;
         while ($(".errorMessage").exists() && count++ < 5) {
+            acceptCookies = $(By.id("onetrust-accept-btn-handler"));
+            if (acceptCookies.exists()) {
+                acceptCookies.click();
+            }
             log.warn("Invalid captcha for regNr: {}", regNr);
             screenshot = $("#vpc_captcha").screenshot();
             assert screenshot != null;
             log.info("Solving captcha for regNr: {}", regNr);
             solveCaptcha = recaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
             $(By.name("checksec1")).setValue(solveCaptcha);
+            acceptCookies = $(By.id("onetrust-accept-btn-handler"));
+            if (acceptCookies.exists()) {
+                acceptCookies.click();
+            }
             $("button[type='submit']").click();
         }
         log.info("Price captcha solved for regNr: {}", regNr);

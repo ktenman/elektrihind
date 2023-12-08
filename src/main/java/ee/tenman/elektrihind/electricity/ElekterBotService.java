@@ -21,7 +21,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import oshi.SystemInfo;
-import oshi.hardware.CentralProcessor;
 import oshi.hardware.GlobalMemory;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.software.os.FileSystem;
@@ -55,7 +54,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
-    private long[] prevTicks;
 
     @Resource
     private HolidaysConfiguration holidaysConfiguration;
@@ -172,15 +170,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         SystemInfo si = new SystemInfo();
         HardwareAbstractionLayer hal = si.getHardware();
 
-        CentralProcessor processor = hal.getProcessor();
-
-        if (prevTicks == null) {
-            // Initialize prevTicks if it's the first call
-            prevTicks = processor.getSystemCpuLoadTicks();
-        }
-        double cpuLoad = processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100;
-        // Update prevTicks for the next call
-        prevTicks = processor.getSystemCpuLoadTicks();
+        double cpuLoad = digitalOceanService.getCpuUsagePercentage();
 
         // Memory Usage
         GlobalMemory memory = hal.getMemory();

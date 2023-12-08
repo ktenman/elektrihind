@@ -19,7 +19,7 @@ RUN apt-get update && \
     rm geckodriver-v0.33.0-linux64.tar.gz
 
 # Set environment variables
-ENV JAVA_OPTS="-Xmx600m -Xms300m -Duser.timezone=Europe/Tallinn"
+ENV JAVA_OPTS="-Xmx400m -Xms200m -Duser.timezone=Europe/Tallinn"
 ENV PATH="/usr/bin/firefox:/usr/bin/geckodriver:${PATH}"
 
 # Optionally, create the cache directory and set proper permissions

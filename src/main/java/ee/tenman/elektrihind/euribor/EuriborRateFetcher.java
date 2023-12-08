@@ -31,6 +31,7 @@ public class EuriborRateFetcher {
     public void init() {
         log.info("Initializing EuriborRateFetcher...");
         fetchEuriborRates();
+        log.info("EuriborRateFetcher initialized.");
     }
 
     public SortedMap<LocalDate, BigDecimal> getRates() {

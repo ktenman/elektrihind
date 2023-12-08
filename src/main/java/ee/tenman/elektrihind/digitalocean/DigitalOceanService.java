@@ -20,9 +20,9 @@ public class DigitalOceanService {
         digitalOceanClient.rebootDroplet(DROPLET_ID, Map.of("type", "reboot"));
     }
 
-    public static String[] getLast10Seconds() {
+    public static String[] getLast5Seconds() {
         Instant now = Instant.now();
-        Instant oneMinuteAgo = now.minus(10, ChronoUnit.SECONDS);
+        Instant oneMinuteAgo = now.minus(5, ChronoUnit.SECONDS);
 
         String start = String.valueOf(oneMinuteAgo.getEpochSecond());
         String end = String.valueOf(now.getEpochSecond());
@@ -31,7 +31,7 @@ public class DigitalOceanService {
     }
 
     public double getCpuUsagePercentage() {
-        String[] lastMinute = getLast10Seconds();
+        String[] lastMinute = getLast5Seconds();
         DigitalOceanResponse response = digitalOceanClient.getDropletCpuMetrics(DROPLET_ID, lastMinute[0], lastMinute[1]);
 
         double totalCpuTime = 0;

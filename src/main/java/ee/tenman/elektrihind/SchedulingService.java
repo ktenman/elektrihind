@@ -2,6 +2,7 @@ package ee.tenman.elektrihind;
 
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
+import ee.tenman.elektrihind.euribor.EuriborRateFetcher;
 import ee.tenman.elektrihind.telegram.TelegramService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,9 @@ public class SchedulingService {
 
     @Resource
     private CacheService cacheService;
+
+    @Resource
+    private EuriborRateFetcher euriborRateFetcher;
 
     @Resource
     private Clock clock;
@@ -51,6 +55,12 @@ public class SchedulingService {
         }
 
         cacheService.setLatestPrices(electricityPrices);
+    }
+
+    @Scheduled(cron = "0 59 * * * ?") // Runs every 60 minutes
+    public void fetchEuribor() {
+        log.info("Fetching Euribor rates...");
+        euriborRateFetcher.init();
     }
 
     void sendMessageAndIncrementCount(String formattedPrices) {

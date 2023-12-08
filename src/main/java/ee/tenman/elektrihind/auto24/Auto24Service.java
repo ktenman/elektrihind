@@ -63,7 +63,7 @@ public class Auto24Service {
                 .parent()
                 .text()
                 .replace("\n", " ");
-        Selenide.closeWindow();
+        Selenide.closeWebDriver();
         log.info("Price for regNr: {} is {}", regNr, response);
         return response;
     }
@@ -94,6 +94,7 @@ public class Auto24Service {
         return carDetails;
     }
 
+    @SneakyThrows
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
     public String search(String regNr) {
         long startTime = System.nanoTime();

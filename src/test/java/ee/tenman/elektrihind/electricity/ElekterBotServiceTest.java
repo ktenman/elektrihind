@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 
+import static ee.tenman.elektrihind.electricity.ElekterBotService.CAR_REGISTRATION_PATTERN;
 import static ee.tenman.elektrihind.electricity.ElekterBotService.DURATION_PATTERN;
 import static ee.tenman.elektrihind.electricity.PriceFinderServiceTest.ELECTRICITY_PRICES;
 import static java.time.ZoneOffset.UTC;
@@ -276,6 +278,21 @@ class ElekterBotServiceTest {
         int result = service.durationInMinutes(matcher);
 
         assertThat(result).isEqualTo(expectedDurationInMinutes);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "ark 12345", "ark AB123", "ark abcD"})
+    void testValidPatterns(String input) {
+        assertThat(CAR_REGISTRATION_PATTERN.matcher(input).matches()).isTrue();
+    }
+
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "ark", "arK 123 456", "ARK-123", "xyz 123", "ark on katki"})
+    void testInvalidPatterns(String input) {
+        assertThat(CAR_REGISTRATION_PATTERN.matcher(input).matches()).isFalse();
     }
 
 }

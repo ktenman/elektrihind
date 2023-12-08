@@ -42,6 +42,10 @@ public class Auto24DetailsService {
         String captchaToken = recaptchaSolverService.solveCaptcha();
         log.info("Car captcha solved for regNr: {}", regNr);
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
+        acceptCookies = $(By.id("onetrust-accept-btn-handler"));
+        if (acceptCookies.exists()) {
+            acceptCookies.click();
+        }
         $("button[type='submit']").click();
         acceptCookies = $(By.id("onetrust-accept-btn-handler"));
         if (acceptCookies.exists()) {

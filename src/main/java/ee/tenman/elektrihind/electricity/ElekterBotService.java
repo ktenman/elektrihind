@@ -46,7 +46,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -84,6 +83,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     @Resource
     private PriceFinderService priceFinderService;
+
+    @Resource
+    private ExecutorService executor;
 
     @Value("${telegram.elektriteemu.token}")
     private String token;
@@ -163,8 +165,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
             String regNr = messageText.toUpperCase().split(" ")[1];
             sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
 
-            ExecutorService executor = Executors.newFixedThreadPool(2);
-
             CompletableFuture<String> priceFuture = CompletableFuture.supplyAsync(
                     () -> auto24PriceService.carPrice(regNr), executor);
             CompletableFuture<Map<String, String>> detailsFuture = CompletableFuture.supplyAsync(
@@ -177,8 +177,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
                         sendMessage(chatId, "Failed to fetch car details: " + e.getMessage());
                         return null;
                     });
-
-            executor.shutdown();
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages

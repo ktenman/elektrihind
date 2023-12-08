@@ -39,9 +39,9 @@ public class Auto24Service {
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring");
         $(By.id("onetrust-accept-btn-handler")).click();
         $(By.id("reg_nr-inp")).setValue(regNr);
-        log.info("Solving captcha for regNr: {}", regNr);
+        log.info("Solving car captcha for regNr: {}", regNr);
         String captchaToken = recaptchaSolverService.solveCaptcha();
-        log.info("Captcha solved for regNr: {}", regNr);
+        log.info("Car captcha solved for regNr: {}", regNr);
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
         $("button[type='submit']").click();
         ElementsCollection rows = $$("table.result tr");
@@ -64,10 +64,10 @@ public class Auto24Service {
 
         File screenshot = $("#vpc_captcha").screenshot();
         assert screenshot != null;
-        log.info("Solving captcha for regNr: {}", regNr);
+        log.info("Solving price captcha for regNr: {}", regNr);
         String solveCaptcha = recaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
         $(By.name("checksec1")).setValue(solveCaptcha);
-        log.info("Captcha solved for regNr: {}", regNr);
+        log.info("Price Captcha solved for regNr: {}", regNr);
         $("button[type='submit']").click();
         int count = 0;
         while ($(".errorMessage").exists() && count++ < 5) {

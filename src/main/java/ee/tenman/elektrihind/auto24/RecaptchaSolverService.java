@@ -47,9 +47,9 @@ public class RecaptchaSolverService {
         Map<String, Object> response = recaptchaClient.sendImageCaptcha(apiKey, "post", multipartFile, 1);
         String requestId = (String) response.get("request");
 
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 60; i++) {
             try {
-                Thread.sleep(3000);
+                Thread.sleep(2000);
                 Map<String, Object> captchaResponse = recaptchaClient.retrieveCaptcha(apiKey, "get", requestId, 1);
                 if ((int) captchaResponse.get("status") == 1) {
                     return (String) captchaResponse.get("request");

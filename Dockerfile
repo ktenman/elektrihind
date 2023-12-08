@@ -5,21 +5,20 @@ COPY pom.xml .
 COPY src /app/src
 RUN mvn -T 1C --batch-mode --quiet package -DskipTests
 
-# Second Stage: Install Firefox and GeckoDriver
-FROM alpine:latest AS firefox
-RUN apk --no-cache add firefox-esr wget && \
-    wget -q "https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz" -O /tmp/geckodriver.tgz && \
-    tar zxf /tmp/geckodriver.tgz -C /usr/local/bin/ && \
-    rm /tmp/geckodriver.tgz
+# Second Stage: Install Chrome and ChromeDriver
+FROM alpine:latest AS chrome
+RUN apk --no-cache add chromium chromium-chromedriver wget && \
+    wget -q "https://chromedriver.storage.googleapis.com/92.0.4515.107/chromedriver_linux64.zip" -O /tmp/chromedriver.zip && \
+    unzip -o /tmp/chromedriver.zip -d /usr/local/bin/ && \
+    rm /tmp/chromedriver.zip
 
 # Final Stage: Create the runtime image
 FROM bellsoft/liberica-runtime-container:jre-21-slim-musl
 WORKDIR /app
 
-# Copy Firefox and GeckoDriver from the second stage
-# Update the path to Firefox binary as per the Alpine Linux installation
-COPY --from=firefox /usr/bin/firefox-esr /usr/bin/firefox
-COPY --from=firefox /usr/local/bin/geckodriver /usr/local/bin/geckodriver
+# Copy Chrome and ChromeDriver from the second stage
+COPY --from=chrome /usr/bin/chromium-browser /usr/bin/chromium-browser
+COPY --from=chrome /usr/lib/chromium/chromedriver /usr/bin/chromedriver
 
 # Optionally, create the cache directory and set proper permissions
 RUN mkdir /app/cache && chown 1000:1000 /app/cache

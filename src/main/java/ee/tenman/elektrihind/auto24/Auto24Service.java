@@ -21,7 +21,7 @@ public class Auto24Service {
 
     static {
         Configuration.headless = true;
-        Configuration.browser = "firefox";
+        Configuration.browser = "chrome";
     }
 
     @Resource

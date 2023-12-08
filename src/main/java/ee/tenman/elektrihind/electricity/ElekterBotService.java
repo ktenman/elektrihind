@@ -56,6 +56,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
+    public static final Pattern CAR_REGISTRATION_PATTERN = Pattern.compile("ark\\s+([a-zA-Z0-9]+)", Pattern.CASE_INSENSITIVE);
 
     @Resource
     private HolidaysConfiguration holidaysConfiguration;
@@ -149,6 +150,8 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
         String messageText = message.getText();
         Matcher matcher = DURATION_PATTERN.matcher(messageText);
+        Matcher arkMatcher = CAR_REGISTRATION_PATTERN.matcher(messageText);
+
 
         if ("/start".equals(messageText)) {
             sendMessage(chatId, "Hello! I am an electricity bill calculator bot. Please send me a CSV file.");
@@ -158,9 +161,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
         } else if (messageText.toLowerCase().contains("metric")) {
             String response = getSystemMetrics();
             sendMessageCode(chatId, messageId, response);
-        } else if (messageText.toLowerCase().contains("ark")) {
+        } else if (arkMatcher.find()) {
             CompletableFuture.runAsync(() -> {
-                String regNr = messageText.toUpperCase().split(" ")[1];
+                String regNr = arkMatcher.group(1).toUpperCase();
                 sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
                 String search = auto24Service.search(regNr);
                 sendMessageCode(chatId, messageId, search);

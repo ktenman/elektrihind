@@ -162,7 +162,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
             sendMessageCode(chatId, messageId, search);
         } else if (messageText.equalsIgnoreCase("reboot")) {
             digitalOceanService.rebootDroplet();
-            sendMessage(chatId, "Droplet reboot initiated.");
+            sendMessageCode(chatId, messageId, "Droplet reboot initiated!");
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages

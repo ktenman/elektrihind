@@ -7,9 +7,8 @@ RUN mvn -T 1C --batch-mode --quiet package -DskipTests
 
 # Second Stage: Install Firefox and GeckoDriver
 FROM alpine:latest AS firefox
-RUN apk add --no-cache firefox-esr
-RUN apk add --no-cache wget && \
-    wget -q "https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz" -O /tmp/geckodriver.tgz && \
+RUN apk --no-cache add firefox-esr wget && \
+    wget -q "https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz" -O /tmp/geckodriver.tgz && \
     tar zxf /tmp/geckodriver.tgz -C /usr/local/bin/ && \
     rm /tmp/geckodriver.tgz
 

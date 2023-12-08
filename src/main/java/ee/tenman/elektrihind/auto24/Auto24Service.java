@@ -4,6 +4,7 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
+import com.codeborne.selenide.SelenideElement;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +38,10 @@ public class Auto24Service {
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
     public Map<String, String> carDetails(String regNr) {
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring");
-        $(By.id("onetrust-accept-btn-handler")).click();
+        SelenideElement acceptCookies = $(By.id("onetrust-accept-btn-handler"));
+        if (acceptCookies.exists()) {
+            acceptCookies.click();
+        }
         $(By.id("reg_nr-inp")).setValue(regNr);
         log.info("Solving car captcha for regNr: {}", regNr);
         String captchaToken = recaptchaSolverService.solveCaptcha();
@@ -59,7 +63,10 @@ public class Auto24Service {
     @SneakyThrows(IOException.class)
     public String carPrice(String regNr) {
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");
-        $(By.id("onetrust-accept-btn-handler")).click();
+        SelenideElement acceptCookies = $(By.id("onetrust-accept-btn-handler"));
+        if (acceptCookies.exists()) {
+            acceptCookies.click();
+        }
         $(By.name("vpc_reg_nr")).setValue(regNr);
 
         File screenshot = $("#vpc_captcha").screenshot();

@@ -6,7 +6,7 @@ COPY src /app/src
 RUN mvn -T 1C --batch-mode --quiet package -DskipTests
 
 # Stage 2: Final Image with OpenJDK, Firefox, and GeckoDriver
-FROM openjdk:21-jdk-bookworm
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 # Install Firefox and GeckoDriver

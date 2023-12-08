@@ -213,9 +213,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
         return String.format("`" +
                 "CPU: %.2f %% %n" +
-                "CPU (v2): %.2f %% %n" +
+                // "CPU (v2): %.2f %% %n" +
                 "Disk Usage: %.2f %% %n" +
-                "Memory Usage: %.2f %%`", cpuLoad, digitalOceanService.getCpuUsagePercentage(), diskUsage, memoryUsage);
+                "Memory Usage: %.2f %%`", cpuLoad, diskUsage, memoryUsage);
     }
 
     private void handleDocumentMessage(Message message, long chatId) {

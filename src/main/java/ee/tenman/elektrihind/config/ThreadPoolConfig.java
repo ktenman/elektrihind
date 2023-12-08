@@ -11,6 +11,6 @@ public class ThreadPoolConfig {
 
     @Bean
     public ExecutorService taskExecutor() {
-        return Executors.newFixedThreadPool(2); // Define the desired number of threads
+        return Executors.newSingleThreadExecutor();
     }
 }

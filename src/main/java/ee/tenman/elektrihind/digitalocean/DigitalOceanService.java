@@ -31,10 +31,10 @@ public class DigitalOceanService {
     }
 
     public double getCpuUsagePercentage() {
-        String[] lastMinute = getLast5Seconds();
-        DigitalOceanResponse response = digitalOceanClient.getDropletCpuMetrics(DROPLET_ID, lastMinute[0], lastMinute[1]);
+        String[] last5Seconds = getLast5Seconds();
+        DigitalOceanResponse response = digitalOceanClient.getDropletCpuMetrics(DROPLET_ID, last5Seconds[0], last5Seconds[1]);
 
-        double totalCpuTime = 0;
+        double totalCpuTime = 0.000000000000001;
         double idleTime = 0;
 
         for (Result result : response.getData().getResult()) {

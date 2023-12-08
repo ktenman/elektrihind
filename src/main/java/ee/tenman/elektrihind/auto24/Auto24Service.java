@@ -98,7 +98,7 @@ public class Auto24Service {
         return carDetails;
     }
 
-    @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
+    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
     public String search(String regNr) {
         return carPrice(regNr) + "\n\n" + carDetails(regNr).entrySet().stream()
                 .map(entry -> entry.getKey() + ": " + entry.getValue())

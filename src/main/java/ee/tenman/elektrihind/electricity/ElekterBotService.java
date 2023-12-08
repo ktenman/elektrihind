@@ -5,6 +5,7 @@ import ee.tenman.elektrihind.auto24.Auto24Service;
 import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.digitalocean.DigitalOceanService;
+import ee.tenman.elektrihind.euribor.EuriborRateFetcher;
 import ee.tenman.elektrihind.telegram.TelegramService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
@@ -87,6 +88,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
     @Resource(name = "singleThreadExecutor")
     private ExecutorService singleThreadExecutor;
 
+    @Resource
+    private EuriborRateFetcher euriborRateFetcher;
+
     @Value("${telegram.elektriteemu.token}")
     private String token;
 
@@ -163,6 +167,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
         } else if (messageText.toLowerCase().contains("metric")) {
             String response = getSystemMetrics();
             sendMessageCode(chatId, messageId, response);
+        } else if (messageText.toLowerCase().contains("euribor")) {
+            String euriborResonse = euriborRateFetcher.getEuriborRateResponse();
+            sendMessageCode(chatId, messageId, euriborResonse);
         } else if (arkMatcher.find()) {
             CompletableFuture.runAsync(() -> {
                 String regNr = arkMatcher.group(1).toUpperCase();

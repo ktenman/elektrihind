@@ -72,6 +72,7 @@ public class Auto24PriceService {
                 .text()
                 .replace("\n", " ");
         Selenide.closeWindow();
+        log.info("Price for regNr: {} is {}", regNr, response);
         return response;
     }
 }

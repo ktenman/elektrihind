@@ -51,6 +51,7 @@ public class Auto24DetailsService {
             carDetails.put(key, value);
         }
         Selenide.closeWindow();
+        log.info("Found car details for regNr: {}", regNr);
         return carDetails;
     }
 }

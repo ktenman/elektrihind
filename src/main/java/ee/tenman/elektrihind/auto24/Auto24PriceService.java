@@ -46,7 +46,6 @@ public class Auto24PriceService {
         log.info("Solving price captcha for regNr: {}", regNr);
         String solveCaptcha = recaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
         $(By.name("checksec1")).setValue(solveCaptcha);
-        log.info("Price Captcha solved for regNr: {}", regNr);
         $("button[type='submit']").click();
         int count = 0;
         while ($(".errorMessage").exists() && count++ < 5) {
@@ -58,7 +57,7 @@ public class Auto24PriceService {
             $(By.name("checksec1")).setValue(solveCaptcha);
             $("button[type='submit']").click();
         }
-        log.info("Captcha solved for regNr: {}", regNr);
+        log.info("Price captcha solved for regNr: {}", regNr);
         String response = $$(By.tagName("div")).filter(Condition.text("Sõiduki keskmine hind"))
                 .last()
                 .parent()

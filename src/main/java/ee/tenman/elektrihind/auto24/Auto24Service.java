@@ -51,7 +51,7 @@ public class Auto24Service {
             String value = rows.get(i).$$("td").get(1).getText();
             carDetails.put(key, value);
         }
-        Selenide.closeWebDriver();
+//        Selenide.closeWebDriver();
         return carDetails;
     }
 
@@ -81,7 +81,7 @@ public class Auto24Service {
             $("button[type='submit']").click();
         }
         String response = $$(By.tagName("div")).filter(Condition.text("Sõiduki keskmine hind")).last().parent().text();
-        Selenide.closeWebDriver();
+//        Selenide.closeWebDriver();
         return response;
     }
 }

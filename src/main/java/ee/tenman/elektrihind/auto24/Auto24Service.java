@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -29,12 +30,15 @@ import static com.codeborne.selenide.Selenide.executeJavaScript;
 public class Auto24Service {
 
     @Resource
+    private ExecutorService executorService;
+
+    @Resource
     private RecaptchaSolverService recaptchaSolverService;
 
     @SneakyThrows({IOException.class, InterruptedException.class})
     public String carPrice(String regNr) {
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.SECONDS.sleep(2);
         SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
         if (acceptCookies.exists()) {
             acceptCookies.click();
@@ -71,7 +75,7 @@ public class Auto24Service {
     @SneakyThrows({InterruptedException.class})
     public Map<String, String> carDetails(String regNr) {
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring");
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.SECONDS.sleep(2);
         SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
         if (acceptCookies.exists()) {
             acceptCookies.click();

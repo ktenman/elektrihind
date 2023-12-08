@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -154,10 +155,12 @@ public class ElekterBotService extends TelegramLongPollingBot {
             String response = getSystemMetrics();
             sendMessageCode(chatId, messageId, response);
         } else if (messageText.toLowerCase().contains("ark")) {
-            String regNr = messageText.toUpperCase().split(" ")[1];
-            sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
-            String search = auto24Service.search(regNr);
-            sendMessageCode(chatId, messageId, search);
+            CompletableFuture.runAsync(() -> {
+                String regNr = messageText.toUpperCase().split(" ")[1];
+                sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
+                String search = auto24Service.search(regNr);
+                sendMessageCode(chatId, messageId, search);
+            });
         } else if (messageText.equalsIgnoreCase("reboot")) {
             digitalOceanService.rebootDroplet();
             sendMessageCode(chatId, messageId, "Droplet reboot initiated!");

@@ -1,7 +1,6 @@
 package ee.tenman.elektrihind.movies;
 
 import com.codeborne.selenide.Condition;
-import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.SelenideElement;
 import com.codeborne.selenide.WebDriverRunner;
 import lombok.extern.slf4j.Slf4j;
@@ -22,11 +21,6 @@ public class DuckDuckGoClient {
 
     private static final String DIRECTED_BY_TEXT = "Directed by";
     private static final String SEARCH_URL_TEMPLATE = "https://duckduckgo.com/?q=%s+site:imdb.com";
-
-    static {
-        Configuration.browser = "firefox";
-        Configuration.headless = true;
-    }
 
     public Optional<String> searchForImdbLink(String title, String year, String director) {
         if (StringUtils.isBlank(title) || StringUtils.isBlank(year) || StringUtils.isBlank(director)) {

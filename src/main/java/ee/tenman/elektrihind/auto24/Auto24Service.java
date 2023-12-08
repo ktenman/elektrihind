@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.codeborne.selenide.Selenide.$;
@@ -30,10 +31,11 @@ public class Auto24Service {
     @Resource
     private RecaptchaSolverService recaptchaSolverService;
 
-    @SneakyThrows(IOException.class)
+    @SneakyThrows({IOException.class, InterruptedException.class})
     public String carPrice(String regNr) {
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");
-        SelenideElement acceptCookies = $(By.id("onetrust-accept-btn-handler"));
+        TimeUnit.SECONDS.sleep(1);
+        SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
         if (acceptCookies.exists()) {
             acceptCookies.click();
         }
@@ -66,9 +68,11 @@ public class Auto24Service {
         return response;
     }
 
+    @SneakyThrows({InterruptedException.class})
     public Map<String, String> carDetails(String regNr) {
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring");
-        SelenideElement acceptCookies = $(By.id("onetrust-accept-btn-handler"));
+        TimeUnit.SECONDS.sleep(1);
+        SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
         if (acceptCookies.exists()) {
             acceptCookies.click();
         }
@@ -77,15 +81,7 @@ public class Auto24Service {
         String captchaToken = recaptchaSolverService.solveCaptcha();
         log.info("Car captcha solved for regNr: {}", regNr);
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
-        acceptCookies = $(By.id("onetrust-accept-btn-handler"));
-        if (acceptCookies.exists()) {
-            acceptCookies.click();
-        }
         $("button[type='submit']").click();
-        acceptCookies = $(By.id("onetrust-accept-btn-handler"));
-        if (acceptCookies.exists()) {
-            acceptCookies.click();
-        }
         ElementsCollection rows = $$("table.result tr");
         Map<String, String> carDetails = new HashMap<>();
         for (int i = 0; i < rows.size(); i++) {

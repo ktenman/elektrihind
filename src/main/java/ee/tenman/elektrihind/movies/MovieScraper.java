@@ -1,7 +1,6 @@
 package ee.tenman.elektrihind.movies;
 
 import com.codeborne.selenide.Condition;
-import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
@@ -71,8 +70,6 @@ public class MovieScraper {
 
     private void initializeBrowser() {
         log.info("Initializing browser configurations.");
-        Configuration.browser = "firefox";
-        Configuration.headless = true;
         open("https://poff.ee/otsi_filmi/?towns=Tartu&cinemas=Elektriteater%2C%20Tartu");
     }
 

@@ -63,7 +63,7 @@ public class Auto24Service {
                 .parent()
                 .text()
                 .replace("\n", " ");
-        Selenide.closeWebDriver();
+        Selenide.closeWindow();
         log.info("Price for regNr: {} is {}", regNr, response);
         return response;
     }

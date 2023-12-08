@@ -84,9 +84,9 @@ public class Auto24Service {
             log.info("Solving captcha for regNr: {}", regNr);
             solveCaptcha = recaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
             $(By.name("checksec1")).setValue(solveCaptcha);
-            log.info("Captcha solved for regNr: {}", regNr);
             $("button[type='submit']").click();
         }
+        log.info("Captcha solved for regNr: {}", regNr);
         String response = $$(By.tagName("div")).filter(Condition.text("Sõiduki keskmine hind")).last().parent().text();
 //        Selenide.closeWebDriver();
         return response;

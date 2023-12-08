@@ -20,21 +20,16 @@ public class DigitalOceanService {
         digitalOceanClient.rebootDroplet(DROPLET_ID, Map.of("type", "reboot"));
     }
 
-    public static String[] getLast5Seconds() {
+    public double getCpuUsagePercentage() {
         Instant now = Instant.now();
-        Instant oneMinuteAgo = now.minus(5, ChronoUnit.SECONDS);
+        Instant oneMinuteAgo = now.minus(1, ChronoUnit.MINUTES);
 
         String start = String.valueOf(oneMinuteAgo.getEpochSecond());
         String end = String.valueOf(now.getEpochSecond());
 
-        return new String[]{start, end};
-    }
+        DigitalOceanResponse response = digitalOceanClient.getDropletCpuMetrics(DROPLET_ID, start, end);
 
-    public double getCpuUsagePercentage() {
-        String[] last5Seconds = getLast5Seconds();
-        DigitalOceanResponse response = digitalOceanClient.getDropletCpuMetrics(DROPLET_ID, last5Seconds[0], last5Seconds[1]);
-
-        double totalCpuTime = 0.000000000000001;
+        double totalCpuTime = 0.0001;
         double idleTime = 0;
 
         for (Result result : response.getData().getResult()) {

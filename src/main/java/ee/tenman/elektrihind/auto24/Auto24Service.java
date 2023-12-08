@@ -61,7 +61,7 @@ public class Auto24Service {
                 .parent()
                 .text()
                 .replace("\n", " ");
-        Selenide.closeWebDriver();
+        Selenide.closeWindow();
         log.info("Price for regNr: {} is {}", regNr, response);
         return response;
     }
@@ -93,7 +93,7 @@ public class Auto24Service {
             String value = rows.get(i).$$("td").get(1).getText();
             carDetails.put(key, value);
         }
-        Selenide.closeWebDriver();
+        Selenide.closeWindow();
         log.info("Found car details for regNr: {}", regNr);
         return carDetails;
     }

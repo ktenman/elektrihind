@@ -50,7 +50,10 @@ public class Auto24DetailsService {
             String value = rows.get(i).$$("td").get(1).getText();
             carDetails.put(key, value);
         }
+        Selenide.clearBrowserCookies();
+        Selenide.clearBrowserLocalStorage();
         Selenide.closeWindow();
+        Selenide.closeWebDriver();
         log.info("Found car details for regNr: {}", regNr);
         return carDetails;
     }

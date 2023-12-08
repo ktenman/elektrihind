@@ -9,10 +9,14 @@ RUN mvn -T 1C --batch-mode --quiet package -DskipTests
 FROM openjdk:21-jdk-slim-bookworm
 WORKDIR /app
 
-# Install Firefox and GeckoDriver
+# Install necessary utilities
 RUN apt-get update && \
-    apt-get install -y firefox-esr && \
-    wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz && \
+    apt-get install -y firefox-esr wget tar && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install GeckoDriver
+RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz && \
     tar -xzf geckodriver-v0.33.0-linux64.tar.gz && \
     mv geckodriver /usr/bin/ && \
     chmod +x /usr/bin/geckodriver && \

@@ -4,6 +4,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -21,6 +22,29 @@ public class RecaptchaSolverService {
 
     public String solveCaptcha() {
         Map<String, Object> response = recaptchaClient.sendCaptcha(apiKey, "userrecaptcha", SITE_KEY, PAGE_URL, 1);
+        String requestId = (String) response.get("request");
+
+        for (int i = 0; i < 50; i++) {
+            try {
+                Thread.sleep(3000);
+                Map<String, Object> captchaResponse = recaptchaClient.retrieveCaptcha(apiKey, "get", requestId, 1);
+                if ((int) captchaResponse.get("status") == 1) {
+                    return (String) captchaResponse.get("request");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return null;
+            }
+        }
+        return null;
+    }
+
+    public String solveCaptcha(byte[] captchaImage) {
+        String fileName = "captcha.png";
+        String contentType = "image/png";
+        MultipartFile multipartFile = new ByteArrayMultipartFile(captchaImage, "file", fileName, contentType);
+
+        Map<String, Object> response = recaptchaClient.sendImageCaptcha(apiKey, "post", multipartFile, 1);
         String requestId = (String) response.get("request");
 
         for (int i = 0; i < 50; i++) {

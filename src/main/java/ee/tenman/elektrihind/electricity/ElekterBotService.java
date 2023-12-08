@@ -43,6 +43,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -154,12 +157,22 @@ public class ElekterBotService extends TelegramLongPollingBot {
             sendMessageCode(chatId, messageId, response);
         } else if (messageText.toLowerCase().contains("ark")) {
             String regNr = messageText.toUpperCase().split(" ")[1];
-            sendMessage(chatId, "Fetching car details for regNr: " + regNr);
-            Map<String, String> carDetails = auto24Service.carDetails(regNr);
-            String response = carDetails.entrySet().stream()
+            sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
+
+            ExecutorService executor = Executors.newFixedThreadPool(2);
+            CompletableFuture<String> priceFuture = CompletableFuture.supplyAsync(
+                    () -> auto24Service.carPrice(regNr), executor);
+            CompletableFuture<Map<String, String>> detailsFuture = CompletableFuture.supplyAsync(
+                    () -> auto24Service.carDetails(regNr), executor);
+
+            priceFuture.thenCombine(detailsFuture, (price, details) -> price + "\n\n" + details.entrySet().stream()
                     .map(entry -> entry.getKey() + ": " + entry.getValue())
-                    .collect(Collectors.joining("\n"));
-            sendMessageCode(chatId, messageId, response);
+                            .collect(Collectors.joining("\n"))).thenAccept(combinedResponse -> sendMessageCode(chatId, messageId, combinedResponse))
+                    .exceptionally(e -> {
+                        sendMessage(chatId, "Failed to fetch car details: " + e.getMessage());
+                        return null;
+                    });
+            executor.shutdown();
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages

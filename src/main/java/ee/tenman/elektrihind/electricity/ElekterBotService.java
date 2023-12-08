@@ -1,7 +1,8 @@
 package ee.tenman.elektrihind.electricity;
 
 import ee.tenman.elektrihind.CacheService;
-import ee.tenman.elektrihind.auto24.Auto24Service;
+import ee.tenman.elektrihind.auto24.Auto24DetailsService;
+import ee.tenman.elektrihind.auto24.Auto24PriceService;
 import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.telegram.TelegramService;
@@ -76,7 +77,10 @@ public class ElekterBotService extends TelegramLongPollingBot {
     private TelegramService telegramService;
 
     @Resource
-    private Auto24Service auto24Service;
+    private Auto24PriceService auto24PriceService;
+
+    @Resource
+    private Auto24DetailsService auto24DetailsService;
 
     @Resource
     private PriceFinderService priceFinderService;
@@ -165,9 +169,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
                 // Fetch car price and details in parallel
                 CompletableFuture<String> priceFuture = CompletableFuture.supplyAsync(
-                        () -> auto24Service.carPrice(regNr), executor);
+                        () -> auto24PriceService.carPrice(regNr), executor);
                 CompletableFuture<Map<String, String>> detailsFuture = CompletableFuture.supplyAsync(
-                        () -> auto24Service.carDetails(regNr), executor);
+                        () -> auto24DetailsService.carDetails(regNr), executor);
 
                 // Combine results and send the response
                 priceFuture.thenCombine(detailsFuture, (price, details) -> price + "\n\n" + details.entrySet().stream()

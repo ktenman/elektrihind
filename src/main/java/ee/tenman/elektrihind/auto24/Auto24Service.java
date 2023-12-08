@@ -17,8 +17,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -29,9 +27,6 @@ import static com.codeborne.selenide.Selenide.executeJavaScript;
 @Service
 @Slf4j
 public class Auto24Service {
-
-    @Resource(name = "twoThreadExecutor")
-    private ExecutorService twoThreadExecutor;
 
     @Resource
     private RecaptchaSolverService recaptchaSolverService;
@@ -103,21 +98,17 @@ public class Auto24Service {
     public String search(String regNr) {
         long startTime = System.nanoTime();
 
-        CompletableFuture<String> carPriceFuture = CompletableFuture.supplyAsync(() -> carPrice(regNr), twoThreadExecutor);
-        CompletableFuture<Map<String, String>> carDetailsFuture = CompletableFuture.supplyAsync(() -> carDetails(regNr), twoThreadExecutor);
+        Map<String, String> details = carDetails(regNr);
+        String price = carPrice(regNr);
 
-        CompletableFuture<String> combinedFuture = carPriceFuture.thenCombine(carDetailsFuture, (price, details) -> {
-            String detailsString = details.entrySet().stream()
-                    .map(entry -> entry.getKey() + ": " + entry.getValue())
-                    .collect(Collectors.joining("\n"));
-            return price + "\n\n" + detailsString;
-        });
+        String result = price + "\n\n" + details.entrySet().stream()
+                .map(entry -> entry.getKey() + ": " + entry.getValue())
+                .collect(Collectors.joining("\n"));
 
-        String result = combinedFuture.join();
         long endTime = System.nanoTime();
         double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
 
-        return result + "\n\nTask Duration: " + String.format("%.1f seconds", durationSeconds);
+        return result + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
     }
 
 }

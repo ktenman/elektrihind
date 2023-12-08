@@ -21,6 +21,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import oshi.SystemInfo;
+import oshi.hardware.CentralProcessor;
 import oshi.hardware.GlobalMemory;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.software.os.FileSystem;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -180,7 +182,16 @@ public class ElekterBotService extends TelegramLongPollingBot {
         SystemInfo si = new SystemInfo();
         HardwareAbstractionLayer hal = si.getHardware();
 
-        double cpuLoad = digitalOceanService.getCpuUsagePercentage();
+        // CPU Usage
+        CentralProcessor processor = hal.getProcessor();
+        long[] prevTicks = processor.getSystemCpuLoadTicks();
+        // Wait a second to get a better measurement
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        double cpuLoad = processor.getSystemCpuLoadBetweenTicks(prevTicks) * 100; // Get system CPU load between ticks
 
         // Memory Usage
         GlobalMemory memory = hal.getMemory();
@@ -200,7 +211,11 @@ public class ElekterBotService extends TelegramLongPollingBot {
             diskUsage = (double) usableSpace / totalSpace * 100;
         }
 
-        return String.format("`CPU: %.2f %% %nDisk Usage: %.2f %% %nMemory Usage: %.2f %%`", cpuLoad, diskUsage, memoryUsage);
+        return String.format("`" +
+                "CPU: %.2f %% %n" +
+                "CPU (v2): %.2f %% %n" +
+                "Disk Usage: %.2f %% %n" +
+                "Memory Usage: %.2f %%`", cpuLoad, digitalOceanService.getCpuUsagePercentage(), diskUsage, memoryUsage);
     }
 
     private void handleDocumentMessage(Message message, long chatId) {

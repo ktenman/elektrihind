@@ -81,8 +81,8 @@ public class ElekterBotService extends TelegramLongPollingBot {
     @Resource
     private DigitalOceanService digitalOceanService;
 
-    @Resource
-    private ExecutorService executorService;
+    @Resource(name = "singleThreadExecutor")
+    private ExecutorService singleThreadExecutor;
 
     @Value("${telegram.elektriteemu.token}")
     private String token;
@@ -164,7 +164,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
                 String search = auto24Service.search(regNr);
                 sendMessageCode(chatId, messageId, search);
-            }, executorService);
+            }, singleThreadExecutor);
         } else if (messageText.equalsIgnoreCase("reboot")) {
             digitalOceanService.rebootDroplet();
             sendMessageCode(chatId, messageId, "Droplet reboot initiated!");

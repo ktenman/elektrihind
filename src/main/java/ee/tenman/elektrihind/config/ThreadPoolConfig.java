@@ -10,7 +10,12 @@ import java.util.concurrent.Executors;
 public class ThreadPoolConfig {
 
     @Bean
-    public ExecutorService taskExecutor() {
+    public ExecutorService singleThreadExecutor() {
         return Executors.newSingleThreadExecutor();
+    }
+
+    @Bean
+    public ExecutorService twoThreadExecutor() {
+        return Executors.newFixedThreadPool(2);
     }
 }

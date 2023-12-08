@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -29,8 +30,8 @@ import static com.codeborne.selenide.Selenide.executeJavaScript;
 @Slf4j
 public class Auto24Service {
 
-    @Resource
-    private ExecutorService executorService;
+    @Resource(name = "twoThreadExecutor")
+    private ExecutorService twoThreadExecutor;
 
     @Resource
     private RecaptchaSolverService recaptchaSolverService;
@@ -100,9 +101,23 @@ public class Auto24Service {
 
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
     public String search(String regNr) {
-        return carPrice(regNr) + "\n\n" + carDetails(regNr).entrySet().stream()
-                .map(entry -> entry.getKey() + ": " + entry.getValue())
-                .collect(Collectors.joining("\n"));
+        long startTime = System.nanoTime();
+
+        CompletableFuture<String> carPriceFuture = CompletableFuture.supplyAsync(() -> carPrice(regNr), twoThreadExecutor);
+        CompletableFuture<Map<String, String>> carDetailsFuture = CompletableFuture.supplyAsync(() -> carDetails(regNr), twoThreadExecutor);
+
+        CompletableFuture<String> combinedFuture = carPriceFuture.thenCombine(carDetailsFuture, (price, details) -> {
+            String detailsString = details.entrySet().stream()
+                    .map(entry -> entry.getKey() + ": " + entry.getValue())
+                    .collect(Collectors.joining("\n"));
+            return price + "\n\n" + detailsString;
+        });
+
+        String result = combinedFuture.join();
+        long endTime = System.nanoTime();
+        double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
+
+        return result + "\n\nTask Duration: " + String.format("%.1f seconds", durationSeconds);
     }
 
 }

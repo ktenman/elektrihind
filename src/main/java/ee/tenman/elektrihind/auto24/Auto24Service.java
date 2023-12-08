@@ -5,8 +5,6 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
@@ -22,16 +20,23 @@ public class Auto24Service {
     @Resource
     private ExecutorService executor;
 
+//    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
+//    public String search(String regNr) {
+//        CompletableFuture<String> priceFuture = CompletableFuture.supplyAsync(
+//                () -> auto24PriceService.carPrice(regNr), executor);
+//        CompletableFuture<Map<String, String>> detailsFuture = CompletableFuture.supplyAsync(
+//                () -> auto24DetailsService.carDetails(regNr), executor);
+//
+//        return priceFuture.thenCombine(detailsFuture, (price, details) -> price + "\n\n" + details.entrySet().stream()
+//                .map(entry -> entry.getKey() + ": " + entry.getValue())
+//                .collect(Collectors.joining("\n"))).join(); // Block and get the result
+//    }
+
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
     public String search(String regNr) {
-        CompletableFuture<String> priceFuture = CompletableFuture.supplyAsync(
-                () -> auto24PriceService.carPrice(regNr), executor);
-        CompletableFuture<Map<String, String>> detailsFuture = CompletableFuture.supplyAsync(
-                () -> auto24DetailsService.carDetails(regNr), executor);
-
-        return priceFuture.thenCombine(detailsFuture, (price, details) -> price + "\n\n" + details.entrySet().stream()
+        return auto24PriceService.carPrice(regNr) + "\n\n" + auto24DetailsService.carDetails(regNr).entrySet().stream()
                 .map(entry -> entry.getKey() + ": " + entry.getValue())
-                .collect(Collectors.joining("\n"))).join(); // Block and get the result
+                .collect(Collectors.joining("\n"));
     }
 
 }

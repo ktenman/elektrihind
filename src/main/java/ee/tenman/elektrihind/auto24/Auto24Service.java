@@ -87,7 +87,11 @@ public class Auto24Service {
             $("button[type='submit']").click();
         }
         log.info("Captcha solved for regNr: {}", regNr);
-        String response = $$(By.tagName("div")).filter(Condition.text("Sõiduki keskmine hind")).last().parent().text();
+        String response = $$(By.tagName("div")).filter(Condition.text("Sõiduki keskmine hind"))
+                .last()
+                .parent()
+                .text()
+                .replace("\n", " ");
         Selenide.closeWindow();
         return response;
     }

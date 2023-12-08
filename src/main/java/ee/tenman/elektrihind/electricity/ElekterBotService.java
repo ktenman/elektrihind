@@ -160,31 +160,25 @@ public class ElekterBotService extends TelegramLongPollingBot {
             String response = getSystemMetrics();
             sendMessageCode(chatId, messageId, response);
         } else if (messageText.toLowerCase().contains("ark")) {
-            CompletableFuture.runAsync(() -> {
-                String regNr = messageText.toUpperCase().split(" ")[1];
-                sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
+            String regNr = messageText.toUpperCase().split(" ")[1];
+            sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
 
-                // Create an ExecutorService for parallel tasks
-                ExecutorService executor = Executors.newFixedThreadPool(2);
+            ExecutorService executor = Executors.newFixedThreadPool(2);
 
-                // Fetch car price and details in parallel
-                CompletableFuture<String> priceFuture = CompletableFuture.supplyAsync(
-                        () -> auto24PriceService.carPrice(regNr), executor);
-                CompletableFuture<Map<String, String>> detailsFuture = CompletableFuture.supplyAsync(
-                        () -> auto24DetailsService.carDetails(regNr), executor);
+            CompletableFuture<String> priceFuture = CompletableFuture.supplyAsync(
+                    () -> auto24PriceService.carPrice(regNr), executor);
+            CompletableFuture<Map<String, String>> detailsFuture = CompletableFuture.supplyAsync(
+                    () -> auto24DetailsService.carDetails(regNr), executor);
 
-                // Combine results and send the response
-                priceFuture.thenCombine(detailsFuture, (price, details) -> price + "\n\n" + details.entrySet().stream()
-                                .map(entry -> entry.getKey() + ": " + entry.getValue())
-                                .collect(Collectors.joining("\n"))).thenAccept(response -> sendMessageCode(chatId, messageId, response))
-                        .exceptionally(e -> {
-                            sendMessage(chatId, "Failed to fetch car details: " + e.getMessage());
-                            return null;
-                        });
+            priceFuture.thenCombine(detailsFuture, (price, details) -> price + "\n\n" + details.entrySet().stream()
+                            .map(entry -> entry.getKey() + ": " + entry.getValue())
+                            .collect(Collectors.joining("\n"))).thenAccept(response -> sendMessageCode(chatId, messageId, response))
+                    .exceptionally(e -> {
+                        sendMessage(chatId, "Failed to fetch car details: " + e.getMessage());
+                        return null;
+                    });
 
-                // Shutdown the executor service
-                executor.shutdown();
-            });
+            executor.shutdown();
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages

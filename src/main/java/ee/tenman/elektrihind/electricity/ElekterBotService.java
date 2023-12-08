@@ -1,8 +1,7 @@
 package ee.tenman.elektrihind.electricity;
 
 import ee.tenman.elektrihind.CacheService;
-import ee.tenman.elektrihind.auto24.Auto24DetailsService;
-import ee.tenman.elektrihind.auto24.Auto24PriceService;
+import ee.tenman.elektrihind.auto24.Auto24Service;
 import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.telegram.TelegramService;
@@ -42,10 +41,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -76,16 +72,10 @@ public class ElekterBotService extends TelegramLongPollingBot {
     private TelegramService telegramService;
 
     @Resource
-    private Auto24PriceService auto24PriceService;
-
-    @Resource
-    private Auto24DetailsService auto24DetailsService;
-
-    @Resource
     private PriceFinderService priceFinderService;
 
     @Resource
-    private ExecutorService executor;
+    private Auto24Service auto24Service;
 
     @Value("${telegram.elektriteemu.token}")
     private String token;
@@ -164,19 +154,8 @@ public class ElekterBotService extends TelegramLongPollingBot {
         } else if (messageText.toLowerCase().contains("ark")) {
             String regNr = messageText.toUpperCase().split(" ")[1];
             sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
-
-            CompletableFuture<String> priceFuture = CompletableFuture.supplyAsync(
-                    () -> auto24PriceService.carPrice(regNr), executor);
-            CompletableFuture<Map<String, String>> detailsFuture = CompletableFuture.supplyAsync(
-                    () -> auto24DetailsService.carDetails(regNr), executor);
-
-            priceFuture.thenCombine(detailsFuture, (price, details) -> price + "\n\n" + details.entrySet().stream()
-                            .map(entry -> entry.getKey() + ": " + entry.getValue())
-                            .collect(Collectors.joining("\n"))).thenAccept(response -> sendMessageCode(chatId, messageId, response))
-                    .exceptionally(e -> {
-                        sendMessage(chatId, "Failed to fetch car details: " + e.getMessage());
-                        return null;
-                    });
+            String search = auto24Service.search(regNr);
+            sendMessageCode(chatId, messageId, search);
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages

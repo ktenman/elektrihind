@@ -43,6 +43,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -153,14 +156,31 @@ public class ElekterBotService extends TelegramLongPollingBot {
             String response = getSystemMetrics();
             sendMessageCode(chatId, messageId, response);
         } else if (messageText.toLowerCase().contains("ark")) {
-            String regNr = messageText.toUpperCase().split(" ")[1];
-            sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
-            String response = auto24Service.carPrice(regNr);
-            Map<String, String> carDetails = auto24Service.carDetails(regNr);
-            response = response + "\n\n" + carDetails.entrySet().stream()
-                    .map(entry -> entry.getKey() + ": " + entry.getValue())
-                    .collect(Collectors.joining("\n"));
-            sendMessageCode(chatId, messageId, response);
+            CompletableFuture.runAsync(() -> {
+                String regNr = messageText.toUpperCase().split(" ")[1];
+                sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
+
+                // Create an ExecutorService for parallel tasks
+                ExecutorService executor = Executors.newFixedThreadPool(2);
+
+                // Fetch car price and details in parallel
+                CompletableFuture<String> priceFuture = CompletableFuture.supplyAsync(
+                        () -> auto24Service.carPrice(regNr), executor);
+                CompletableFuture<Map<String, String>> detailsFuture = CompletableFuture.supplyAsync(
+                        () -> auto24Service.carDetails(regNr), executor);
+
+                // Combine results and send the response
+                priceFuture.thenCombine(detailsFuture, (price, details) -> price + "\n\n" + details.entrySet().stream()
+                                .map(entry -> entry.getKey() + ": " + entry.getValue())
+                                .collect(Collectors.joining("\n"))).thenAccept(response -> sendMessageCode(chatId, messageId, response))
+                        .exceptionally(e -> {
+                            sendMessage(chatId, "Failed to fetch car details: " + e.getMessage());
+                            return null;
+                        });
+
+                // Shutdown the executor service
+                executor.shutdown();
+            });
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages

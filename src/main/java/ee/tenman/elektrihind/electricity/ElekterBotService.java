@@ -4,6 +4,7 @@ import ee.tenman.elektrihind.CacheService;
 import ee.tenman.elektrihind.auto24.Auto24Service;
 import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
+import ee.tenman.elektrihind.digitalocean.DigitalOceanService;
 import ee.tenman.elektrihind.telegram.TelegramService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
@@ -76,6 +77,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     @Resource
     private Auto24Service auto24Service;
+
+    @Resource
+    private DigitalOceanService digitalOceanService;
 
     @Value("${telegram.elektriteemu.token}")
     private String token;
@@ -156,6 +160,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
             sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
             String search = auto24Service.search(regNr);
             sendMessageCode(chatId, messageId, search);
+        } else if (messageText.equalsIgnoreCase("reboot")) {
+            digitalOceanService.rebootDroplet();
+            sendMessage(chatId, "Droplet reboot initiated.");
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages
@@ -325,6 +332,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         message.enableMarkdown(true);
         message.setChatId(String.valueOf(chatId));
         message.setReplyToMessageId(replyToMessageId);
+
 
         message.setText("`" + text + "`");
 

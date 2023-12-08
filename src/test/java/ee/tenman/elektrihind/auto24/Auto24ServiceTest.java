@@ -2,7 +2,6 @@ package ee.tenman.elektrihind.auto24;
 
 import ee.tenman.elektrihind.IntegrationTest;
 import jakarta.annotation.Resource;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,7 +13,7 @@ class Auto24ServiceTest {
     private Auto24Service auto24Service;
 
     @Test
-    @Disabled
+//    @Disabled
     void search() {
         String search = auto24Service.search("876BCH");
 
@@ -23,8 +22,8 @@ class Auto24ServiceTest {
     }
 
     @Test
-    @Disabled
-    void search2() {
+//    @Disabled
+    void xsearch2() {
         String search = auto24Service.search("325BDV");
 
         assertThat(search).contains("Sõiduki keskmine hind: 1400 € kuni 1700 €");

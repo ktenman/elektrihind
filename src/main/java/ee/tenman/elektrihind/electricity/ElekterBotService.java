@@ -56,7 +56,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
-    public static final Pattern CAR_REGISTRATION_PATTERN = Pattern.compile("ark\\s+([a-zA-Z0-9]+)", Pattern.CASE_INSENSITIVE);
+    public static final Pattern CAR_REGISTRATION_PATTERN = Pattern.compile("^ark\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
 
     @Resource
     private HolidaysConfiguration holidaysConfiguration;

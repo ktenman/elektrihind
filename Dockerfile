@@ -1,19 +1,26 @@
-# Set the base image to Maven with Java 21
+# First Stage: Build the application
 FROM maven:3.9-eclipse-temurin-21-alpine AS build
-
-# Set the current working directory inside the container
 WORKDIR /app
-
-# Copy the Maven POM file and download the dependencies, so they will be cached
 COPY pom.xml .
-
-# Copy the project files and build the project
 COPY src /app/src
 RUN mvn -T 1C --batch-mode --quiet package -DskipTests
 
+# Second Stage: Install Firefox and GeckoDriver
+FROM alpine:latest AS firefox
+RUN apk add --no-cache firefox-esr
+RUN apk add --no-cache wget && \
+    wget -q "https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz" -O /tmp/geckodriver.tgz && \
+    tar zxf /tmp/geckodriver.tgz -C /usr/local/bin/ && \
+    rm /tmp/geckodriver.tgz
+
+# Final Stage: Create the runtime image
 FROM bellsoft/liberica-runtime-container:jre-21-slim-musl
-# Set the current working directory inside the container
 WORKDIR /app
+
+# Copy Firefox and GeckoDriver from the second stage
+# Update the path to Firefox binary as per the Alpine Linux installation
+COPY --from=firefox /usr/bin/firefox-esr /usr/bin/firefox
+COPY --from=firefox /usr/local/bin/geckodriver /usr/local/bin/geckodriver
 
 # Optionally, create the cache directory and set proper permissions
 RUN mkdir /app/cache && chown 1000:1000 /app/cache

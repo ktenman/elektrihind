@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind.auto24;
+package ee.tenman.elektrihind.recaptcha;
 
 import org.springframework.web.multipart.MultipartFile;
 

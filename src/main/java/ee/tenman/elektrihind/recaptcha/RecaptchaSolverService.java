@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind.auto24;
+package ee.tenman.elektrihind.recaptcha;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind.auto24;
+package ee.tenman.elektrihind.recaptcha;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;

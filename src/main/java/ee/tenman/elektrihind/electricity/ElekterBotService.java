@@ -1,7 +1,7 @@
 package ee.tenman.elektrihind.electricity;
 
-import ee.tenman.elektrihind.auto24.Auto24Service;
 import ee.tenman.elektrihind.cache.CacheService;
+import ee.tenman.elektrihind.car.CarSearchService;
 import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.digitalocean.DigitalOceanService;
@@ -85,7 +85,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
     private PriceFinderService priceFinderService;
 
     @Resource
-    private Auto24Service auto24Service;
+    private CarSearchService carSearchService;
 
     @Resource
     private DigitalOceanService digitalOceanService;
@@ -251,7 +251,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 long startTime = System.nanoTime();
                 String regNr = arkMatcher.group(1).toUpperCase();
                 sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
-                String search = auto24Service.search(regNr);
+                String search = carSearchService.search(regNr);
                 long endTime = System.nanoTime();
                 double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
                 search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);

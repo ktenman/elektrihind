@@ -197,7 +197,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         buttonMetric.setCallbackData(METRIC);
 
         InlineKeyboardButton buttonReboot = new InlineKeyboardButton("Reboot Droplet");
-        buttonReboot.setCallbackData("reboot");
+        buttonMetric.setCallbackData("reboot");
 
         // Adding buttons to the keyboard
         List<InlineKeyboardButton> rowInline1 = new ArrayList<>();
@@ -265,7 +265,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages
-        displayMenu(chatId);
+//        displayMenu(chatId);
     }
 
     private String getSystemMetrics() {

@@ -63,6 +63,8 @@ public class ElekterBotService extends TelegramLongPollingBot {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
     public static final Pattern CAR_REGISTRATION_PATTERN = Pattern.compile("^ark\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
+    private static final String EURIBOR = "euribor";
+    private static final String METRIC = "metric";
 
     @Resource
     private HolidaysConfiguration holidaysConfiguration;
@@ -142,19 +144,14 @@ public class ElekterBotService extends TelegramLongPollingBot {
         long chatId = callbackQuery.getMessage().getChatId();
 
         switch (callData) {
-            case "check_price":
-                String response = getElectricityPriceResponse();
-                sendMessage(chatId, response);
-                break;
-            case "car_plate_query":
-                // Prompt the user to enter the car plate number
-                sendMessage(chatId, "Please enter the car plate number with the 'ark' command.");
-                break;
-            default:
-                sendMessage(chatId, "Command not recognized.");
-                break;
+            case "check_price" -> sendMessage(chatId, getElectricityPriceResponse());
+            case "car_plate_query" -> sendMessage(chatId, "Please enter the car plate number with the 'ark' command.");
+            case EURIBOR -> sendMessage(chatId, euriborRateFetcher.getEuriborRateResponse());
+            case METRIC -> sendMessage(chatId, getSystemMetrics());
+            default -> sendMessage(chatId, "Command not recognized.");
         }
     }
+
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -181,20 +178,32 @@ public class ElekterBotService extends TelegramLongPollingBot {
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
 
-        // Creating buttons
+        // Existing buttons
         InlineKeyboardButton buttonCheckPrice = new InlineKeyboardButton("Check Electricity Price");
         buttonCheckPrice.setCallbackData("check_price");
 
         InlineKeyboardButton buttonCarPlateQuery = new InlineKeyboardButton("Car Plate Query");
         buttonCarPlateQuery.setCallbackData("car_plate_query");
 
+        // New buttons
+        InlineKeyboardButton buttonEuribor = new InlineKeyboardButton("Euribor Rates");
+        buttonEuribor.setCallbackData("euribor");
+
+        InlineKeyboardButton buttonMetric = new InlineKeyboardButton("System Metrics");
+        buttonMetric.setCallbackData("metric");
+
         // Adding buttons to the keyboard
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-        rowInline.add(buttonCheckPrice);
-        rowInline.add(buttonCarPlateQuery);
+        List<InlineKeyboardButton> rowInline1 = new ArrayList<>();
+        rowInline1.add(buttonCheckPrice);
+        rowInline1.add(buttonCarPlateQuery);
+
+        List<InlineKeyboardButton> rowInline2 = new ArrayList<>();
+        rowInline2.add(buttonEuribor);
+        rowInline2.add(buttonMetric);
 
         // Set the keyboard to the markup
-        rowsInline.add(rowInline);
+        rowsInline.add(rowInline1);
+        rowsInline.add(rowInline2);
         markupInline.setKeyboard(rowsInline);
 
         // Creating a message and setting the markup

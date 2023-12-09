@@ -12,17 +12,11 @@ import java.util.Map;
 @Slf4j
 public class RecaptchaSolverService {
 
-    private static final String SITE_KEY = "6Lf3qrkZAAAAAJLmqi1osY8lac0rLbAJItqEvZ0K";
-    private static final String PAGE_URL = "https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring";
     @Resource
     private RecaptchaClient recaptchaClient;
 
     @Value("${twocaptcha.key}")
     private String apiKey;
-
-    public String solveCaptcha() {
-        return solveCaptcha(SITE_KEY, PAGE_URL);
-    }
 
     public String solveCaptcha(String siteKey, String pageUrl) {
         Map<String, Object> response = recaptchaClient.sendCaptcha(apiKey, "userrecaptcha", siteKey, pageUrl, 1);

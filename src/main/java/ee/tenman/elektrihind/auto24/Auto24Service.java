@@ -34,6 +34,9 @@ import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE_2;
 @Slf4j
 public class Auto24Service {
 
+    private static final String SITE_KEY = "6Lf3qrkZAAAAAJLmqi1osY8lac0rLbAJItqEvZ0K";
+    private static final String PAGE_URL = "https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring";
+
     private static final List<String> ACCEPTED_KEYS = List.of(
             "Mark",
             "Kütusekulu keskmine (l/ 100 km)",
@@ -103,7 +106,7 @@ public class Auto24Service {
     public Map<String, String> carDetails(Map<String, String> carDetails) {
         String regNr = carDetails.get("Reg nr");
         String vin = carDetails.get("Vin");
-        Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring");
+        Selenide.open(PAGE_URL);
         TimeUnit.SECONDS.sleep(2);
         SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
         if (acceptCookies.exists()) {
@@ -112,7 +115,7 @@ public class Auto24Service {
         $(By.id("vin-inp")).setValue(vin);
         $(By.id("reg_nr-inp")).setValue(regNr);
         log.info("Solving car captcha for regNr: {}", regNr);
-        String captchaToken = recaptchaSolverService.solveCaptcha();
+        String captchaToken = recaptchaSolverService.solveCaptcha(SITE_KEY, PAGE_URL);
         log.info("Car captcha solved for regNr: {}", regNr);
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
         $("button[type='submit']").click();
@@ -142,7 +145,7 @@ public class Auto24Service {
 
     @SneakyThrows({InterruptedException.class})
     public Map<String, String> carDetails(String regNr) {
-        Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring");
+        Selenide.open(PAGE_URL);
         TimeUnit.SECONDS.sleep(2);
         SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
         if (acceptCookies.exists()) {
@@ -150,7 +153,7 @@ public class Auto24Service {
         }
         $(By.id("reg_nr-inp")).setValue(regNr);
         log.info("Solving car captcha for regNr: {}", regNr);
-        String captchaToken = recaptchaSolverService.solveCaptcha();
+        String captchaToken = recaptchaSolverService.solveCaptcha(SITE_KEY, PAGE_URL);
         log.info("Car captcha solved for regNr: {}", regNr);
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
         $("button[type='submit']").click();

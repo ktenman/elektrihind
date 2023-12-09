@@ -457,11 +457,11 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
 
         SendMessage message = new SendMessage();
-        message.setParseMode("MarkdownV2");
+        message.setParseMode("Markdown");
         message.enableMarkdown(true);
         message.setChatId(String.valueOf(chatId));
 
-        message.setText("`" + text + "`");
+        message.setText("```" + text + "```");
 
         try {
             execute(message);

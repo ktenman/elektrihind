@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 
 import static ee.tenman.elektrihind.electricity.ElekterBotService.CAR_REGISTRATION_PATTERN;
@@ -67,6 +68,9 @@ class ElekterBotServiceTest {
 
     @Mock
     private CacheService cacheService;
+
+    @Mock
+    private ExecutorService singleThreadExecutor;
 
     @Mock
     private TelegramService telegramService;
@@ -166,7 +170,7 @@ class ElekterBotServiceTest {
         ElekterBotService spyBotService = spy(botService);
         spyBotService.onUpdateReceived(update);
 
-        verify(spyBotService, times(2)).execute(sendMessageCaptor.capture());
+        verify(spyBotService, times(1)).execute(sendMessageCaptor.capture());
         SendMessage sentMessage = sendMessageCaptor.getAllValues().getFirst();
         assertThat(sentMessage.getChatId()).isEqualTo(String.valueOf(message.getChatId()));
 //        assertThat(sentMessage.getText()).contains("Current electricity price is 10.08 cents/kWh.");
@@ -215,7 +219,7 @@ class ElekterBotServiceTest {
         String expectedMessage = ("`Best time to start is 2023-11-10 01:00 with average price of 4.0 cents/kWh. Total " +
                 "cost is 2.0 cents. In 1 hours! Start consuming immediately at 2023-11-09 23:45. Total cost is 15.05 " +
                 "cents with average price of 30.1 cents/kWh. 7.53x more expensive to start immediately.`");
-        verify(spyBotService, times(2)).execute(sendMessageCaptor.capture()); // This should probably be realBotService
+        verify(spyBotService, times(1)).execute(sendMessageCaptor.capture()); // This should probably be realBotService
         String actualMessage = sendMessageCaptor.getValue().getText().replaceAll("\\s+", " ").trim();
 //        assertThat(actualMessage).isEqualTo(expectedMessage);
     }

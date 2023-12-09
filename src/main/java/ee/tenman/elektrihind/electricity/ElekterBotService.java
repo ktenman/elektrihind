@@ -148,6 +148,10 @@ public class ElekterBotService extends TelegramLongPollingBot {
             case "car_plate_query" -> sendMessage(chatId, "Please enter the car plate number with the 'ark' command.");
             case EURIBOR -> sendMessage(chatId, euriborRateFetcher.getEuriborRateResponse());
             case METRIC -> sendMessage(chatId, getSystemMetrics());
+            case "reboot" -> {
+                digitalOceanService.rebootDroplet();
+                sendMessage(chatId, "Droplet reboot initiated!");
+            }
             default -> sendMessage(chatId, "Command not recognized.");
         }
     }
@@ -186,10 +190,13 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
         // New buttons
         InlineKeyboardButton buttonEuribor = new InlineKeyboardButton("Euribor Rates");
-        buttonEuribor.setCallbackData("euribor");
+        buttonEuribor.setCallbackData(EURIBOR);
 
         InlineKeyboardButton buttonMetric = new InlineKeyboardButton("System Metrics");
-        buttonMetric.setCallbackData("metric");
+        buttonMetric.setCallbackData(METRIC);
+
+        InlineKeyboardButton buttonReboot = new InlineKeyboardButton("Reboot Droplet");
+        buttonMetric.setCallbackData("reboot");
 
         // Adding buttons to the keyboard
         List<InlineKeyboardButton> rowInline1 = new ArrayList<>();
@@ -199,6 +206,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         List<InlineKeyboardButton> rowInline2 = new ArrayList<>();
         rowInline2.add(buttonEuribor);
         rowInline2.add(buttonMetric);
+        rowInline2.add(buttonReboot);
 
         // Set the keyboard to the markup
         rowsInline.add(rowInline1);
@@ -234,10 +242,10 @@ public class ElekterBotService extends TelegramLongPollingBot {
         } else if (messageText.toLowerCase().contains("elektrihind")) {
             String response = getElectricityPriceResponse();
             sendMessageCode(chatId, messageId, response);
-        } else if (messageText.toLowerCase().contains("metric")) {
+        } else if (messageText.toLowerCase().contains(METRIC)) {
             String response = getSystemMetrics();
             sendMessageCode(chatId, messageId, response);
-        } else if (messageText.toLowerCase().contains("euribor")) {
+        } else if (messageText.toLowerCase().contains(EURIBOR)) {
             String euriborResonse = euriborRateFetcher.getEuriborRateResponse();
             sendMessageCode(chatId, messageId, euriborResonse);
         } else if (arkMatcher.find()) {

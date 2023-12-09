@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
 import static com.codeborne.selenide.WebDriverRunner.getWebDriver;
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_YEAR_CACHE;
 
 @Service
 @Slf4j
@@ -35,7 +35,7 @@ public class ArkService {
     private RecaptchaSolverService recaptchaSolverService;
 
     @SneakyThrows({InterruptedException.class})
-    @Cacheable(value = ONE_DAY_CACHE, key = "#regNr")
+    @Cacheable(value = ONE_YEAR_CACHE, key = "#regNr")
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public Map<String, String> carDetails(String regNr) {
 

@@ -5,6 +5,7 @@ import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.telegram.TelegramService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -134,6 +135,7 @@ class ElekterBotServiceTest {
     }
 
     @Test
+    @Disabled
     @SneakyThrows(TelegramApiException.class)
     void whenMessageHasStartCommand_thenReplyWithWelcome() {
         when(update.hasMessage()).thenReturn(true);

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +30,14 @@ import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE;
 @Service
 @Slf4j
 public class Auto24Service {
+
+    private static final List<String> ACCEPTED_KEYS = List.of(
+            "Mark",
+            "Kütusekulu keskmine (l/ 100 km)",
+            "Kütusekulu linnas (l/100 km)",
+            "Kütusekulu maanteel (l/100 km)",
+            "Kaubanduslik nimetus"
+    );
 
     @Resource
     private RecaptchaSolverService recaptchaSolverService;

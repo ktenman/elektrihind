@@ -15,7 +15,7 @@ public class RedisConfig {
 
     public static final String ONE_HOUR_CACHE = "one-hour-cache";
     public static final String THIRTY_MINUTES_CACHE = "thirty-minutes-cache";
-    public static final String ONE_DAY_CACHE = "one-day-cache";
+    public static final String ONE_DAY_CACHE = "one-day-cache-2";
     public static final String MESSAGE_COUNTS_CACHE = "messageCounts";
 
     private static final Duration DEFAULT_TTL = Duration.ofMinutes(10);

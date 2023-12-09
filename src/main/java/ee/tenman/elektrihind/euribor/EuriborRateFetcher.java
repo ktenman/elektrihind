@@ -55,12 +55,17 @@ public class EuriborRateFetcher {
         BigDecimal previousRate = previousEntry.getValue();
 
         BigDecimal rateChange = latestRate.subtract(previousRate);
-        String changeSymbol = rateChange.compareTo(BigDecimal.ZERO) >= 0 ? "+" : "";
+        String changeSymbol = "";
         String emoji = "";
+
         if (rateChange.compareTo(BigDecimal.ZERO) > 0) {
+            changeSymbol = "+";
             emoji = "\ud83d\udc4e"; // 👎 for increase
         } else if (rateChange.compareTo(BigDecimal.ZERO) < 0) {
+            changeSymbol = "-";
             emoji = "\ud83d\udc4d"; // 👍 for decrease
+        } else {
+            emoji = "\u270A"; // ✊ for no change
         }
 
         return String.format("Euribor for %s is %.3f (%s%.3f) %s",

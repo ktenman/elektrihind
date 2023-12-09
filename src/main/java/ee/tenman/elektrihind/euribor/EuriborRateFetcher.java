@@ -1,11 +1,11 @@
 package ee.tenman.elektrihind.euribor;
 
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -15,9 +15,10 @@ import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE;
 
 @Service
 @Slf4j
@@ -27,13 +28,6 @@ public class EuriborRateFetcher {
     private static final String EURIBOR_RATES_URL = "https://www.euribor-rates.eu/en/current-euribor-rates/3/euribor-rate-6-months/";
     private final TreeMap<LocalDate, BigDecimal> rates = new TreeMap<>(Collections.reverseOrder());
 
-    @PostConstruct
-    public void init() {
-        log.info("Initializing EuriborRateFetcher...");
-        fetchEuriborRates();
-        log.info("EuriborRateFetcher initialized.");
-    }
-
     public SortedMap<LocalDate, BigDecimal> getRates() {
         if (rates.isEmpty()) {
             fetchEuriborRates();
@@ -41,11 +35,7 @@ public class EuriborRateFetcher {
         return rates;
     }
 
-    public Map.Entry<LocalDate, BigDecimal> getLastKnownEuriborRate() {
-        return Optional.ofNullable(getRates().firstEntry())
-                .orElseThrow(() -> new RuntimeException("No Euribor rates available"));
-    }
-
+    @Cacheable(ONE_DAY_CACHE)
     public String getEuriborRateResponse() {
         if (getRates().size() < 2) {
             return "Not enough data to calculate Euribor rate change.";

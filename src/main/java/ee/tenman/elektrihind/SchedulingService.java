@@ -61,7 +61,7 @@ public class SchedulingService {
     @Scheduled(cron = "0 59 * * * ?") // Runs every 60 minutes
     public void fetchEuribor() {
         log.info("Fetching Euribor rates...");
-        euriborRateFetcher.init();
+        euriborRateFetcher.fetchEuriborRates();
     }
 
     void sendMessageAndIncrementCount(String formattedPrices) {

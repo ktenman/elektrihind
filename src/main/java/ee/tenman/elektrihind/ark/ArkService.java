@@ -10,6 +10,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
@@ -34,6 +36,7 @@ public class ArkService {
 
     @SneakyThrows({InterruptedException.class})
     @Cacheable(value = ONE_DAY_CACHE, key = "#regNr")
+    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public Map<String, String> carDetails(String regNr) {
 
         Selenide.open(PAGE_URL);
@@ -74,7 +77,7 @@ public class ArkService {
         carDetails.put("Vin", vin + "\n");
         for (int i = 0; i < rows.size(); i++) {
             ElementsCollection td = rows.get(i).$$("td");
-            String key = td.get(0).getText();
+            String key = td.get(0).getText().replace(":", "");
             String value = td.get(1).getText();
             carDetails.put(key, value);
         }

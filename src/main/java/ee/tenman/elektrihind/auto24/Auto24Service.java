@@ -8,6 +8,7 @@ import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE;
 
 @Service
 @Slf4j
@@ -96,6 +98,7 @@ public class Auto24Service {
 
     @SneakyThrows
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
+    @Cacheable(value = ONE_DAY_CACHE, key = "#regNr")
     public String search(String regNr) {
         long startTime = System.nanoTime();
 

@@ -16,9 +16,12 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Document;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import oshi.SystemInfo;
@@ -134,21 +137,79 @@ public class ElekterBotService extends TelegramLongPollingBot {
         return token;
     }
 
-    @Override
-    public void onUpdateReceived(Update update) {
-        if (!update.hasMessage()) {
-            return;
-        }
+    private void handleCallbackQuery(CallbackQuery callbackQuery) {
+        String callData = callbackQuery.getData();
+        long chatId = callbackQuery.getMessage().getChatId();
 
-        Message message = update.getMessage();
-        long chatId = message.getChatId();
-
-        if (message.hasText()) {
-            handleTextMessage(message);
-        } else if (message.hasDocument()) {
-            handleDocumentMessage(message, chatId);
+        switch (callData) {
+            case "check_price":
+                String response = getElectricityPriceResponse();
+                sendMessage(chatId, response);
+                break;
+            case "car_plate_query":
+                // Prompt the user to enter the car plate number
+                sendMessage(chatId, "Please enter the car plate number with the 'ark' command.");
+                break;
+            default:
+                sendMessage(chatId, "Command not recognized.");
+                break;
         }
     }
+
+    @Override
+    public void onUpdateReceived(Update update) {
+
+        if (update.hasCallbackQuery()) {
+            handleCallbackQuery(update.getCallbackQuery());
+        } else if (update.hasMessage()) {
+            if (!update.hasMessage()) {
+                return;
+            }
+
+            Message message = update.getMessage();
+            long chatId = message.getChatId();
+
+            if (message.hasText()) {
+                handleTextMessage(message);
+            } else if (message.hasDocument()) {
+                handleDocumentMessage(message, chatId);
+            }
+        }
+    }
+
+    private void displayMenu(long chatId) {
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+
+        // Creating buttons
+        InlineKeyboardButton buttonCheckPrice = new InlineKeyboardButton("Check Electricity Price");
+        buttonCheckPrice.setCallbackData("check_price");
+
+        InlineKeyboardButton buttonCarPlateQuery = new InlineKeyboardButton("Car Plate Query");
+        buttonCarPlateQuery.setCallbackData("car_plate_query");
+
+        // Adding buttons to the keyboard
+        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+        rowInline.add(buttonCheckPrice);
+        rowInline.add(buttonCarPlateQuery);
+
+        // Set the keyboard to the markup
+        rowsInline.add(rowInline);
+        markupInline.setKeyboard(rowsInline);
+
+        // Creating a message and setting the markup
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText("Select an option:");
+        message.setReplyMarkup(markupInline);
+
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error("Failed to display menu: {}", e.getMessage());
+        }
+    }
+
 
     private void handleTextMessage(Message message) {
         long chatId = message.getChatId();
@@ -161,6 +222,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
         if ("/start".equals(messageText)) {
             sendMessage(chatId, "Hello! I am an electricity bill calculator bot. Please send me a CSV file.");
+            displayMenu(chatId);
         } else if (messageText.toLowerCase().contains("elektrihind")) {
             String response = getElectricityPriceResponse();
             sendMessageCode(chatId, messageId, response);

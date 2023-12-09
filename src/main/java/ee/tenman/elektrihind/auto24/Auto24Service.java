@@ -93,27 +93,6 @@ public class Auto24Service {
         }
         Selenide.closeWindow();
         log.info("Found car details for regNr: {}", regNr);
-
-//        Reg nr: 876BCH
-//        Mark: SUBARU FORESTER
-//
-//        Vin: JF1SH5LS5AG105986
-//
-//        Esmane registreerimine: 18.09.2009
-//        Kategooria: sõiduauto
-//        Kere nimetus: universaal
-//        Kere värvus: helehall
-//        Mootor: 1994 cm³
-//        Mootori võimsus: 110 kW
-//        Kütus: Mootoribensiin
-//        Käigukast: Automaat
-//        Veoskeem: nelikvedu
-//        Registreerimistunnistus: EL813202
-//        Kütusekulu keskmine: 8.4
-//        Kütusekulu linnas: 11.2
-//        Kütusekulu maanteel: 6.9
-//        Läbisõit: 120141 (31.07.2023)
-
         return carDetails;
     }
 

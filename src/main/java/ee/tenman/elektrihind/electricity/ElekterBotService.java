@@ -436,6 +436,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         SendMessage message = new SendMessage();
         message.setParseMode("MarkdownV2");
         message.enableMarkdown(true);
+        message.enableMarkdownV2(true);
         message.setChatId(String.valueOf(chatId));
         message.setReplyToMessageId(replyToMessageId);
 
@@ -455,11 +456,12 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
 
         SendMessage message = new SendMessage();
-        message.setParseMode("Markdown");
+        message.setParseMode("MarkdownV2");
         message.enableMarkdown(true);
+        message.enableMarkdownV2(true);
         message.setChatId(String.valueOf(chatId));
 
-        message.setText("\n```" + text + "```");
+        message.setText("```" + text + "```");
 
         try {
             execute(message);

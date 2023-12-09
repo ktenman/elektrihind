@@ -45,6 +45,7 @@ public class Auto24Service implements CaptchaSolver {
     @SneakyThrows({IOException.class, InterruptedException.class})
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
     public Map<String, String> carPrice(String regNr) {
+        log.info("Searching car price for regNr: {}", regNr);
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");
         TimeUnit.SECONDS.sleep(2);
         SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
@@ -87,6 +88,7 @@ public class Auto24Service implements CaptchaSolver {
     @SneakyThrows({InterruptedException.class})
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
     public Map<String, String> carDetails(Map<String, String> carDetails, String captchaToken) {
+        log.info("Searching car details for regNr: {}", carDetails.get("Reg nr"));
         String regNr = carDetails.get("Reg nr");
         String vin = carDetails.get("Vin");
         Selenide.open(PAGE_URL);

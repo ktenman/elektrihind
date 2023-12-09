@@ -39,7 +39,7 @@ public class ArkService implements CaptchaSolver {
     @Cacheable(value = ONE_YEAR_CACHE_1, key = "#regNr")
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public Map<String, String> carDetails(String regNr, String captchaToken) {
-
+        log.info("Searching car details for regNr: {}", regNr);
         Selenide.open(PAGE_URL);
         getWebDriver().manage().window().maximize();
         TimeUnit.SECONDS.sleep(1);

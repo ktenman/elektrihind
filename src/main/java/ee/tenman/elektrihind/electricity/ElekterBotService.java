@@ -155,18 +155,17 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-
         if (update.hasCallbackQuery()) {
             handleCallbackQuery(update.getCallbackQuery());
         } else if (update.hasMessage()) {
-            if (!update.hasMessage()) {
-                return;
-            }
-
             Message message = update.getMessage();
             long chatId = message.getChatId();
 
             if (message.hasText()) {
+                if ("/start".equals(message.getText())) {
+                    sendMessage(chatId, "Welcome to the bot! Here are your options:");
+                }
+                displayMenu(chatId);
                 handleTextMessage(message);
             } else if (message.hasDocument()) {
                 handleDocumentMessage(message, chatId);

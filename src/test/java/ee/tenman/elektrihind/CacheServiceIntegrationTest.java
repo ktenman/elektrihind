@@ -1,6 +1,7 @@
 package ee.tenman.elektrihind;
 
 import ee.tenman.elektrihind.cache.CacheService;
+import ee.tenman.elektrihind.electricity.ElectricityPricesService;
 import ee.tenman.elektrihind.electricity.ElekterBotService;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,7 +10,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.ZoneId;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,6 +20,8 @@ class CacheServiceIntegrationTest {
 
     @MockBean
     ElekterBotService elekterBotService;
+    @MockBean
+    ElectricityPricesService electricityPricesService;
     @MockBean
     Clock clock;
     @Resource
@@ -33,12 +35,12 @@ class CacheServiceIntegrationTest {
     }
 
     @Test
-    void testGetMessageCount() {
-        LocalDate testDate = LocalDate.now(clock);
+    void testCanSendMessageToday() {
+        assertThat(cacheService.canSendMessageToday()).isTrue();
+
         cacheService.incrementMessageCountForToday();
 
-        assertThat(cacheService.getMessageCount(testDate)).isEqualTo(1);
+        assertThat(cacheService.canSendMessageToday()).isFalse();
     }
-
 
 }

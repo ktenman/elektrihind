@@ -56,24 +56,15 @@ public class CacheService {
         log.info("CacheService initialization completed");
     }
 
-    public int getMessageCount(LocalDate date) {
-        log.debug("Fetching message count for date: {}", date);
-        return cacheHelperService.getMessageCount(date);
-    }
-
-    public void incrementMessageCount(LocalDate date) {
-        log.info("Incrementing message count for date: {}", date);
-        cacheHelperService.incrementMessageCount(date, getMessageCount(date));
-    }
-
     public boolean canSendMessageToday() {
         LocalDate today = LocalDate.now(clock);
-        return getMessageCount(today) < DAILY_MESSAGE_LIMIT;
+        return cacheHelperService.getMessageCount(today) < DAILY_MESSAGE_LIMIT;
     }
 
     public void incrementMessageCountForToday() {
         LocalDate today = LocalDate.now(clock);
-        incrementMessageCount(today);
+        log.info("Incrementing message count for date: {}", today);
+        cacheHelperService.incrementMessageCount(today, cacheHelperService.getMessageCount(today));
         log.info("Message count for today incremented.");
     }
 

@@ -16,8 +16,8 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -85,7 +85,7 @@ public class Auto24Service {
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
         $("button[type='submit']").click();
         ElementsCollection rows = $$("table.result tr");
-        Map<String, String> carDetails = new HashMap<>();
+        TreeMap<String, String> carDetails = new TreeMap<>();
         for (int i = 0; i < rows.size(); i++) {
             String key = rows.get(i).$$("td").get(0).getText();
             String value = rows.get(i).$$("td").get(1).getText();
@@ -93,6 +93,27 @@ public class Auto24Service {
         }
         Selenide.closeWindow();
         log.info("Found car details for regNr: {}", regNr);
+
+//        Reg nr: 876BCH
+//        Mark: SUBARU FORESTER
+//
+//        Vin: JF1SH5LS5AG105986
+//
+//        Esmane registreerimine: 18.09.2009
+//        Kategooria: sõiduauto
+//        Kere nimetus: universaal
+//        Kere värvus: helehall
+//        Mootor: 1994 cm³
+//        Mootori võimsus: 110 kW
+//        Kütus: Mootoribensiin
+//        Käigukast: Automaat
+//        Veoskeem: nelikvedu
+//        Registreerimistunnistus: EL813202
+//        Kütusekulu keskmine: 8.4
+//        Kütusekulu linnas: 11.2
+//        Kütusekulu maanteel: 6.9
+//        Läbisõit: 120141 (31.07.2023)
+
         return carDetails;
     }
 

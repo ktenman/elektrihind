@@ -5,8 +5,6 @@ import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest
@@ -18,7 +16,7 @@ class Auto24ServiceTest {
     @Test
     @Disabled
     void search() {
-        Map<String, String> stringStringMap = auto24Service.carDetails("876BCH");
+        String search = auto24Service.search("876BCH");
 
         System.out.println();
     }

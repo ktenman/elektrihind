@@ -18,7 +18,8 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE_3;
+
 
 @Service
 @Slf4j
@@ -35,7 +36,7 @@ public class EuriborRateFetcher {
         return rates;
     }
 
-    @Cacheable(ONE_DAY_CACHE)
+    @Cacheable(ONE_DAY_CACHE_3)
     public String getEuriborRateResponse() {
         if (getRates().size() < 2) {
             return "Not enough data to calculate Euribor rate change.";

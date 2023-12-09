@@ -5,6 +5,7 @@ import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import ee.tenman.elektrihind.ark.ArkService;
+import ee.tenman.elektrihind.lkf.LKFService;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE_2;
 
 @Service
 @Slf4j
@@ -53,6 +54,9 @@ public class Auto24Service {
 
     @Resource
     private ArkService arkService;
+
+    @Resource
+    private LKFService lkfService;
 
     @Resource(name = "twoThreadExecutor")
     private ExecutorService twoThreadExecutor;
@@ -179,11 +183,13 @@ public class Auto24Service {
 
     @SneakyThrows
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
-    @Cacheable(value = ONE_DAY_CACHE, key = "#regNr")
+    @Cacheable(value = ONE_DAY_CACHE_2, key = "#regNr")
     public String search(String regNr) {
 
         Map<String, String> details = arkService.carDetails(regNr);
         details = carDetails(details);
+        Map<String, String> crashes = lkfService.carDetails(regNr);
+        details.putAll(crashes);
         String price = carPrice(regNr);
 
         return price + "\n\n" + details.entrySet().stream()

@@ -154,6 +154,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
             }
             default -> sendMessage(chatId, "Command not recognized.");
         }
+        displayMenu(chatId);
     }
 
 

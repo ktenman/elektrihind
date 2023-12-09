@@ -154,7 +154,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
             }
             default -> sendMessage(chatId, "Command not recognized.");
         }
-        displayMenu(chatId);
+        CompletableFuture.runAsync(() -> displayMenu(chatId), singleThreadExecutor);
     }
 
 
@@ -168,7 +168,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
             if (message.hasText()) {
                 handleTextMessage(message);
-                displayMenu(chatId);
+                CompletableFuture.runAsync(() -> displayMenu(chatId), singleThreadExecutor);
             } else if (message.hasDocument()) {
                 handleDocumentMessage(message, chatId);
             }
@@ -214,7 +214,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         // Creating a message and setting the markup
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
-        message.setText("Select an option:");
+        //message.setText("Select an option:");
         message.setReplyMarkup(markupInline);
 
         try {

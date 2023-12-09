@@ -144,13 +144,13 @@ public class ElekterBotService extends TelegramLongPollingBot {
         long chatId = callbackQuery.getMessage().getChatId();
 
         switch (callData) {
-            case "check_price" -> sendMessage(chatId, getElectricityPriceResponse());
+            case "check_price" -> sendMessageCode(chatId, getElectricityPriceResponse());
             case "car_plate_query" -> sendMessage(chatId, "Please enter the car plate number with the 'ark' command.");
             case EURIBOR -> sendMessageCode(chatId, euriborRateFetcher.getEuriborRateResponse());
             case METRIC -> sendMessageCode(chatId, getSystemMetrics());
             case "reboot" -> {
                 digitalOceanService.rebootDroplet();
-                sendMessage(chatId, "Droplet reboot initiated!");
+                sendMessageCode(chatId, "Droplet reboot initiated!");
             }
             default -> sendMessage(chatId, "Command not recognized.");
         }
@@ -213,7 +213,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         // Creating a message and setting the markup
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
-//        message.setText("Select an option:");
+        message.setText("Select an option:");
         message.setReplyMarkup(markupInline);
 
         try {

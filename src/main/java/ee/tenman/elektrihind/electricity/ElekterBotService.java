@@ -179,20 +179,20 @@ public class ElekterBotService extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
 
         // Existing buttons
-        InlineKeyboardButton buttonCheckPrice = new InlineKeyboardButton("Check Electricity Price");
+        InlineKeyboardButton buttonCheckPrice = new InlineKeyboardButton("Elektrihind");
         buttonCheckPrice.setCallbackData("check_price");
 
         InlineKeyboardButton buttonCarPlateQuery = new InlineKeyboardButton("Car Plate Query");
         buttonCarPlateQuery.setCallbackData("car_plate_query");
 
         // New buttons
-        InlineKeyboardButton buttonEuribor = new InlineKeyboardButton("Euribor Rates");
+        InlineKeyboardButton buttonEuribor = new InlineKeyboardButton("Euribor");
         buttonEuribor.setCallbackData(EURIBOR);
 
-        InlineKeyboardButton buttonMetric = new InlineKeyboardButton("System Metrics");
+        InlineKeyboardButton buttonMetric = new InlineKeyboardButton("Metrics");
         buttonMetric.setCallbackData(METRIC);
 
-        InlineKeyboardButton buttonReboot = new InlineKeyboardButton("Reboot Droplet");
+        InlineKeyboardButton buttonReboot = new InlineKeyboardButton("Reboot");
         buttonReboot.setCallbackData("reboot");
 
         // Adding buttons to the keyboard
@@ -440,7 +440,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         message.setChatId(String.valueOf(chatId));
         message.setReplyToMessageId(replyToMessageId);
 
-        message.setText(" \n\n ```" + text + "```");
+        message.setText("`" + text + "`");
 
         try {
             execute(message);

@@ -20,7 +20,6 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -178,36 +177,36 @@ public class Auto24Service {
         return acceptableKeys.stream().anyMatch(key::contains);
     }
 
-//    @SneakyThrows
-//    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
-//    @Cacheable(value = ONE_DAY_CACHE, key = "#regNr")
-//    public String search(String regNr) {
-//
-//        Map<String, String> details = arkService.carDetails(regNr);
-//        details = carDetails(details);
-//        String price = carPrice(regNr);
-//
-//        return price + "\n\n" + details.entrySet().stream()
-//                .map(entry -> entry.getKey() + ": " + entry.getValue())
-//                .collect(Collectors.joining("\n"));
-//    }
-
     @SneakyThrows
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
     @Cacheable(value = ONE_DAY_CACHE, key = "#regNr")
     public String search(String regNr) {
-        CompletableFuture<Map<String, String>> carDetailsFuture = CompletableFuture.supplyAsync(() -> carDetails(arkService.carDetails(regNr)), twoThreadExecutor);
-        CompletableFuture<String> carPriceFuture = CompletableFuture.supplyAsync(() -> carPrice(regNr), twoThreadExecutor);
 
-        carDetailsFuture.join();
-        carPriceFuture.join();
-
-        Map<String, String> details = carDetailsFuture.get();
-        String price = carPriceFuture.get();
+        Map<String, String> details = arkService.carDetails(regNr);
+        details = carDetails(details);
+        String price = carPrice(regNr);
 
         return price + "\n\n" + details.entrySet().stream()
                 .map(entry -> entry.getKey() + ": " + entry.getValue())
                 .collect(Collectors.joining("\n"));
     }
+
+//    @SneakyThrows
+//    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
+//    @Cacheable(value = ONE_DAY_CACHE, key = "#regNr")
+//    public String search(String regNr) {
+//        CompletableFuture<Map<String, String>> carDetailsFuture = CompletableFuture.supplyAsync(() -> carDetails(arkService.carDetails(regNr)), twoThreadExecutor);
+//        CompletableFuture<String> carPriceFuture = CompletableFuture.supplyAsync(() -> carPrice(regNr), twoThreadExecutor);
+//
+//        carDetailsFuture.join();
+//        carPriceFuture.join();
+//
+//        Map<String, String> details = carDetailsFuture.get();
+//        String price = carPriceFuture.get();
+//
+//        return price + "\n\n" + details.entrySet().stream()
+//                .map(entry -> entry.getKey() + ": " + entry.getValue())
+//                .collect(Collectors.joining("\n"));
+//    }
 
 }

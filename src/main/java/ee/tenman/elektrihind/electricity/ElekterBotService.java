@@ -239,7 +239,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
         if ("/start".equals(messageText)) {
             sendMessage(chatId, "Hello! I am an electricity bill calculator bot. Please send me a CSV file.");
-            displayMenu(chatId);
         } else if (messageText.toLowerCase().contains("elektrihind")) {
             String response = getElectricityPriceResponse();
             sendMessageCode(chatId, messageId, response);
@@ -266,6 +265,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages
+        displayMenu(chatId);
     }
 
     private String getSystemMetrics() {

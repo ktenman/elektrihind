@@ -31,12 +31,39 @@ import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE;
 @Slf4j
 public class Auto24Service {
 
+//    Reg nr: 876BCH
+//    Mark: SUBARU FORESTER
+//
+//    Vin: JF1SH5LS5AG105986
+//
+//    Esmane registreerimine: 18.09.2009
+//    Kategooria: sõiduauto
+//    Kere nimetus: universaal
+//    Kere värvus: helehall
+//    Mootor: 1994 cm³
+//    Mootori võimsus: 110 kW
+//    Kütus: Mootoribensiin
+//    Käigukast: Automaat
+//    Veoskeem: nelikvedu
+//    Registreerimistunnistus: EL813202
+//    Kütusekulu keskmine: 8.4
+//    Kütusekulu linnas: 11.2
+//    Kütusekulu maanteel: 6.9
+//    Läbisõit: 120141 (31.07.2023)
+
     private static final List<String> ACCEPTED_KEYS = List.of(
             "Mark",
             "Kütusekulu keskmine (l/ 100 km)",
             "Kütusekulu linnas (l/100 km)",
             "Kütusekulu maanteel (l/100 km)",
-            "Kaubanduslik nimetus"
+            "Kaubanduslik nimetus",
+            "Esmaregistreerimise kuupäev (B)",
+            "Värvus",
+            "Mootori töömaht (cm3)",
+            "Mootori võimsus (kW)",
+            "Mootori tüüp",
+            "Käigukasti tüüp",
+            "Veotelgi"
     );
 
     @Resource
@@ -98,11 +125,17 @@ public class Auto24Service {
         for (int i = 0; i < rows.size(); i++) {
             String key = rows.get(i).$$("td").get(0).getText();
             String value = rows.get(i).$$("td").get(1).getText();
-            carDetails.put(key, value);
+            if (isAcceptedKey(key)) {
+                carDetails.put(key, value);
+            }
         }
         Selenide.closeWindow();
         log.info("Found car details for regNr: {}", regNr);
         return carDetails;
+    }
+
+    private boolean isAcceptedKey(String key) {
+        return ACCEPTED_KEYS.stream().anyMatch(key::contains);
     }
 
     @SneakyThrows

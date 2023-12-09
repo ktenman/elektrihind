@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind;
 
+import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
 import ee.tenman.elektrihind.euribor.EuriborRateFetcher;

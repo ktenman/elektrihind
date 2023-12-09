@@ -22,3 +22,9 @@ imdb-api:
 digitalocean:
   api:
     token:
+
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379

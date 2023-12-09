@@ -1,7 +1,7 @@
 package ee.tenman.elektrihind.electricity;
 
-import ee.tenman.elektrihind.CacheService;
 import ee.tenman.elektrihind.auto24.Auto24Service;
+import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.digitalocean.DigitalOceanService;

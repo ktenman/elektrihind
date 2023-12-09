@@ -1,6 +1,6 @@
 package ee.tenman.elektrihind.electricity;
 
-import ee.tenman.elektrihind.CacheService;
+import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.telegram.TelegramService;
 import lombok.SneakyThrows;

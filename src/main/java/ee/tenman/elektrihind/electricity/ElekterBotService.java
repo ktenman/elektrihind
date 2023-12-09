@@ -193,7 +193,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         buttonMetric.setCallbackData(METRIC);
 
         InlineKeyboardButton buttonReboot = new InlineKeyboardButton("Reboot Droplet");
-        buttonMetric.setCallbackData("reboot");
+        buttonReboot.setCallbackData("reboot");
 
         // Adding buttons to the keyboard
         List<InlineKeyboardButton> rowInline1 = new ArrayList<>();

@@ -166,10 +166,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
             long chatId = message.getChatId();
 
             if (message.hasText()) {
-                if ("/start".equals(message.getText())) {
-                    sendMessage(chatId, "Welcome to the bot! Here are your options:");
-                }
-                displayMenu(chatId);
                 handleTextMessage(message);
             } else if (message.hasDocument()) {
                 handleDocumentMessage(message, chatId);
@@ -237,7 +233,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
 
         if ("/start".equals(messageText)) {
-            sendMessage(chatId, "Hello! I am an electricity bill calculator bot. Please send me a CSV file.");
+            sendMessage(chatId, "Welcome to the bot!");
         } else if (messageText.toLowerCase().contains("elektrihind")) {
             String response = getElectricityPriceResponse();
             sendMessageCode(chatId, messageId, response);
@@ -264,7 +260,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages
-//        displayMenu(chatId);
+        displayMenu(chatId);
     }
 
     private String getSystemMetrics() {
@@ -436,7 +432,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
         message.enableMarkdown(true);
         message.setChatId(String.valueOf(chatId));
         message.setReplyToMessageId(replyToMessageId);
-
 
         message.setText("`" + text + "`");
 

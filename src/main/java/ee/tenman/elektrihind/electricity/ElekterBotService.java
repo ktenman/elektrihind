@@ -146,8 +146,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
         switch (callData) {
             case "check_price" -> sendMessage(chatId, getElectricityPriceResponse());
             case "car_plate_query" -> sendMessage(chatId, "Please enter the car plate number with the 'ark' command.");
-            case EURIBOR -> sendMessage(chatId, euriborRateFetcher.getEuriborRateResponse());
-            case METRIC -> sendMessage(chatId, getSystemMetrics());
+            case EURIBOR ->
+                    sendMessageCode(chatId, callbackQuery.getMessage().getMessageId(), euriborRateFetcher.getEuriborRateResponse());
+            case METRIC -> sendMessageCode(chatId, callbackQuery.getMessage().getMessageId(), getSystemMetrics());
             case "reboot" -> {
                 digitalOceanService.rebootDroplet();
                 sendMessage(chatId, "Droplet reboot initiated!");
@@ -300,11 +301,11 @@ public class ElekterBotService extends TelegramLongPollingBot {
             diskUsage = (double) usableSpace / totalSpace * 100;
         }
 
-        return String.format("`" +
+        return String.format("" +
                 "CPU: %.2f %% %n" +
                 // "CPU (v2): %.2f %% %n" +
                 "Disk Usage: %.2f %% %n" +
-                "Memory Usage: %.2f %%`", cpuLoad, diskUsage, memoryUsage);
+                "Memory Usage: %.2f %%", cpuLoad, diskUsage, memoryUsage);
     }
 
     private void handleDocumentMessage(Message message, long chatId) {

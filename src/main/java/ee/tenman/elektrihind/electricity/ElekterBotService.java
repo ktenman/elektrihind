@@ -146,9 +146,8 @@ public class ElekterBotService extends TelegramLongPollingBot {
         switch (callData) {
             case "check_price" -> sendMessage(chatId, getElectricityPriceResponse());
             case "car_plate_query" -> sendMessage(chatId, "Please enter the car plate number with the 'ark' command.");
-            case EURIBOR ->
-                    sendMessageCode(chatId, callbackQuery.getMessage().getMessageId(), euriborRateFetcher.getEuriborRateResponse());
-            case METRIC -> sendMessageCode(chatId, callbackQuery.getMessage().getMessageId(), getSystemMetrics());
+            case EURIBOR -> sendMessageCode(chatId, euriborRateFetcher.getEuriborRateResponse());
+            case METRIC -> sendMessageCode(chatId, getSystemMetrics());
             case "reboot" -> {
                 digitalOceanService.rebootDroplet();
                 sendMessage(chatId, "Droplet reboot initiated!");
@@ -448,6 +447,25 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
     }
 
+    void sendMessageCode(long chatId, String text) {
+        if (text == null) {
+            log.warn("Not sending null message to chat: {}", chatId);
+            return;
+        }
+
+        SendMessage message = new SendMessage();
+        message.setParseMode("MarkdownV2");
+        message.enableMarkdown(true);
+        message.setChatId(String.valueOf(chatId));
+
+        message.setText("`" + text + "`");
+
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error("Failed to send message to chat: {} with text: {}", chatId, text, e);
+        }
+    }
 
     void handleCsvDocument(Document document, long chatId) {
         String filePath = null;

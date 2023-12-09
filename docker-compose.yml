@@ -26,3 +26,6 @@ services:
 volumes:
   cache-volume:
   redis-data:
+
+networks:
+  mynetwork:

@@ -168,7 +168,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
             if (message.hasText()) {
                 handleTextMessage(message);
-                CompletableFuture.runAsync(() -> displayMenu(chatId), singleThreadExecutor);
             } else if (message.hasDocument()) {
                 handleDocumentMessage(message, chatId);
             }
@@ -233,18 +232,22 @@ public class ElekterBotService extends TelegramLongPollingBot {
         Matcher matcher = DURATION_PATTERN.matcher(messageText);
         Matcher arkMatcher = CAR_REGISTRATION_PATTERN.matcher(messageText);
 
-
+        boolean showMenu = false;
         if ("/start".equals(messageText)) {
             sendMessage(chatId, "Welcome to the bot!");
+            showMenu = true;
         } else if (messageText.toLowerCase().contains("elektrihind")) {
             String response = getElectricityPriceResponse();
             sendMessageCode(chatId, messageId, response);
+            showMenu = true;
         } else if (messageText.toLowerCase().contains(METRIC)) {
             String response = getSystemMetrics();
             sendMessageCode(chatId, messageId, response);
+            showMenu = true;
         } else if (messageText.toLowerCase().contains(EURIBOR)) {
             String euriborResonse = euriborRateFetcher.getEuriborRateResponse();
             sendMessageCode(chatId, messageId, euriborResonse);
+            showMenu = true;
         } else if (arkMatcher.find()) {
             CompletableFuture.runAsync(() -> {
                 long startTime = System.nanoTime();
@@ -256,12 +259,16 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
                 sendMessageCode(chatId, messageId, search);
             }, singleThreadExecutor);
+            showMenu = true;
         } else if (messageText.equalsIgnoreCase("reboot")) {
             digitalOceanService.rebootDroplet();
             sendMessageCode(chatId, messageId, "Droplet reboot initiated!");
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages
+        if (showMenu) {
+            CompletableFuture.runAsync(() -> displayMenu(chatId), singleThreadExecutor);
+        }
     }
 
     private String getSystemMetrics() {

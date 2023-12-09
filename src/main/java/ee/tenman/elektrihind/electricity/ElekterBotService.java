@@ -154,7 +154,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
             }
             default -> sendMessage(chatId, "Command not recognized.");
         }
-        CompletableFuture.runAsync(() -> displayMenu(chatId), singleThreadExecutor);
     }
 
 

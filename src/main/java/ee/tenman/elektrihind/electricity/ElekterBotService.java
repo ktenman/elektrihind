@@ -213,7 +213,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         // Creating a message and setting the markup
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
-        message.setText("Select an option:");
+//        message.setText("Select an option:");
         message.setReplyMarkup(markupInline);
 
         try {

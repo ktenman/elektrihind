@@ -440,7 +440,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         message.setChatId(String.valueOf(chatId));
         message.setReplyToMessageId(replyToMessageId);
 
-        message.setText("```copy\n" + text + "```");
+        message.setText("```\n" + text + "```");
 
         try {
             execute(message);

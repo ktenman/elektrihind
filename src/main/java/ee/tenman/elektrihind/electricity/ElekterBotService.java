@@ -172,9 +172,13 @@ public class ElekterBotService extends TelegramLongPollingBot {
             sendMessageCode(chatId, messageId, euriborResonse);
         } else if (arkMatcher.find()) {
             CompletableFuture.runAsync(() -> {
+                long startTime = System.nanoTime();
                 String regNr = arkMatcher.group(1).toUpperCase();
                 sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
                 String search = auto24Service.search(regNr);
+                long endTime = System.nanoTime();
+                double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
+                search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
                 sendMessageCode(chatId, messageId, search);
             }, singleThreadExecutor);
         } else if (messageText.equalsIgnoreCase("reboot")) {

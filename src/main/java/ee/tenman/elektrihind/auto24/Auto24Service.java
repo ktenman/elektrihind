@@ -100,19 +100,13 @@ public class Auto24Service {
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
     @Cacheable(value = ONE_DAY_CACHE, key = "#regNr")
     public String search(String regNr) {
-        long startTime = System.nanoTime();
 
         Map<String, String> details = carDetails(regNr);
         String price = carPrice(regNr);
 
-        String result = price + "\n\n" + details.entrySet().stream()
+        return price + "\n\n" + details.entrySet().stream()
                 .map(entry -> entry.getKey() + ": " + entry.getValue())
                 .collect(Collectors.joining("\n"));
-
-        long endTime = System.nanoTime();
-        double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
-
-        return result + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
     }
 
 }

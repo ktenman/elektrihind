@@ -254,7 +254,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 String search = auto24Service.search(regNr);
                 long endTime = System.nanoTime();
                 double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
-                search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
+                search = search + "\n\nTask duration: " + String.format("%.2f seconds", durationSeconds);
                 sendMessageCode(chatId, messageId, search);
             }, singleThreadExecutor);
         } else if (messageText.equalsIgnoreCase("reboot")) {

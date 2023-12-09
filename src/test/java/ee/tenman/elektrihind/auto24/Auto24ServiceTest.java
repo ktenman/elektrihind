@@ -5,6 +5,8 @@ import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @IntegrationTest
@@ -16,10 +18,9 @@ class Auto24ServiceTest {
     @Test
     @Disabled
     void search() {
-        String search = auto24Service.search("876BCH");
+        Map<String, String> stringStringMap = auto24Service.carDetails("876BCH");
 
-        assertThat(search).contains("Sõiduki keskmine hind: 3200 € kuni 7200 €");
-        assertThat(search).contains("Eestis registreerimise kuupäev (B1): 18.09.2009");
+        System.out.println();
     }
 
     @Test

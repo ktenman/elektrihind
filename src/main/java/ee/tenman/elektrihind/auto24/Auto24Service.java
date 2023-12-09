@@ -4,6 +4,7 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import ee.tenman.elektrihind.ark.ArkService;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,8 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -30,26 +33,6 @@ import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE;
 @Service
 @Slf4j
 public class Auto24Service {
-
-//    Reg nr: 876BCH
-//    Mark: SUBARU FORESTER
-//
-//    Vin: JF1SH5LS5AG105986
-//
-//    Esmane registreerimine: 18.09.2009
-//    Kategooria: sõiduauto
-//    Kere nimetus: universaal
-//    Kere värvus: helehall
-//    Mootor: 1994 cm³
-//    Mootori võimsus: 110 kW
-//    Kütus: Mootoribensiin
-//    Käigukast: Automaat
-//    Veoskeem: nelikvedu
-//    Registreerimistunnistus: EL813202
-//    Kütusekulu keskmine: 8.4
-//    Kütusekulu linnas: 11.2
-//    Kütusekulu maanteel: 6.9
-//    Läbisõit: 120141 (31.07.2023)
 
     private static final List<String> ACCEPTED_KEYS = List.of(
             "Mark",
@@ -68,6 +51,12 @@ public class Auto24Service {
 
     @Resource
     private RecaptchaSolverService recaptchaSolverService;
+
+    @Resource
+    private ArkService arkService;
+
+    @Resource(name = "twoThreadExecutor")
+    private ExecutorService twoThreadExecutor;
 
     @SneakyThrows({IOException.class, InterruptedException.class})
     public String carPrice(String regNr) {
@@ -106,6 +95,48 @@ public class Auto24Service {
         return response;
     }
 
+
+    @SneakyThrows({InterruptedException.class})
+    public Map<String, String> carDetails(Map<String, String> carDetails) {
+        String regNr = carDetails.get("Reg nr");
+        String vin = carDetails.get("Vin");
+        Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring");
+        TimeUnit.SECONDS.sleep(2);
+        SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
+        if (acceptCookies.exists()) {
+            acceptCookies.click();
+        }
+        $(By.id("vin-inp")).setValue(vin);
+        $(By.id("reg_nr-inp")).setValue(regNr);
+        log.info("Solving car captcha for regNr: {}", regNr);
+        String captchaToken = recaptchaSolverService.solveCaptcha();
+        log.info("Car captcha solved for regNr: {}", regNr);
+        executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
+        $("button[type='submit']").click();
+        ElementsCollection rows = Selenide.$(By.className("result")).findAll(By.tagName("tr"));
+        for (int i = 0; i < rows.size(); i++) {
+            ElementsCollection selenideElements = rows.get(i).$$("td");
+            String key = selenideElements.get(0).getText();
+            String value = selenideElements.get(1).getText();
+            if (isAcceptedKey2(key)) {
+                carDetails.put(key, value);
+            }
+        }
+
+        ElementsCollection selenideElements = $$(By.tagName("h4"))
+                .find(Condition.text("Ülevaatuste ajalugu"))
+                .sibling(0)
+                .findAll(By.tagName("tr"))
+                .get(1).$$("td");
+        String labisoit = selenideElements.get(4).text() + " (" + selenideElements.get(0).text() + ")";
+
+        carDetails.put("Läbisõit", labisoit);
+
+        Selenide.closeWindow();
+        log.info("Found car details for regNr: {}", regNr);
+        return carDetails;
+    }
+
     @SneakyThrows({InterruptedException.class})
     public Map<String, String> carDetails(String regNr) {
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring");
@@ -138,13 +169,41 @@ public class Auto24Service {
         return ACCEPTED_KEYS.stream().anyMatch(key::contains);
     }
 
+    private boolean isAcceptedKey2(String key) {
+        List<String> acceptableKeys = List.of(
+                "Kütusekulu keskmine (l/ 100 km)",
+                "Kütusekulu linnas (l/100 km)",
+                "Kütusekulu maanteel (l/100 km)"
+        );
+        return acceptableKeys.stream().anyMatch(key::contains);
+    }
+
+//    @SneakyThrows
+//    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
+//    @Cacheable(value = ONE_DAY_CACHE, key = "#regNr")
+//    public String search(String regNr) {
+//
+//        Map<String, String> details = arkService.carDetails(regNr);
+//        details = carDetails(details);
+//        String price = carPrice(regNr);
+//
+//        return price + "\n\n" + details.entrySet().stream()
+//                .map(entry -> entry.getKey() + ": " + entry.getValue())
+//                .collect(Collectors.joining("\n"));
+//    }
+
     @SneakyThrows
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
     @Cacheable(value = ONE_DAY_CACHE, key = "#regNr")
     public String search(String regNr) {
+        CompletableFuture<Map<String, String>> carDetailsFuture = CompletableFuture.supplyAsync(() -> carDetails(arkService.carDetails(regNr)), twoThreadExecutor);
+        CompletableFuture<String> carPriceFuture = CompletableFuture.supplyAsync(() -> carPrice(regNr), twoThreadExecutor);
 
-        Map<String, String> details = carDetails(regNr);
-        String price = carPrice(regNr);
+        carDetailsFuture.join();
+        carPriceFuture.join();
+
+        Map<String, String> details = carDetailsFuture.get();
+        String price = carPriceFuture.get();
 
         return price + "\n\n" + details.entrySet().stream()
                 .map(entry -> entry.getKey() + ": " + entry.getValue())

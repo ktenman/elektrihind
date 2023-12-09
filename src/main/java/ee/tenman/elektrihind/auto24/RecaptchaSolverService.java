@@ -21,7 +21,11 @@ public class RecaptchaSolverService {
     private String apiKey;
 
     public String solveCaptcha() {
-        Map<String, Object> response = recaptchaClient.sendCaptcha(apiKey, "userrecaptcha", SITE_KEY, PAGE_URL, 1);
+        return solveCaptcha(SITE_KEY, PAGE_URL);
+    }
+
+    public String solveCaptcha(String siteKey, String pageUrl) {
+        Map<String, Object> response = recaptchaClient.sendCaptcha(apiKey, "userrecaptcha", siteKey, pageUrl, 1);
         String requestId = (String) response.get("request");
 
         for (int i = 0; i < 50; i++) {
@@ -38,6 +42,7 @@ public class RecaptchaSolverService {
         }
         return null;
     }
+
 
     public String solveCaptcha(byte[] captchaImage) {
         String fileName = "captcha.png";

@@ -48,7 +48,7 @@ public class ArkService {
                 .parent() // Move to the parent td of the span
                 .sibling(0) // Move to the next td sibling
                 .$("input") // Find the input within this td
-                .setValue("876bch");
+                .setValue(regNr);
 
         log.info("Solving car captcha for regNr: {}", regNr);
         String captchaToken = recaptchaSolverService.solveCaptcha(SITE_KEY, PAGE_URL);

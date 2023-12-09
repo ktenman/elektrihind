@@ -26,7 +26,7 @@ class Auto24ServiceTest {
     @Test
     @Disabled
     void xsearch2() {
-        String search = auto24Service.search("325BDV");
+        String search = auto24Service.search("678WKS");
 
         assertThat(search).contains("Sõiduki keskmine hind: 1400 € kuni 1700 €");
         assertThat(search).contains("Eestis registreerimise kuupäev (B1): 12.05.2011");

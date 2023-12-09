@@ -178,7 +178,7 @@ public class Auto24Service {
     }
 
     @SneakyThrows
-    @Retryable(maxAttempts = 5, backoff = @Backoff(delay = 1500))
+    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
     @Cacheable(value = ONE_DAY_CACHE, key = "#regNr")
     public String search(String regNr) {
 

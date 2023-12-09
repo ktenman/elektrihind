@@ -16,7 +16,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class ElektrihindApplication {
 
     static {
-        Configuration.headless = true;
+        Configuration.headless = false;
         Configuration.browser = "firefox";
     }
 

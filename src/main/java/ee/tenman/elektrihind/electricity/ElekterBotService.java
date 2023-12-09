@@ -167,6 +167,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
             if (message.hasText()) {
                 handleTextMessage(message);
+                displayMenu(chatId);
             } else if (message.hasDocument()) {
                 handleDocumentMessage(message, chatId);
             }
@@ -260,7 +261,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages
-        displayMenu(chatId);
     }
 
     private String getSystemMetrics() {

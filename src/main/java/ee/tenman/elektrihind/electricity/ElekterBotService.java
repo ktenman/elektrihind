@@ -325,7 +325,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         List<InlineKeyboardButton> rowInline = new ArrayList<>();
 
         InlineKeyboardButton retryButton = new InlineKeyboardButton();
-        retryButton.setText("Rerun ark " + regNr);
+        retryButton.setText("Rerun 'ark " + regNr + "'");
         retryButton.setCallbackData("ark " + regNr); // Ensure this callback is handled in handleCallbackQuery method
 
         rowInline.add(retryButton);

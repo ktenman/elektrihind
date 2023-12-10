@@ -148,8 +148,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
         Matcher arkMatcher = CAR_REGISTRATION_PATTERN.matcher(callData);
         if (arkMatcher.find()) {
             String regNr = arkMatcher.group(1).toUpperCase();
-            long startTime = System.nanoTime();
+            AtomicLong startTime = new AtomicLong();
             CompletableFuture.supplyAsync(() -> {
+                        startTime.set(System.nanoTime());
                         sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
                         return carSearchService.search2(regNr); // This call returns the search result
                     }, singleThreadExecutor)
@@ -166,7 +167,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
                         } else {
                             // No exception occurred, process the search result
                             long endTime = System.nanoTime();
-                            double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
+                            double durationSeconds = (endTime - startTime.get()) / 1_000_000_000.0;
                             search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
                             sendMessageCode(chatId, search);
                         }
@@ -280,7 +281,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
             sendMessageCode(chatId, messageId, euriborResonse);
         } else if (arkMatcher.find()) {
             String regNr = arkMatcher.group(1).toUpperCase();
-            AtomicLong startTime = new AtomicLong(System.nanoTime());
+            AtomicLong startTime = new AtomicLong();
             CompletableFuture.supplyAsync(() -> {
                         startTime.set(System.nanoTime());
                         sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);

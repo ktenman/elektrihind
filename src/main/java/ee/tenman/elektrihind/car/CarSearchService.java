@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.car;
 
+import com.codeborne.selenide.Selenide;
 import ee.tenman.elektrihind.car.ark.ArkService;
 import ee.tenman.elektrihind.car.auto24.Auto24Service;
 import ee.tenman.elektrihind.car.lkf.LKFService;
@@ -117,6 +118,7 @@ public class CarSearchService {
                     .get();
             response.putAll(auto24details);
         }
+        CompletableFuture.runAsync(Selenide::closeWebDriver, fourThreadExecutor);
         return response.entrySet().stream()
                 .map(entry -> entry.getKey() + ": " + entry.getValue())
                 .collect(Collectors.joining("\n"));

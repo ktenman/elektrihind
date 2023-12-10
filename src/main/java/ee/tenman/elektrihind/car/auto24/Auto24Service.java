@@ -44,7 +44,7 @@ public class Auto24Service implements CaptchaSolver {
 
     @SneakyThrows({IOException.class, InterruptedException.class})
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
-    public Map<String, String> carPrice(String regNr) {
+    public LinkedHashMap<String, String> carPrice(String regNr) {
         log.info("Searching car price for regNr: {}", regNr);
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");
         TimeUnit.SECONDS.sleep(2);
@@ -77,12 +77,12 @@ public class Auto24Service implements CaptchaSolver {
                 .text()
                 .replace("\n", " ");
         Selenide.closeWindow();
-        log.info("Price for regNr: {} is {}", regNr, response);
         String[] split = response.split(":");
-        return new LinkedHashMap<>(Map.of(
-                split[0], split[1] + "\n",
-                "Reg nr", regNr
-        ));
+        LinkedHashMap<String, String> result = new LinkedHashMap<>();
+        result.put(split[0], split[1] + "\n");
+        result.put("Reg nr", regNr);
+        log.info("Price for regNr: {} is {}", regNr, response);
+        return result;
     }
 
     @SneakyThrows({InterruptedException.class})

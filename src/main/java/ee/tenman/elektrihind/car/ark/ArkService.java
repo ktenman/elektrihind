@@ -77,7 +77,7 @@ public class ArkService implements CaptchaSolver {
             String value = td.get(1).getText();
             carDetails.put(key, value);
         }
-        Selenide.closeWindow();
+//        Selenide.closeWindow();
         log.info("Found car details for regNr: {}", regNr);
         return carDetails;
     }

@@ -123,7 +123,7 @@ public class Auto24Service implements CaptchaSolver {
 
         carDetails.put("Läbisõit", labisoit);
 
-        Selenide.closeWindow();
+//        Selenide.closeWindow();
         log.info("Found car details for regNr: {}", regNr);
         return carDetails;
     }

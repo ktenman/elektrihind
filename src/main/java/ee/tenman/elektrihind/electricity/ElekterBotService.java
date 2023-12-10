@@ -144,6 +144,36 @@ public class ElekterBotService extends TelegramLongPollingBot {
         String callData = callbackQuery.getData();
         long chatId = callbackQuery.getMessage().getChatId();
 
+        Matcher arkMatcher = CAR_REGISTRATION_PATTERN.matcher(callData);
+        if (arkMatcher.find()) {
+            String regNr = arkMatcher.group(1).toUpperCase();
+            long startTime = System.nanoTime();
+            CompletableFuture.supplyAsync(() -> {
+                        sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
+                        return carSearchService.search2(regNr); // This call returns the search result
+                    }, singleThreadExecutor)
+                    .orTimeout(30, TimeUnit.SECONDS)
+                    .handle((search, throwable) -> { // Handle both completion and exception
+                        if (throwable != null) { // Check if there was an exception
+                            if (throwable.getCause() instanceof TimeoutException) {
+                                log.error("Fetching car details timed out for regNr: {}", throwable.getMessage());
+                                sendMessageWithRetryButton(chatId, "An error occurred while fetching car details.", regNr);
+                            } else {
+                                log.error("Error fetching car details: {}", throwable.getMessage());
+                                sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
+                            }
+                        } else {
+                            // No exception occurred, process the search result
+                            long endTime = System.nanoTime();
+                            double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
+                            search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
+                            sendMessageCode(chatId, search);
+                        }
+                        return null; // Return value is not used in this context
+                    });
+            return;
+        }
+
         switch (callData) {
             case "check_price" -> sendMessageCode(chatId, getElectricityPriceResponse());
             case "car_plate_query" -> sendMessage(chatId, "Please enter the car plate number with the 'ark' command.");

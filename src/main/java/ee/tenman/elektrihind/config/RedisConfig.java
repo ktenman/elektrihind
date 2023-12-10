@@ -18,6 +18,7 @@ public class RedisConfig {
     public static final String ONE_DAY_CACHE_3 = "one-day-cache-33";
     public static final String ONE_DAY_CACHE_4 = "one-day-cache-4";
     public static final String ONE_YEAR_CACHE_1 = "one-year-cache-11";
+    public static final String THIRTY_DAYS_CACHE_1 = "thirty-days-cache-11";
     public static final String MESSAGE_COUNTS_CACHE = "messageCounts-22";
 
     private static final Duration DEFAULT_TTL = Duration.ofMinutes(10);
@@ -30,6 +31,7 @@ public class RedisConfig {
         cacheConfigurations.put(ONE_DAY_CACHE_3, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(1)));
         cacheConfigurations.put(ONE_DAY_CACHE_4, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(1)));
         cacheConfigurations.put(ONE_YEAR_CACHE_1, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(365)));
+        cacheConfigurations.put(THIRTY_DAYS_CACHE_1, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(30)));
         cacheConfigurations.put(MESSAGE_COUNTS_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(1)));
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig().entryTtl(DEFAULT_TTL);
         return RedisCacheManager.builder(connectionFactory)

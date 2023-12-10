@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static com.codeborne.selenide.Selenide.$$;
@@ -34,6 +36,9 @@ public class ArkService implements CaptchaSolver {
 
     @Resource
     private RecaptchaSolverService recaptchaSolverService;
+
+    @Resource(name = "fourThreadExecutor")
+    private ExecutorService fourThreadExecutor;
 
     @SneakyThrows({InterruptedException.class})
     @Cacheable(value = ONE_YEAR_CACHE_1, key = "#regNr")
@@ -77,8 +82,8 @@ public class ArkService implements CaptchaSolver {
             String value = td.get(1).getText();
             carDetails.put(key, value);
         }
-//        Selenide.closeWindow();
         log.info("Found car details for regNr: {}", regNr);
+        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
         return carDetails;
     }
 

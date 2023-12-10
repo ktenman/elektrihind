@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static com.codeborne.selenide.Selenide.$$;
@@ -32,6 +34,9 @@ public class LKFService implements CaptchaSolver {
 
     @Resource
     private RecaptchaSolverService recaptchaSolverService;
+
+    @Resource(name = "fourThreadExecutor")
+    private ExecutorService fourThreadExecutor;
 
     @SneakyThrows({InterruptedException.class})
     @Cacheable(value = ONE_DAY_CACHE_1, key = "#regNr")
@@ -56,7 +61,7 @@ public class LKFService implements CaptchaSolver {
         log.info("Found lkf car crashes for regNr: {}", regNr);
         Map<String, String> result = new LinkedHashMap<>();
         result.put("Avariide arv", String.valueOf(crashes));
-//        Selenide.closeWindow();
+        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
         return result;
     }
 

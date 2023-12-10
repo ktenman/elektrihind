@@ -6,6 +6,8 @@ import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 @IntegrationTest
 class CarSearchServiceTest {
 
@@ -17,7 +19,7 @@ class CarSearchServiceTest {
     void search() {
         long start = System.nanoTime();
 
-        String search = carSearchService.search("876BCH");
+        Map<String, String> search = carSearchService.search("876BCH");
 
         long end = System.nanoTime();
         double duration = (end - start) / 1_000_000_000.0;
@@ -29,7 +31,7 @@ class CarSearchServiceTest {
     void search2() {
         Configuration.headless = false;
         long start = System.nanoTime();
-        String search = carSearchService.search2("329SAH");
+        Map<String, String> search = carSearchService.search2("329SAH");
 
         long end = System.nanoTime();
         double duration = (end - start) / 1_000_000_000.0;

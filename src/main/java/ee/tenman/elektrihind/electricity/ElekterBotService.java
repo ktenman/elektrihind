@@ -152,7 +152,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
                         sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
                         return carSearchService.search2(regNr); // This call returns the search result
                     }, singleThreadExecutor)
-                    .orTimeout(30, TimeUnit.SECONDS)
+                    .orTimeout(20, TimeUnit.MINUTES)
                     .handle((search, throwable) -> { // Handle both completion and exception
                         if (throwable != null) { // Check if there was an exception
                             if (throwable.getCause() instanceof TimeoutException) {
@@ -284,14 +284,14 @@ public class ElekterBotService extends TelegramLongPollingBot {
                         sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
                         return carSearchService.search2(regNr); // This call returns the search result
                     }, singleThreadExecutor)
-                    .orTimeout(30, TimeUnit.SECONDS)
+                    .orTimeout(20, TimeUnit.MINUTES)
                     .handle((search, throwable) -> { // Handle both completion and exception
                         if (throwable != null) { // Check if there was an exception
                             if (throwable.getCause() instanceof TimeoutException) {
                                 log.error("Fetching car details timed out for regNr: {}", throwable.getMessage());
                                 sendMessageWithRetryButton(chatId, "An error occurred while fetching car details.", regNr);
                             } else {
-                                log.error("Error fetching car details: {}", throwable.getMessage());
+                                log.error("Error fetching car details: {}", throwable.getLocalizedMessage());
                                 sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
                             }
                         } else {

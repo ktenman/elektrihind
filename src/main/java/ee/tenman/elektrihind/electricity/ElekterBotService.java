@@ -48,6 +48,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -247,16 +248,21 @@ public class ElekterBotService extends TelegramLongPollingBot {
             String euriborResonse = euriborRateFetcher.getEuriborRateResponse();
             sendMessageCode(chatId, messageId, euriborResonse);
         } else if (arkMatcher.find()) {
+            String regNr = arkMatcher.group(1).toUpperCase();
             CompletableFuture.runAsync(() -> {
                 long startTime = System.nanoTime();
-                String regNr = arkMatcher.group(1).toUpperCase();
-                sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
-                String search = carSearchService.search2(regNr);
-                long endTime = System.nanoTime();
-                double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
-                search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
-                sendMessageCode(chatId, messageId, search);
-            }, singleThreadExecutor);
+                try {
+                    sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
+                    String search = carSearchService.search2(regNr);
+                    long endTime = System.nanoTime();
+                    double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
+                    search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
+                    sendMessageCode(chatId, messageId, search);
+                } catch (CompletionException e) {
+                    sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
+                }
+            }, singleThreadExecutor).orTimeout(1, TimeUnit.MINUTES);
+
         } else if (messageText.equalsIgnoreCase("reboot")) {
             digitalOceanService.rebootDroplet();
             sendMessageCode(chatId, messageId, "Droplet reboot initiated!");
@@ -265,6 +271,32 @@ public class ElekterBotService extends TelegramLongPollingBot {
         } // Consider adding an else block for unhandled text messages
         if (showMenu) {
             CompletableFuture.runAsync(() -> displayMenu(chatId), singleThreadExecutor);
+        }
+    }
+
+    private void sendMessageWithRetryButton(long chatId, String text, String regNr) {
+        SendMessage message = new SendMessage();
+        message.setChatId(String.valueOf(chatId));
+        message.setText(text);
+
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+        InlineKeyboardButton retryButton = new InlineKeyboardButton();
+        retryButton.setText("Rerun ark " + regNr);
+        retryButton.setCallbackData("ark " + regNr); // Ensure this callback is handled in handleCallbackQuery method
+
+        rowInline.add(retryButton);
+        rowsInline.add(rowInline);
+        markupInline.setKeyboard(rowsInline);
+
+        message.setReplyMarkup(markupInline);
+
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error("Failed to send timeout message with retry button: {}", e.getMessage());
         }
     }
 

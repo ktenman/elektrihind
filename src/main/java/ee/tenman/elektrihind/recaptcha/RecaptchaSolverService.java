@@ -17,8 +17,8 @@ public class RecaptchaSolverService {
 
     private static final String CAPTCHA_IMAGE_NAME = "captcha.png";
     private static final String CAPTCHA_IMAGE_TYPE = "image/png";
-    private static final int MAX_RETRIES = 60;
-    private static final long RETRY_DELAY_MS = 2500;
+    private static final int MAX_RETRIES = 225;
+    private static final long RETRY_DELAY_MS = 666;
 
     @Resource
     private RecaptchaClient recaptchaClient;
@@ -26,14 +26,14 @@ public class RecaptchaSolverService {
     @Value("${twocaptcha.key}")
     private String apiKey;
 
-    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000))
+    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1000))
     public String solveCaptcha(String siteKey, String pageUrl) {
         Map<String, Object> response = recaptchaClient.sendCaptcha(apiKey, "userrecaptcha", siteKey, pageUrl, 1);
         String requestId = (String) response.get("request");
         return waitForCaptchaResult(requestId);
     }
 
-    @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 2000))
+    @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1000))
     public String solveCaptcha(byte[] captchaImage) {
         MultipartFile multipartFile = new ByteArrayMultipartFile(captchaImage, "file", CAPTCHA_IMAGE_NAME, CAPTCHA_IMAGE_TYPE);
         Map<String, Object> response = recaptchaClient.sendImageCaptcha(apiKey, "post", multipartFile, 1);

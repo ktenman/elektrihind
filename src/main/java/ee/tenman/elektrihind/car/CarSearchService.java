@@ -11,6 +11,7 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -42,7 +43,7 @@ public class CarSearchService {
     @Cacheable(value = ONE_DAY_CACHE_2, key = "#regNr")
     public String search(String regNr) {
 
-        CompletableFuture<Map<String, String>> carPriceFuture = CompletableFuture.supplyAsync(() -> auto24Service.carPrice(regNr), fourThreadExecutor);
+        CompletableFuture<LinkedHashMap<String, String>> carPriceFuture = CompletableFuture.supplyAsync(() -> auto24Service.carPrice(regNr), fourThreadExecutor);
         CompletableFuture<String> arkCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> arkService.getCaptchaToken(), fourThreadExecutor);
         CompletableFuture<String> auto24CaptchaTokenFuture = CompletableFuture.supplyAsync(() -> auto24Service.getCaptchaToken(), fourThreadExecutor);
         CompletableFuture<String> lkfCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> lkfService.getCaptchaToken(), fourThreadExecutor);
@@ -50,7 +51,7 @@ public class CarSearchService {
         CompletableFuture<Void> allFutures = CompletableFuture.allOf(carPriceFuture, arkCaptchaTokenFuture, auto24CaptchaTokenFuture, lkfCaptchaTokenFuture);
         allFutures.join();
 
-        Map<String, String> response = carPriceFuture.get();
+        LinkedHashMap<String, String> response = carPriceFuture.get();
 
         String arkCaptchaToken = arkCaptchaTokenFuture.get();
         Map<String, String> arkDetails = arkService.carDetails(regNr, arkCaptchaToken);

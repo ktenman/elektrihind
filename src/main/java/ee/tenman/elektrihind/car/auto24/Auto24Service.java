@@ -77,7 +77,7 @@ public class Auto24Service implements CaptchaSolver {
                 .text()
                 .replace("\n", " ");
         Selenide.closeWindow();
-        String[] split = response.split(":");
+        String[] split = response.split(": ");
         LinkedHashMap<String, String> result = new LinkedHashMap<>();
         result.put(split[0], split[1] + "\n");
         result.put("Reg nr", regNr);

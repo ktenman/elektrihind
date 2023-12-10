@@ -26,7 +26,7 @@ public class ScrapeninjaService {
 
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     public Map<String, String> scrape(String vinCode, String regNr, String captchaToken) {
-        log.info("Scraping vinCode={}, regNr={}, captchaToken={}", vinCode, regNr, captchaToken);
+        log.info("Scraping vinCode={}, regNr={}", vinCode, regNr);
         ScrapeninjaRequest request = new ScrapeninjaRequest();
         request.setUrl("https://eng.auto24.ee/ostuabi/?t=soiduki-andmete-paring&s=vin");
         request.setHeaders(new String[]{"Content-Type: application/x-www-form-urlencoded"});
@@ -58,7 +58,7 @@ public class ScrapeninjaService {
                 result.put(key, value);
             }
         }
-        log.info("Scraped vinCode={}, regNr={}, captchaToken={}, result={}", vinCode, regNr, captchaToken, result);
+        log.info("Scraped vinCode={}, regNr={}, result={}", vinCode, regNr, result);
         return result;
     }
 }

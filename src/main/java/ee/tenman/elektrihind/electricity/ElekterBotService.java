@@ -303,7 +303,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
                         // No exception occurred, process the search result
                         long endTime = System.nanoTime();
                         double durationSeconds = (endTime - startTime.get()) / 1_000_000_000.0;
-                        search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
+                        search = search + "\n\nTask duration: " + String.format("%.2f seconds", durationSeconds);
                         sendMessageCode(chatId, messageId, search);
                     }
                     return null; // Return value is not used in this context
@@ -371,7 +371,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
         return String.format("" +
                 "CPU: %.2f %% %n" +
-                // "CPU (v2): %.2f %% %n" +
                 "Disk Usage: %.2f %% %n" +
                 "Memory Usage: %.2f %%", cpuLoad, diskUsage, memoryUsage);
     }

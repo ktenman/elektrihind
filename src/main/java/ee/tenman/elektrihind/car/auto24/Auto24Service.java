@@ -52,7 +52,7 @@ public class Auto24Service implements CaptchaSolver {
     public LinkedHashMap<String, String> carPrice(String regNr) {
         log.info("Searching car price for regNr: {}", regNr);
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");
-        TimeUnit.SECONDS.sleep(2);
+        TimeUnit.SECONDS.sleep(3);
         SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
         if (acceptCookies.exists()) {
             acceptCookies.click();
@@ -84,6 +84,10 @@ public class Auto24Service implements CaptchaSolver {
         Selenide.closeWindow();
         String[] split = response.split(": ");
         LinkedHashMap<String, String> result = new LinkedHashMap<>();
+        if (split.length <= 1) {
+            result.put("Reg nr", regNr);
+            return result;
+        }
         result.put(split[0], split[1] + "\n");
         result.put("Reg nr", regNr);
         log.info("Price for regNr: {} is {}", regNr, response);

@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE_2;
@@ -73,41 +74,56 @@ public class CarSearchService {
     }
 
     @SneakyThrows
-    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
+    @Retryable(maxAttempts = 5, backoff = @Backoff(delay = 1500))
     @Cacheable(value = ONE_DAY_CACHE_4, key = "#regNr")
     public String search2(String regNr) {
         Selenide.closeWebDriver();
+        int timeout = 5;
+        TimeUnit timeUnit = TimeUnit.MINUTES;
+        CompletableFuture<LinkedHashMap<String, String>> carPriceFuture = CompletableFuture.supplyAsync(() -> auto24Service.carPrice(regNr), fourThreadExecutor)
+                .orTimeout(timeout, timeUnit);
 
-        CompletableFuture<Map<String, String>> carPriceFuture = CompletableFuture.supplyAsync(() -> auto24Service.carPrice(regNr), fourThreadExecutor);
-        CompletableFuture<String> arkCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> arkService.getCaptchaToken(), fourThreadExecutor);
-        CompletableFuture<String> auto24CaptchaTokenFuture = CompletableFuture.supplyAsync(() -> auto24Service.getCaptchaToken(), fourThreadExecutor);
-        CompletableFuture<String> lkfCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> lkfService.getCaptchaToken(), fourThreadExecutor);
+        CompletableFuture<String> arkCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> arkService.getCaptchaToken(), fourThreadExecutor)
+                .orTimeout(timeout, timeUnit);
+        CompletableFuture<String> auto24CaptchaTokenFuture = CompletableFuture.supplyAsync(() -> auto24Service.getCaptchaToken(), fourThreadExecutor)
+                .orTimeout(timeout, timeUnit);
+        CompletableFuture<String> lkfCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> lkfService.getCaptchaToken(), fourThreadExecutor)
+                .orTimeout(timeout, timeUnit);
 
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(carPriceFuture, arkCaptchaTokenFuture, auto24CaptchaTokenFuture, lkfCaptchaTokenFuture);
+        CompletableFuture<Void> allFutures = CompletableFuture.allOf(carPriceFuture, arkCaptchaTokenFuture, auto24CaptchaTokenFuture, lkfCaptchaTokenFuture)
+                .orTimeout(timeout, timeUnit);
         allFutures.join();
 
         Map<String, String> response = carPriceFuture.get();
 
         String arkCaptchaToken = arkCaptchaTokenFuture.get();
-        Map<String, String> arkDetails = arkService.carDetails(regNr, arkCaptchaToken);
+        Map<String, String> arkDetails = CompletableFuture.supplyAsync(() -> arkService.carDetails(regNr, arkCaptchaToken), fourThreadExecutor)
+                .orTimeout(timeout, timeUnit)
+                .get();
         response.putAll(arkDetails);
 
         String auto24CaptchaToken = auto24CaptchaTokenFuture.get();
-        Map<String, String> scrapeNinjaDetails = scrapeninjaService.scrape(arkDetails.get("Vin"), regNr, auto24CaptchaToken);
+        Map<String, String> scrapeNinjaDetails = CompletableFuture.supplyAsync(() -> scrapeninjaService.scrape(arkDetails.get("Vin"), regNr, auto24CaptchaToken), fourThreadExecutor)
+                .orTimeout(timeout, timeUnit)
+                .get();
         response.putAll(scrapeNinjaDetails);
 
         String lkfCaptchaToken = lkfCaptchaTokenFuture.get();
-        Map<String, String> crashes = lkfService.carDetails(regNr, lkfCaptchaToken);
+        Map<String, String> crashes = CompletableFuture.supplyAsync(() -> lkfService.carDetails(regNr, lkfCaptchaToken), fourThreadExecutor)
+                .orTimeout(timeout, timeUnit)
+                .get();
         response.putAll(crashes);
 
         if (!response.containsKey("Läbisõit") || !response.containsKey("Kütusekulu keskmine")) {
             String captchaToken = auto24Service.getCaptchaToken();
-            Map<String, String> auto24details = auto24Service.carDetails(response, captchaToken);
+            Map<String, String> auto24details = CompletableFuture.supplyAsync(() -> auto24Service.carDetails(response, captchaToken), fourThreadExecutor)
+                    .orTimeout(timeout, timeUnit)
+                    .get();
             response.putAll(auto24details);
         }
-
         return response.entrySet().stream()
                 .map(entry -> entry.getKey() + ": " + entry.getValue())
                 .collect(Collectors.joining("\n"));
     }
+
 }

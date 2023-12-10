@@ -15,6 +15,11 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -39,6 +44,28 @@ public class ArkService implements CaptchaSolver {
 
     @Resource(name = "fourThreadExecutor")
     private ExecutorService fourThreadExecutor;
+
+    public static void downloadImage(String imageUrl, String destinationFile) throws IOException {
+        try (InputStream in = new BufferedInputStream(new URL(imageUrl).openStream());
+             FileOutputStream fileOutputStream = new FileOutputStream(destinationFile)) {
+            byte dataBuffer[] = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
+                fileOutputStream.write(dataBuffer, 0, bytesRead);
+            }
+        } catch (IOException e) {
+            // handle exception
+            throw e;
+        }
+    }
+
+    @Override
+    public String getCaptchaToken() {
+        log.info("Solving ark captcha");
+        String token = recaptchaSolverService.solveCaptcha(SITE_KEY, PAGE_URL);
+        log.info("Ark captcha solved");
+        return token;
+    }
 
     @SneakyThrows({InterruptedException.class})
     @Cacheable(value = THIRTY_DAYS_CACHE_1, key = "#regNr")
@@ -69,13 +96,24 @@ public class ArkService implements CaptchaSolver {
                 .map(strings -> strings[1])
                 .orElseThrow(() -> new RuntimeException("VIN not found"));
 
-        TimeUnit.SECONDS.sleep(3);
+
+        SelenideElement logoElement = Selenide.$(By.className("asset-image"));
+        String logo = null;
+        if (logoElement.exists()) {
+            SelenideElement imageElement = logoElement.find(By.tagName("img"));
+            if (imageElement.exists()) {
+                logo = imageElement.attr("src");
+            }
+        }
 
         ElementsCollection rows = Selenide.$(By.className("asset-details")).findAll(By.tagName("tr"));
         Map<String, String> carDetails = new LinkedHashMap<>();
 
         carDetails.put("Mark", carName + "\n");
         carDetails.put("Vin", vin + "\n");
+        if (logo != null) {
+            carDetails.put("Logo", logo);
+        }
         for (int i = 0; i < rows.size(); i++) {
             ElementsCollection td = rows.get(i).$$("td");
             String key = td.get(0).getText().replace(":", "");
@@ -85,13 +123,5 @@ public class ArkService implements CaptchaSolver {
         log.info("Found car details for regNr: {}", regNr);
         CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
         return carDetails;
-    }
-
-    @Override
-    public String getCaptchaToken() {
-        log.info("Solving ark captcha");
-        String token = recaptchaSolverService.solveCaptcha(SITE_KEY, PAGE_URL);
-        log.info("Ark captcha solved");
-        return token;
     }
 }

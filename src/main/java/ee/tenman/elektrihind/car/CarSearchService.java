@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE_2;
 import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE_4;
@@ -43,7 +42,7 @@ public class CarSearchService {
     @SneakyThrows
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     @Cacheable(value = ONE_DAY_CACHE_2, key = "#regNr")
-    public String search(String regNr) {
+    public Map<String, String> search(String regNr) {
         CompletableFuture<LinkedHashMap<String, String>> carPriceFuture = CompletableFuture.supplyAsync(() -> auto24Service.carPrice(regNr), fourThreadExecutor);
         CompletableFuture<String> arkCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> arkService.getCaptchaToken(), fourThreadExecutor);
         CompletableFuture<String> auto24CaptchaTokenFuture = CompletableFuture.supplyAsync(() -> auto24Service.getCaptchaToken(), fourThreadExecutor);
@@ -66,15 +65,13 @@ public class CarSearchService {
         Map<String, String> crashes = lkfService.carDetails(regNr, lkfCaptchaToken);
         response.putAll(crashes);
 
-        return response.entrySet().stream()
-                .map(entry -> entry.getKey() + ": " + entry.getValue())
-                .collect(Collectors.joining("\n"));
+        return response;
     }
 
     @SneakyThrows
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
     @Cacheable(value = ONE_DAY_CACHE_4, key = "#regNr")
-    public String search2(String regNr) {
+    public Map<String, String> search2(String regNr) {
         int timeout = 4;
         TimeUnit timeUnit = TimeUnit.MINUTES;
         CompletableFuture<LinkedHashMap<String, String>> carPriceFuture = CompletableFuture.supplyAsync(() -> auto24Service.carPrice(regNr), fourThreadExecutor)
@@ -119,9 +116,7 @@ public class CarSearchService {
             response.putAll(auto24details);
         }
         CompletableFuture.runAsync(Selenide::closeWebDriver, fourThreadExecutor);
-        return response.entrySet().stream()
-                .map(entry -> entry.getKey() + ": " + entry.getValue())
-                .collect(Collectors.joining("\n"));
+        return response;
     }
 
 }

@@ -16,8 +16,10 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Document;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -46,6 +48,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -149,30 +152,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         if (arkMatcher.find()) {
             String regNr = arkMatcher.group(1).toUpperCase();
             AtomicLong startTime = new AtomicLong();
-            CompletableFuture.supplyAsync(() -> {
-                        startTime.set(System.nanoTime());
-                        sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
-                        return carSearchService.search2(regNr); // This call returns the search result
-                    }, singleThreadExecutor)
-                    .orTimeout(20, TimeUnit.MINUTES)
-                    .handle((search, throwable) -> { // Handle both completion and exception
-                        if (throwable != null) { // Check if there was an exception
-                            if (throwable.getCause() instanceof TimeoutException) {
-                                log.error("Fetching car details timed out for regNr: {}", throwable.getMessage());
-                                sendMessageWithRetryButton(chatId, "An error occurred while fetching car details.", regNr);
-                            } else {
-                                log.error("Error fetching car details: {}", throwable.getMessage());
-                                sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
-                            }
-                        } else {
-                            // No exception occurred, process the search result
-                            long endTime = System.nanoTime();
-                            double durationSeconds = (endTime - startTime.get()) / 1_000_000_000.0;
-                            search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
-                            sendMessageCode(chatId, search);
-                        }
-                        return null; // Return value is not used in this context
-                    });
+            search(startTime, chatId, regNr, null);
             return;
         }
 
@@ -282,30 +262,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         } else if (arkMatcher.find()) {
             String regNr = arkMatcher.group(1).toUpperCase();
             AtomicLong startTime = new AtomicLong();
-            CompletableFuture.supplyAsync(() -> {
-                        startTime.set(System.nanoTime());
-                        sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
-                        return carSearchService.search2(regNr); // This call returns the search result
-                    }, singleThreadExecutor)
-                    .orTimeout(20, TimeUnit.MINUTES)
-                    .handle((search, throwable) -> { // Handle both completion and exception
-                        if (throwable != null) { // Check if there was an exception
-                            if (throwable.getCause() instanceof TimeoutException) {
-                                log.error("Fetching car details timed out for regNr: {}", throwable.getMessage());
-                                sendMessageWithRetryButton(chatId, "An error occurred while fetching car details.", regNr);
-                            } else {
-                                log.error("Error fetching car details: {}", throwable.getLocalizedMessage());
-                                sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
-                            }
-                        } else {
-                            // No exception occurred, process the search result
-                            long endTime = System.nanoTime();
-                            double durationSeconds = (endTime - startTime.get()) / 1_000_000_000.0;
-                            search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
-                            sendMessageCode(chatId, messageId, search);
-                        }
-                        return null; // Return value is not used in this context
-                    });
+            search(startTime, chatId, regNr, messageId);
 
         } else if (messageText.equalsIgnoreCase("reboot")) {
             digitalOceanService.rebootDroplet();
@@ -316,6 +273,40 @@ public class ElekterBotService extends TelegramLongPollingBot {
         if (showMenu) {
             CompletableFuture.runAsync(() -> displayMenu(chatId), singleThreadExecutor);
         }
+    }
+
+    private void search(AtomicLong startTime, long chatId, String regNr, Integer messageId) {
+        CompletableFuture.supplyAsync(() -> {
+                    startTime.set(System.nanoTime());
+                    sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
+                    Map<String, String> response = carSearchService.search2(regNr);
+                    if (response.containsKey("Logo")) {
+                        sendImage(chatId, response.get("Logo"));
+                    }
+                    return response.entrySet().stream()
+                            .filter(entry -> !entry.getKey().equalsIgnoreCase("logo"))
+                            .map(entry -> entry.getKey() + ": " + entry.getValue())
+                            .collect(Collectors.joining("\n"));
+                }, singleThreadExecutor)
+                .orTimeout(20, TimeUnit.MINUTES)
+                .handle((search, throwable) -> { // Handle both completion and exception
+                    if (throwable != null) { // Check if there was an exception
+                        if (throwable.getCause() instanceof TimeoutException) {
+                            log.error("Fetching car details timed out for regNr: {}", throwable.getMessage());
+                            sendMessageWithRetryButton(chatId, "An error occurred while fetching car details.", regNr);
+                        } else {
+                            log.error("Error fetching car details: {}", throwable.getLocalizedMessage());
+                            sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
+                        }
+                    } else {
+                        // No exception occurred, process the search result
+                        long endTime = System.nanoTime();
+                        double durationSeconds = (endTime - startTime.get()) / 1_000_000_000.0;
+                        search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
+                        sendMessageCode(chatId, messageId, search);
+                    }
+                    return null; // Return value is not used in this context
+                });
     }
 
     private void sendMessageWithRetryButton(long chatId, String text, String regNr) {
@@ -495,14 +486,18 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
     }
 
-    /**
-     * Sends a message as a reply to a specific message in a Telegram chat.
-     *
-     * @param chatId           The chat ID to send the message to.
-     * @param replyToMessageId The ID of the message to reply to. If this is less than or equal to 0, the message won't be sent as a reply.
-     * @param text             The text of the message to send.
-     */
-    void sendMessageCode(long chatId, int replyToMessageId, String text) {
+    void sendImage(long chatId, String imageUrl) {
+        SendPhoto sendPhotoRequest = new SendPhoto();
+        sendPhotoRequest.setChatId(String.valueOf(chatId));
+        sendPhotoRequest.setPhoto(new InputFile(imageUrl)); // Set the URL or file path
+        try {
+            execute(sendPhotoRequest);
+        } catch (TelegramApiException e) {
+            log.error("Failed to send image to chat: {} with URL: {}", chatId, imageUrl, e);
+        }
+    }
+
+    void sendMessageCode(long chatId, Integer replyToMessageId, String text) {
         if (text == null) {
             log.warn("Not sending null message to chat: {}", chatId);
             return;
@@ -513,7 +508,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
         message.enableMarkdown(true);
         message.enableMarkdownV2(true);
         message.setChatId(String.valueOf(chatId));
-        message.setReplyToMessageId(replyToMessageId);
+        if (replyToMessageId != null) {
+            message.setReplyToMessageId(replyToMessageId);
+        }
 
         message.setText("```\n" + text + "```");
 

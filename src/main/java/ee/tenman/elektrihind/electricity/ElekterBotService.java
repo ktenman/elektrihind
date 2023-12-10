@@ -51,6 +51,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -279,8 +280,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
             sendMessageCode(chatId, messageId, euriborResonse);
         } else if (arkMatcher.find()) {
             String regNr = arkMatcher.group(1).toUpperCase();
-            long startTime = System.nanoTime();
+            AtomicLong startTime = new AtomicLong(System.nanoTime());
             CompletableFuture.supplyAsync(() -> {
+                        startTime.set(System.nanoTime());
                         sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
                         return carSearchService.search2(regNr); // This call returns the search result
                     }, singleThreadExecutor)
@@ -297,7 +299,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
                         } else {
                             // No exception occurred, process the search result
                             long endTime = System.nanoTime();
-                            double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
+                            double durationSeconds = (endTime - startTime.get()) / 1_000_000_000.0;
                             search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
                             sendMessageCode(chatId, messageId, search);
                         }

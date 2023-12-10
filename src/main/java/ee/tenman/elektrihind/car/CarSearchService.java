@@ -108,7 +108,7 @@ public class CarSearchService {
                 .get();
         response.putAll(crashes);
 
-        if (!response.containsKey("Läbisõit") || !response.containsKey("Kütusekulu keskmine")) {
+        if (!response.containsKey("Läbisõit")) {
             String captchaToken = auto24Service.getCaptchaToken();
             Map<String, String> auto24details = CompletableFuture.supplyAsync(() -> auto24Service.carDetails(response, captchaToken), fourThreadExecutor)
                     .orTimeout(timeout, timeUnit)

@@ -10,6 +10,7 @@ import ee.tenman.elektrihind.telegram.TelegramService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -252,13 +253,13 @@ public class ElekterBotService extends TelegramLongPollingBot {
             showMenu = true;
         } else if (messageText.toLowerCase().contains("elektrihind")) {
             String response = getElectricityPriceResponse();
-            sendMessageCode(chatId, messageId, response);
+            sendMessageCode(chatId, messageId, response, null);
         } else if (messageText.toLowerCase().contains(METRIC)) {
             String response = getSystemMetrics();
-            sendMessageCode(chatId, messageId, response);
+            sendMessageCode(chatId, messageId, response, null);
         } else if (messageText.toLowerCase().contains(EURIBOR)) {
             String euriborResonse = euriborRateFetcher.getEuriborRateResponse();
-            sendMessageCode(chatId, messageId, euriborResonse);
+            sendMessageCode(chatId, messageId, euriborResonse, null);
         } else if (arkMatcher.find()) {
             String regNr = arkMatcher.group(1).toUpperCase();
             AtomicLong startTime = new AtomicLong();
@@ -266,7 +267,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
         } else if (messageText.equalsIgnoreCase("reboot")) {
             digitalOceanService.rebootDroplet();
-            sendMessageCode(chatId, messageId, "Droplet reboot initiated!");
+            sendMessageCode(chatId, messageId, "Droplet reboot initiated!", null);
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages
@@ -280,14 +281,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
                     startTime.set(System.nanoTime());
                     sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
                     Map<String, String> response = carSearchService.search2(regNr);
-                    String logo = response.entrySet().stream()
-                            .filter(entry -> !entry.getKey().equalsIgnoreCase("logo"))
-                            .map(entry -> entry.getKey() + ": " + entry.getValue())
-                            .collect(Collectors.joining("\n"));
-                    if (response.containsKey("Logo")) {
-                        logo += "\n\n" + response.get("Logo");
-                    }
-                    return logo;
+                    return response;
                 }, singleThreadExecutor)
                 .orTimeout(20, TimeUnit.MINUTES)
                 .handle((search, throwable) -> { // Handle both completion and exception
@@ -303,8 +297,12 @@ public class ElekterBotService extends TelegramLongPollingBot {
                         // No exception occurred, process the search result
                         long endTime = System.nanoTime();
                         double durationSeconds = (endTime - startTime.get()) / 1_000_000_000.0;
-                        search = search + "\n\nTask duration: " + String.format("%.2f seconds", durationSeconds);
-                        sendMessageCode(chatId, messageId, search);
+                        String text = search.entrySet().stream()
+                                .filter(entry -> !entry.getKey().equalsIgnoreCase("logo"))
+                                .map(entry -> entry.getKey() + ": " + entry.getValue())
+                                .collect(Collectors.joining("\n"));
+                        text = text + "\n\nTask duration: " + String.format("%.2f seconds", durationSeconds);
+                        sendMessageCode(chatId, messageId, text, search.get("Logo"));
                     }
                     return null; // Return value is not used in this context
                 });
@@ -429,7 +427,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         BestPriceResult bestPrice = priceFinderService.findBestPriceForDuration(electricityPrices, durationInMinutes);
 
         if (bestPrice == null) {
-            sendMessageCode(chatId, messageId, "Could not calculate the best time to start your washing machine.");
+            sendMessageCode(chatId, messageId, "Could not calculate the best time to start your washing machine.", null);
             return;
         }
 
@@ -441,7 +439,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         String difference = String.format(" %.2f", currentBestPriceResult.getTotalCost() / bestPrice.getTotalCost()) + "x more expensive to start immediately.";
         response += difference;
 
-        sendMessageCode(chatId, messageId, response);
+        sendMessageCode(chatId, messageId, response, null);
     }
 
     private String formatBestPriceResponseForCurrent(BestPriceResult currentBestPriceResult) {
@@ -497,7 +495,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
     }
 
-    void sendMessageCode(long chatId, Integer replyToMessageId, String text) {
+    void sendMessageCode(long chatId, Integer replyToMessageId, String text, String afterText) {
         if (text == null) {
             log.warn("Not sending null message to chat: {}", chatId);
             return;
@@ -512,7 +510,11 @@ public class ElekterBotService extends TelegramLongPollingBot {
             message.setReplyToMessageId(replyToMessageId);
         }
 
-        message.setText("```\n" + text + "```");
+        String messageText = "```\n" + text + "```";
+        if (StringUtils.isNotBlank(afterText)) {
+            messageText += "\n" + afterText;
+        }
+        message.setText(messageText);
 
         try {
             execute(message);

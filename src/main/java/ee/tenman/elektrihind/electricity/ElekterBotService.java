@@ -280,13 +280,14 @@ public class ElekterBotService extends TelegramLongPollingBot {
                     startTime.set(System.nanoTime());
                     sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
                     Map<String, String> response = carSearchService.search2(regNr);
-                    if (response.containsKey("Logo")) {
-                        sendImage(chatId, response.get("Logo"));
-                    }
-                    return response.entrySet().stream()
+                    String logo = response.entrySet().stream()
                             .filter(entry -> !entry.getKey().equalsIgnoreCase("logo"))
                             .map(entry -> entry.getKey() + ": " + entry.getValue())
                             .collect(Collectors.joining("\n"));
+                    if (response.containsKey("Logo")) {
+                        logo += "\n\n" + response.get("Logo");
+                    }
+                    return logo;
                 }, singleThreadExecutor)
                 .orTimeout(20, TimeUnit.MINUTES)
                 .handle((search, throwable) -> { // Handle both completion and exception

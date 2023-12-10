@@ -107,6 +107,9 @@ public class Auto24Service implements CaptchaSolver {
             String key = selenideElements.get(0).getText();
             String value = selenideElements.get(1).getText();
             if (isAcceptedKey(key)) {
+                key = key.replace("(l/ 100 km)", "")
+                        .replace("(l/100 km)", "")
+                        .trim();
                 carDetails.put(key, value);
             }
         }

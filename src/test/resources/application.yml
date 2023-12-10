@@ -16,6 +16,9 @@ omdb-api:
 twocaptcha:
   key:
 
+scrapeninja:
+  key:
+
 imdb-api:
   url: http://localhost:${wiremock.server.port}
 

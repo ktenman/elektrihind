@@ -251,7 +251,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 long startTime = System.nanoTime();
                 String regNr = arkMatcher.group(1).toUpperCase();
                 sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
-                String search = carSearchService.search(regNr);
+                String search = carSearchService.search2(regNr);
                 long endTime = System.nanoTime();
                 double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
                 search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);

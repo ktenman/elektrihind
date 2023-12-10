@@ -11,6 +11,7 @@ services:
       - OMDB_API_KEY=${OMDB_API_KEY}
       - TWO_CAPTCHA_API_KEY=${TWO_CAPTCHA_API_KEY}
       - DIGITAL_OCEAN_API_TOKEN=${DIGITAL_OCEAN_API_TOKEN}
+      - SCRAPENINJA_API_KEY=${SCRAPENINJA_API_KEY}
     volumes:
       - cache-volume:/app/cache
     restart: always

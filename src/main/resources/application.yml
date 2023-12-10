@@ -16,6 +16,9 @@ omdb-api:
 twocaptcha:
   key: ${TWO_CAPTCHA_API_KEY}
 
+scrapeninja:
+  key: ${SCRAPENINJA_API_KEY}
+
 imdb-api:
   url: https://imdb-api.projects.thetuhin.com
 

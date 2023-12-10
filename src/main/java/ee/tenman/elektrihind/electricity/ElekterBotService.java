@@ -258,10 +258,11 @@ public class ElekterBotService extends TelegramLongPollingBot {
                     .handle((search, throwable) -> { // Handle both completion and exception
                         if (throwable != null) { // Check if there was an exception
                             if (throwable.getCause() instanceof TimeoutException) {
-                                sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
+                                log.error("Fetching car details timed out for regNr: {}", throwable.getMessage());
+                                sendMessageWithRetryButton(chatId, "An error occurred while fetching car details.", regNr);
                             } else {
-                                sendMessage(chatId, "An error occurred while fetching car details.");
                                 log.error("Error fetching car details: {}", throwable.getMessage());
+                                sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
                             }
                         } else {
                             // No exception occurred, process the search result

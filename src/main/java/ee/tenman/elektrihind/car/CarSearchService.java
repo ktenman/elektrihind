@@ -74,11 +74,11 @@ public class CarSearchService {
     }
 
     @SneakyThrows
-    @Retryable(maxAttempts = 5, backoff = @Backoff(delay = 1500))
+    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
     @Cacheable(value = ONE_DAY_CACHE_4, key = "#regNr")
     public String search2(String regNr) {
         Selenide.closeWebDriver();
-        int timeout = 5;
+        int timeout = 4;
         TimeUnit timeUnit = TimeUnit.MINUTES;
         CompletableFuture<LinkedHashMap<String, String>> carPriceFuture = CompletableFuture.supplyAsync(() -> auto24Service.carPrice(regNr), fourThreadExecutor)
                 .orTimeout(timeout, timeUnit);

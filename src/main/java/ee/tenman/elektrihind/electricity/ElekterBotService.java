@@ -48,9 +48,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -249,19 +249,29 @@ public class ElekterBotService extends TelegramLongPollingBot {
             sendMessageCode(chatId, messageId, euriborResonse);
         } else if (arkMatcher.find()) {
             String regNr = arkMatcher.group(1).toUpperCase();
-            CompletableFuture.runAsync(() -> {
-                long startTime = System.nanoTime();
-                try {
-                    sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
-                    String search = carSearchService.search2(regNr);
-                    long endTime = System.nanoTime();
-                    double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
-                    search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
-                    sendMessageCode(chatId, messageId, search);
-                } catch (CompletionException e) {
-                    sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
-                }
-            }, singleThreadExecutor).orTimeout(1, TimeUnit.MINUTES);
+            long startTime = System.nanoTime();
+            CompletableFuture.supplyAsync(() -> {
+                        sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
+                        return carSearchService.search2(regNr); // This call returns the search result
+                    }, singleThreadExecutor)
+                    .orTimeout(30, TimeUnit.SECONDS)
+                    .handle((search, throwable) -> { // Handle both completion and exception
+                        if (throwable != null) { // Check if there was an exception
+                            if (throwable.getCause() instanceof TimeoutException) {
+                                sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
+                            } else {
+                                sendMessage(chatId, "An error occurred while fetching car details.");
+                                log.error("Error fetching car details: {}", throwable.getMessage());
+                            }
+                        } else {
+                            // No exception occurred, process the search result
+                            long endTime = System.nanoTime();
+                            double durationSeconds = (endTime - startTime) / 1_000_000_000.0;
+                            search = search + "\n\nTask duration: " + String.format("%.1f seconds", durationSeconds);
+                            sendMessageCode(chatId, messageId, search);
+                        }
+                        return null; // Return value is not used in this context
+                    });
 
         } else if (messageText.equalsIgnoreCase("reboot")) {
             digitalOceanService.rebootDroplet();

@@ -23,7 +23,7 @@ RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckod
     rm geckodriver-v0.33.0-linux64.tar.gz
 
 # Set environment variables
-ENV JAVA_OPTS="-Xmx500m -Xms250m -Duser.timezone=Europe/Tallinn"
+ENV JAVA_OPTS="-Xmx600m -Xms300m -Duser.timezone=Europe/Tallinn"
 ENV PATH="/usr/bin/firefox:/usr/bin/geckodriver:${PATH}"
 
 # Optionally, create the cache directory and set proper permissions

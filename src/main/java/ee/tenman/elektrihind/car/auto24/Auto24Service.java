@@ -70,7 +70,7 @@ public class Auto24Service implements CaptchaSolver {
             log.warn("Invalid captcha for regNr: {}", regNr);
             screenshot = $("#vpc_captcha").screenshot();
             assert screenshot != null;
-            log.info("Solving captcha for regNr: {}", regNr);
+            log.info("Trying to solve price captcha for regNr: {}. Tries: {}", regNr, count);
             solveCaptcha = recaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
             $(By.name("checksec1")).setValue(solveCaptcha);
             $("button[type='submit']").click();

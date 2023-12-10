@@ -43,7 +43,7 @@ public class Auto24Service implements CaptchaSolver {
     private RecaptchaSolverService recaptchaSolverService;
 
     @SneakyThrows({IOException.class, InterruptedException.class})
-    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
+    @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     public LinkedHashMap<String, String> carPrice(String regNr) {
         log.info("Searching car price for regNr: {}", regNr);
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");
@@ -86,7 +86,7 @@ public class Auto24Service implements CaptchaSolver {
     }
 
     @SneakyThrows({InterruptedException.class})
-    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
+    @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     public Map<String, String> carDetails(Map<String, String> carDetails, String captchaToken) {
         log.info("Searching car details for regNr: {}", carDetails.get("Reg nr"));
         String regNr = carDetails.get("Reg nr");

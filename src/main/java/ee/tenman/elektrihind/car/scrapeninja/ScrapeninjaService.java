@@ -7,6 +7,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -22,6 +24,7 @@ public class ScrapeninjaService {
     @Resource
     private ScrapeninjaClient scrapeninjaClient;
 
+    @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     public Map<String, String> scrape(String vinCode, String regNr, String captchaToken) {
         log.info("Scraping vinCode={}, regNr={}, captchaToken={}", vinCode, regNr, captchaToken);
         ScrapeninjaRequest request = new ScrapeninjaRequest();

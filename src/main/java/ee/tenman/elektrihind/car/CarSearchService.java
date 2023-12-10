@@ -40,7 +40,7 @@ public class CarSearchService {
     private ExecutorService fourThreadExecutor;
 
     @SneakyThrows
-    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
+    @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     @Cacheable(value = ONE_DAY_CACHE_2, key = "#regNr")
     public String search(String regNr) {
         Selenide.closeWebDriver();

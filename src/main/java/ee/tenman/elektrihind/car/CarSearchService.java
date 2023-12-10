@@ -93,12 +93,18 @@ public class CarSearchService {
         response.putAll(arkDetails);
 
         String auto24CaptchaToken = auto24CaptchaTokenFuture.get();
-        Map<String, String> auto24Details = scrapeninjaService.scrape(arkDetails.get("Vin"), regNr, auto24CaptchaToken);
-        response.putAll(auto24Details);
+        Map<String, String> scrapeNinjaDetails = scrapeninjaService.scrape(arkDetails.get("Vin"), regNr, auto24CaptchaToken);
+        response.putAll(scrapeNinjaDetails);
 
         String lkfCaptchaToken = lkfCaptchaTokenFuture.get();
         Map<String, String> crashes = lkfService.carDetails(regNr, lkfCaptchaToken);
         response.putAll(crashes);
+
+        if (!response.containsKey("Läbisõit") || !response.containsKey("Kütusekulu keskmine")) {
+            String captchaToken = auto24Service.getCaptchaToken();
+            Map<String, String> auto24details = auto24Service.carDetails(response, captchaToken);
+            response.putAll(auto24details);
+        }
 
         return response.entrySet().stream()
                 .map(entry -> entry.getKey() + ": " + entry.getValue())

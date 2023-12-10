@@ -114,14 +114,16 @@ public class Auto24Service implements CaptchaSolver {
             }
         }
 
-        ElementsCollection selenideElements = $$(By.tagName("h4"))
+        List<String> texts = $$(By.tagName("h4"))
                 .find(Condition.text("Ülevaatuste ajalugu"))
                 .sibling(0)
-                .findAll(By.tagName("tr"))
-                .get(1).$$("td");
-        String labisoit = selenideElements.get(4).text() + " (" + selenideElements.get(0).text() + ")";
-
-        carDetails.put("Läbisõit", labisoit);
+                .findAll(By.tagName("tr")).get(1)
+                .$$(By.tagName("td"))
+                .texts();
+        if (texts.size() > 1) {
+            String labisoit = texts.get(4) + " (" + texts.get(0) + ")";
+            carDetails.put("Läbisõit", labisoit);
+        }
 
 //        Selenide.closeWindow();
         log.info("Found car details for regNr: {}", regNr);

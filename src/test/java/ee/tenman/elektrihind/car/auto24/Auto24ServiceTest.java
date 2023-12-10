@@ -1,27 +1,27 @@
-package ee.tenman.elektrihind.car.scrapeninja;
+package ee.tenman.elektrihind.car.auto24;
 
 import ee.tenman.elektrihind.IntegrationTest;
-import ee.tenman.elektrihind.car.auto24.Auto24Service;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @IntegrationTest
-class ScrapeninjaServiceTest {
-
-    @Resource
-    ScrapeninjaService scrapeninjaService;
+class Auto24ServiceTest {
 
     @Resource
     Auto24Service auto24Service;
 
     @Test
     @Disabled
-    void scrape() {
+    void carDetails() {
+        LinkedHashMap<String, String> map = new LinkedHashMap<>();
+        map.put("Reg nr", "999ilo");
+        map.put("Vin", "WAUZZZF20KN004417");
         String captchaToken = auto24Service.getCaptchaToken();
-        Map<String, String> scraped = scrapeninjaService.scrape("WAUZZZF20KN004417", "999ILO", captchaToken);
+        Map<String, String> stringStringMap = auto24Service.carDetails(map, captchaToken);
 
         System.out.println();
     }

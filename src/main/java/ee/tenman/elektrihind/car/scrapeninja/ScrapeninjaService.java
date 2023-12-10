@@ -34,18 +34,18 @@ public class ScrapeninjaService {
         request.setData(String.format("vin=%s&reg_nr=%s&g-recaptcha-response=%s&vpc_reg_search=1", vinCode, regNr, captchaToken));
 
         ScrapeninjaResponse response = scrapeninjaClient.scrape(apiKey, request);
-        Document doc = Jsoup.parse(response.getBody());
+        Document document = Jsoup.parse(response.getBody());
 
         Map<String, String> result = new TreeMap<>();
-        Elements select = doc.select("tr");
-        for (Element element : select) {
+        Elements elements = document.select("tr");
+        for (Element element : elements) {
             String elementText = element.text();
             boolean korraline = elementText.contains("Korraline");
             if (korraline) {
-                Elements select1 = element.select("td");
-                select1.get(0).text();
-                select1.get(4).text();
-                result.put("Läbisõit", select1.get(4).text() + " (" + select1.get(0).text() + ")");
+                Elements tdElements = element.select("td");
+                tdElements.get(0).text();
+                tdElements.get(4).text();
+                result.put("Läbisõit", tdElements.get(4).text() + " (" + tdElements.get(0).text() + ")");
                 break;
             }
             if (elementText.contains("Kütusekulu")) {

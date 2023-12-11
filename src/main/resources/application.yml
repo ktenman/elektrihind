@@ -34,3 +34,6 @@ spring:
 
 vision:
   base64EncodedKey: ${VISION_BASE64_ENCODED_KEY}
+
+openai:
+  token: ${OPENAI_API_TOKEN}

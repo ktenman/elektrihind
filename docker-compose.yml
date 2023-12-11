@@ -13,6 +13,7 @@ services:
       - DIGITAL_OCEAN_API_TOKEN=${DIGITAL_OCEAN_API_TOKEN}
       - SCRAPENINJA_API_KEY=${SCRAPENINJA_API_KEY}
       - VISION_BASE64_ENCODED_KEY=${VISION_BASE64_ENCODED_KEY}
+      - OPENAI_API_TOKEN=${OPENAI_API_TOKEN}
     volumes:
       - cache-volume:/app/cache
     restart: always

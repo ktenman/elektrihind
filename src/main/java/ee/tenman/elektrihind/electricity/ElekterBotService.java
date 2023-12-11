@@ -2,7 +2,7 @@ package ee.tenman.elektrihind.electricity;
 
 import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.car.CarSearchService;
-import ee.tenman.elektrihind.car.vision.GoogleVisionService;
+import ee.tenman.elektrihind.car.PlateDetectionService;
 import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.digitalocean.DigitalOceanService;
@@ -102,7 +102,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
     private DigitalOceanService digitalOceanService;
 
     @Resource
-    private GoogleVisionService googleVisionService;
+    private PlateDetectionService plateDetectionService;
 
     @Resource(name = "singleThreadExecutor")
     private ExecutorService singleThreadExecutor;
@@ -212,7 +212,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
     }
 
     private void handlePlateNumberImage(Message message, byte[] imageBytes) {
-        Optional<String> plateNumberOpt = googleVisionService.getPlateNumber(imageBytes);
+        Optional<String> plateNumberOpt = plateDetectionService.detectPlate(imageBytes);
 
         if (plateNumberOpt.isPresent()) {
             String regNr = plateNumberOpt.get();

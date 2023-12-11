@@ -34,3 +34,6 @@ spring:
 
 vision:
   base64EncodedKey:
+
+openai:
+  token:

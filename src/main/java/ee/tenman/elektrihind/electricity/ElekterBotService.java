@@ -208,16 +208,16 @@ public class ElekterBotService extends TelegramLongPollingBot {
         // Get the highest quality photo
         String fileId = photos.getLast().getFileId();
         byte[] imageBytes = downloadImage(fileId); // Implement downloadImage to retrieve the photo as byte array
-        handlePlateNumberImage(chatId, imageBytes);
+        handlePlateNumberImage(message, imageBytes);
     }
 
-    private void handlePlateNumberImage(long chatId, byte[] imageBytes) {
+    private void handlePlateNumberImage(Message message, byte[] imageBytes) {
         Optional<String> plateNumberOpt = googleVisionService.getPlateNumber(imageBytes);
 
         if (plateNumberOpt.isPresent()) {
             String regNr = plateNumberOpt.get();
             InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardForPlateNumber(regNr);
-            SendMessage messageWithButton = createMessageWithInlineKeyboard(chatId, "Detected a potential plate number. Would you like to check it?", inlineKeyboardMarkup);
+            SendMessage messageWithButton = createMessageWithInlineKeyboard(message, "Detected a potential plate number. Would you like to check it?", inlineKeyboardMarkup);
             executeSendMessage(messageWithButton);
         }
     }
@@ -423,7 +423,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
         if (fileName.matches(".*(\\.jpg|\\.png)")) {
             byte[] imageBytes = downloadImage(document.getFileId());
-            handlePlateNumberImage(chatId, imageBytes);
+            handlePlateNumberImage(message, imageBytes);
             return;
         }
 
@@ -480,14 +480,14 @@ public class ElekterBotService extends TelegramLongPollingBot {
         return markupInline;
     }
 
-    private SendMessage createMessageWithInlineKeyboard(long chatId, String text, InlineKeyboardMarkup inlineKeyboardMarkup) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText(text);
-        message.setReplyMarkup(inlineKeyboardMarkup);
-        return message;
+    private SendMessage createMessageWithInlineKeyboard(Message message, String text, InlineKeyboardMarkup inlineKeyboardMarkup) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(message.getChatId());
+        sendMessage.setText(text);
+        sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+        sendMessage.setReplyToMessageId(message.getMessageId());
+        return sendMessage;
     }
-
 
     String getElectricityPriceResponse() {
         List<ElectricityPrice> electricityPrices = cacheService.getLatestPrices();

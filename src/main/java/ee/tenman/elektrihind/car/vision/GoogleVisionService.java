@@ -8,6 +8,9 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static ee.tenman.elektrihind.car.vision.GoogleVisionApiRequest.FeatureType.LABEL_DETECTION;
+import static ee.tenman.elektrihind.car.vision.GoogleVisionApiRequest.FeatureType.TEXT_DETECTION;
+
 @Service
 public class GoogleVisionService {
 
@@ -19,9 +22,9 @@ public class GoogleVisionService {
 
     public Optional<String> getPlateNumber(byte[] imageBytes) {
         String plateNr = null;
-        GoogleVisionApiRequest requestBody = new GoogleVisionApiRequest(imageBytes);
+        GoogleVisionApiRequest googleVisionApiRequest = new GoogleVisionApiRequest(imageBytes, LABEL_DETECTION);
 
-        GoogleVisionApiResponse googleVisionApiResponse = googleVisionClient.analyzeImage(requestBody);
+        GoogleVisionApiResponse googleVisionApiResponse = googleVisionClient.analyzeImage(googleVisionApiRequest);
 
         boolean hasVehicleRegistrationPlate = googleVisionApiResponse.getLabelAnnotations().stream()
                 .anyMatch(labelAnnotation -> labelAnnotation.getDescription().equalsIgnoreCase("Vehicle registration plate"));
@@ -29,6 +32,9 @@ public class GoogleVisionService {
         if (!hasVehicleRegistrationPlate) {
             return Optional.empty();
         }
+
+        googleVisionApiRequest = new GoogleVisionApiRequest(imageBytes, TEXT_DETECTION);
+        googleVisionApiResponse = googleVisionClient.analyzeImage(googleVisionApiRequest);
 
         for (EntityAnnotation textAnnotation : googleVisionApiResponse.getTextAnnotations()) {
             String description = textAnnotation.getDescription();

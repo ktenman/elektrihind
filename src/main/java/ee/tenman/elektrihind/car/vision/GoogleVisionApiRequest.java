@@ -2,16 +2,17 @@ package ee.tenman.elektrihind.car.vision;
 
 import lombok.Data;
 
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
+
+import static ee.tenman.elektrihind.car.vision.GoogleVisionApiRequest.FeatureType.LABEL_DETECTION;
+import static ee.tenman.elektrihind.car.vision.GoogleVisionApiRequest.FeatureType.TEXT_DETECTION;
 
 @Data
 public class GoogleVisionApiRequest {
-    private List<AnnotateImageRequest> requests;
-
-    public GoogleVisionApiRequest(byte[] imageBytes) {
+    public GoogleVisionApiRequest(byte[] imageBytes, FeatureType... featureTypes) {
         // Convert the image bytes to a base64 encoded string
         String base64EncodedImage = Base64.getEncoder().encodeToString(imageBytes);
 
@@ -19,21 +20,30 @@ public class GoogleVisionApiRequest {
         Image image = new Image();
         image.setContent(base64EncodedImage);
 
-        // Create label detection feature
-        Feature labelDetectionFeature = new Feature();
-        labelDetectionFeature.setType("LABEL_DETECTION");
+        if (featureTypes.length == 0) {
+            featureTypes = new FeatureType[]{LABEL_DETECTION, TEXT_DETECTION};
+        }
 
-        // Create text detection feature
-        Feature textDetectionFeature = new Feature();
-        textDetectionFeature.setType("TEXT_DETECTION");
+        List<Feature> features = Stream.of(featureTypes).map(featureType -> {
+            Feature feature = new Feature();
+            feature.setType(featureType.name());
+            return feature;
+        }).toList();
 
         // Create the request object
         AnnotateImageRequest annotateImageRequest = new AnnotateImageRequest();
         annotateImageRequest.setImage(image);
-        annotateImageRequest.setFeatures(Arrays.asList(labelDetectionFeature, textDetectionFeature));
+        annotateImageRequest.setFeatures(features);
 
         // Set the requests list with the created request object
         this.requests = Collections.singletonList(annotateImageRequest);
+    }
+
+    private List<AnnotateImageRequest> requests;
+
+    public static enum FeatureType {
+        LABEL_DETECTION,
+        TEXT_DETECTION;
     }
 
     @Data

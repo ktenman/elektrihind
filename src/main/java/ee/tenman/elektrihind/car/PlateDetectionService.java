@@ -17,8 +17,8 @@ public class PlateDetectionService {
     private OpenAiVisionService openAiVisionService;
 
     public Optional<String> detectPlate(byte[] image) {
-        return openAiVisionService.getPlateNumber(image)
-                .or(() -> googleVisionService.getPlateNumber(image));
+        return googleVisionService.getPlateNumber(image)
+                .or(() -> openAiVisionService.getPlateNumber(image));
     }
 
 }

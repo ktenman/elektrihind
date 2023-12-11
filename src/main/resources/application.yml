@@ -31,3 +31,6 @@ spring:
     redis:
       host: redis
       port: 6379
+
+vision:
+  base64EncodedKey: ${VISION_BASE64_ENCODED_KEY}

@@ -75,6 +75,7 @@ jobs:
           echo "TWO_CAPTCHA_API_KEY=${{ secrets.TWO_CAPTCHA_API_KEY }}" >> .env
           echo "DIGITAL_OCEAN_API_TOKEN=${{ secrets.DIGITAL_OCEAN_API_TOKEN }}" >> .env
           echo "SCRAPENINJA_API_KEY=${{ secrets.SCRAPENINJA_API_KEY }}" >> .env
+          echo "VISION_BASE64_ENCODED_KEY=${{ secrets.VISION_BASE64_ENCODED_KEY }}" >> .env
 
       - name: Copy .env and docker-compose.yml files to server
         run: |

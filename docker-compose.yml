@@ -12,6 +12,7 @@ services:
       - TWO_CAPTCHA_API_KEY=${TWO_CAPTCHA_API_KEY}
       - DIGITAL_OCEAN_API_TOKEN=${DIGITAL_OCEAN_API_TOKEN}
       - SCRAPENINJA_API_KEY=${SCRAPENINJA_API_KEY}
+      - VISION_BASE64_ENCODED_KEY=${VISION_BASE64_ENCODED_KEY}
     volumes:
       - cache-volume:/app/cache
     restart: always

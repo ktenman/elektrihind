@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Map;
 
-@FeignClient(name = "digitalOceanClient", url = "https://api.digitalocean.com/v2", configuration = FeignClientConfig.class)
+@FeignClient(name = "digitalOceanClient", url = "https://api.digitalocean.com/v2", configuration = DigitalOceanClientClientConfig.class)
 public interface DigitalOceanClient {
 
     @PostMapping("/droplets/{dropletId}/actions")

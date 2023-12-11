@@ -4,7 +4,7 @@ import feign.RequestInterceptor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
-public class FeignClientConfig {
+public class DigitalOceanClientClientConfig {
 
     @Bean
     public RequestInterceptor requestInterceptor(@Value("${digitalocean.api.token}") String authToken) {

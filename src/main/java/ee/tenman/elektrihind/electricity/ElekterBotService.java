@@ -2,6 +2,7 @@ package ee.tenman.elektrihind.electricity;
 
 import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.car.CarSearchService;
+import ee.tenman.elektrihind.car.vision.GoogleVisionService;
 import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.digitalocean.DigitalOceanService;
@@ -9,6 +10,7 @@ import ee.tenman.elektrihind.euribor.EuriborRateFetcher;
 import ee.tenman.elektrihind.telegram.TelegramService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +24,7 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Document;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -34,9 +37,12 @@ import oshi.hardware.HardwareAbstractionLayer;
 import oshi.software.os.FileSystem;
 import oshi.software.os.OSFileStore;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Clock;
@@ -95,6 +101,9 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     @Resource
     private DigitalOceanService digitalOceanService;
+
+    @Resource
+    private GoogleVisionService googleVisionService;
 
     @Resource(name = "singleThreadExecutor")
     private ExecutorService singleThreadExecutor;
@@ -183,7 +192,34 @@ public class ElekterBotService extends TelegramLongPollingBot {
                 handleTextMessage(message);
             } else if (message.hasDocument()) {
                 handleDocumentMessage(message, chatId);
+            } else if (message.hasPhoto()) {
+                handlePhotoMessage(message, chatId);
             }
+        }
+    }
+
+    private void handlePhotoMessage(Message message, long chatId) {
+        // Photos are sent as a list, the highest quality photo is usually the last one
+        List<PhotoSize> photos = message.getPhoto();
+        if (photos == null || photos.isEmpty()) {
+            sendMessage(chatId, "No photo detected.");
+            return;
+        }
+
+        // Get the highest quality photo
+        String fileId = photos.getLast().getFileId();
+        byte[] imageBytes = downloadImage(fileId); // Implement downloadImage to retrieve the photo as byte array
+        handlePlateNumberImage(chatId, imageBytes);
+    }
+
+    private void handlePlateNumberImage(long chatId, byte[] imageBytes) {
+        Optional<String> plateNumberOpt = googleVisionService.getPlateNumber(imageBytes);
+
+        if (plateNumberOpt.isPresent()) {
+            String regNr = plateNumberOpt.get();
+            InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardForPlateNumber(regNr);
+            SendMessage messageWithButton = createMessageWithInlineKeyboard(chatId, "Detected a potential plate number. Would you like to check it?", inlineKeyboardMarkup);
+            executeSendMessage(messageWithButton);
         }
     }
 
@@ -375,13 +411,84 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
     private void handleDocumentMessage(Message message, long chatId) {
         Document document = message.getDocument();
+        if (document == null || document.getFileName() == null) {
+            sendMessage(chatId, "No file detected.");
+            return;
+        }
+
         String fileName = document.getFileName();
-        if (fileName != null && fileName.endsWith(".csv")) {
+        if (fileName.endsWith(".csv")) {
             handleCsvDocument(document, chatId);
-        } else {
-            sendMessage(chatId, "Please send a CSV file.");
+            return;
+        }
+
+        if (fileName.matches(".*(\\.jpg|\\.png)")) {
+            byte[] imageBytes = downloadImage(document.getFileId());
+            handlePlateNumberImage(chatId, imageBytes);
+            return;
+        }
+
+        sendMessage(chatId, "Please send a CSV or image file.");
+    }
+
+    @SneakyThrows
+    private byte[] downloadImage(String fileId) {
+        // Use getFile to get the file path
+        GetFile getFileMethod = new GetFile();
+        getFileMethod.setFileId(fileId);
+        org.telegram.telegrambots.meta.api.objects.File file = execute(getFileMethod);
+
+        // Use the file path to download the file
+        String filePath = file.getFilePath();
+        String fileUrl = "https://api.telegram.org/file/bot" + token + "/" + filePath;
+        return downloadFileAsBytes(fileUrl); // Implement this method to download the file from the URL
+    }
+
+    private byte[] downloadFileAsBytes(String fileUrl) throws IOException {
+        URL url = new URL(fileUrl);
+        try (InputStream in = url.openStream();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = in.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
+            return out.toByteArray();
         }
     }
+
+    private void executeSendMessage(SendMessage message) {
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error("Error sending message: {}", e.getMessage());
+        }
+    }
+
+    private InlineKeyboardMarkup createInlineKeyboardForPlateNumber(String plateNumber) {
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+        InlineKeyboardButton buttonCheckPlate = new InlineKeyboardButton();
+        buttonCheckPlate.setText("Check car plate #: " + plateNumber);
+        buttonCheckPlate.setCallbackData("ark " + plateNumber);
+        rowInline.add(buttonCheckPlate);
+        rowsInline.add(rowInline);
+        markupInline.setKeyboard(rowsInline);
+
+        return markupInline;
+    }
+
+    private SendMessage createMessageWithInlineKeyboard(long chatId, String text, InlineKeyboardMarkup inlineKeyboardMarkup) {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(text);
+        message.setReplyMarkup(inlineKeyboardMarkup);
+        return message;
+    }
+
 
     String getElectricityPriceResponse() {
         List<ElectricityPrice> electricityPrices = cacheService.getLatestPrices();

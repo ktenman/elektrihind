@@ -66,7 +66,8 @@ public class Auto24Service implements CaptchaSolver {
         $(By.name("checksec1")).setValue(solveCaptcha);
         $("button[type='submit']").click();
         int count = 0;
-        while ($(".errorMessage").exists() && count++ < 15) {
+        while ($(".errorMessage").exists() &&
+                "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 10) {
             log.warn("Invalid captcha for regNr: {}", regNr);
             screenshot = $("#vpc_captcha").screenshot();
             assert screenshot != null;
@@ -74,6 +75,13 @@ public class Auto24Service implements CaptchaSolver {
             solveCaptcha = recaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
             $(By.name("checksec1")).setValue(solveCaptcha);
             $("button[type='submit']").click();
+        }
+        SelenideElement errorMessage = $(".errorMessage");
+        LinkedHashMap<String, String> result = new LinkedHashMap<>();
+        if (errorMessage.exists() && !"Vale kontrollkood.".equalsIgnoreCase(errorMessage.text())) {
+            log.error("Error while solving price captcha for regNr: {}. Error: {}", regNr, errorMessage.text());
+            result.put("Reg nr", regNr);
+            return result;
         }
         log.info("Price captcha solved for regNr: {}", regNr);
         String response = $$(By.tagName("div")).filter(Condition.text("Sõiduki keskmine hind"))
@@ -83,7 +91,6 @@ public class Auto24Service implements CaptchaSolver {
                 .replace("\n", " ");
         Selenide.closeWindow();
         String[] split = response.split(": ");
-        LinkedHashMap<String, String> result = new LinkedHashMap<>();
         if (split.length <= 1) {
             result.put("Reg nr", regNr);
             return result;

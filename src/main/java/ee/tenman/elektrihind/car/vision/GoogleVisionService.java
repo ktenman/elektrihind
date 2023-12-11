@@ -16,6 +16,7 @@ public class GoogleVisionService {
 
     private static final String REGEX = "\\b\\d{3}\\s?[A-Za-z]{3}\\b";
     private static final Pattern PATTERN = Pattern.compile(REGEX, Pattern.CASE_INSENSITIVE);
+    public static final String VEHICLE_REGISTRATION_PLATE = "Vehicle registration plate";
 
     @Resource
     private GoogleVisionClient googleVisionClient;
@@ -27,7 +28,7 @@ public class GoogleVisionService {
         GoogleVisionApiResponse googleVisionApiResponse = googleVisionClient.analyzeImage(googleVisionApiRequest);
 
         boolean hasVehicleRegistrationPlate = googleVisionApiResponse.getLabelAnnotations().stream()
-                .anyMatch(labelAnnotation -> labelAnnotation.getDescription().equalsIgnoreCase("Vehicle registration plate"));
+                .anyMatch(labelAnnotation -> VEHICLE_REGISTRATION_PLATE.equalsIgnoreCase(labelAnnotation.getDescription()));
 
         if (!hasVehicleRegistrationPlate) {
             return Optional.empty();

@@ -25,4 +25,12 @@ class Auto24ServiceTest {
 
         System.out.println();
     }
+
+    @Test
+    @Disabled
+    void carPrice() {
+        LinkedHashMap<String, String> map = auto24Service.carPrice("876BCH");
+
+        System.out.println();
+    }
 }

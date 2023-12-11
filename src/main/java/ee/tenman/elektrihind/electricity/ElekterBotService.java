@@ -12,7 +12,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -289,13 +288,13 @@ public class ElekterBotService extends TelegramLongPollingBot {
             showMenu = true;
         } else if (messageText.toLowerCase().contains("elektrihind")) {
             String response = getElectricityPriceResponse();
-            sendMessageCode(chatId, messageId, response, null);
+            sendMessageCode(chatId, messageId, response);
         } else if (messageText.toLowerCase().contains(METRIC)) {
             String response = getSystemMetrics();
-            sendMessageCode(chatId, messageId, response, null);
+            sendMessageCode(chatId, messageId, response);
         } else if (messageText.toLowerCase().contains(EURIBOR)) {
             String euriborResonse = euriborRateFetcher.getEuriborRateResponse();
-            sendMessageCode(chatId, messageId, euriborResonse, null);
+            sendMessageCode(chatId, messageId, euriborResonse);
         } else if (arkMatcher.find()) {
             String regNr = arkMatcher.group(1).toUpperCase();
             AtomicLong startTime = new AtomicLong();
@@ -303,7 +302,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
 
         } else if (messageText.equalsIgnoreCase("reboot")) {
             digitalOceanService.rebootDroplet();
-            sendMessageCode(chatId, messageId, "Droplet reboot initiated!", null);
+            sendMessageCode(chatId, messageId, "Droplet reboot initiated!");
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages
@@ -338,7 +337,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
                                 .map(entry -> entry.getKey() + ": " + entry.getValue())
                                 .collect(Collectors.joining("\n"));
                         text = text + "\n\nTask duration: " + String.format("%.2f seconds", durationSeconds);
-                        sendMessageCode(chatId, messageId, text, search.get("Logo"));
+                        sendMessageCode(chatId, messageId, text);
                     }
                     return null; // Return value is not used in this context
                 });
@@ -534,7 +533,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         BestPriceResult bestPrice = priceFinderService.findBestPriceForDuration(electricityPrices, durationInMinutes);
 
         if (bestPrice == null) {
-            sendMessageCode(chatId, messageId, "Could not calculate the best time to start your washing machine.", null);
+            sendMessageCode(chatId, messageId, "Could not calculate the best time to start your washing machine.");
             return;
         }
 
@@ -546,7 +545,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         String difference = String.format(" %.2f", currentBestPriceResult.getTotalCost() / bestPrice.getTotalCost()) + "x more expensive to start immediately.";
         response += difference;
 
-        sendMessageCode(chatId, messageId, response, null);
+        sendMessageCode(chatId, messageId, response);
     }
 
     private String formatBestPriceResponseForCurrent(BestPriceResult currentBestPriceResult) {
@@ -602,7 +601,7 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
     }
 
-    void sendMessageCode(long chatId, Integer replyToMessageId, String text, String afterText) {
+    void sendMessageCode(long chatId, Integer replyToMessageId, String text) {
         if (text == null) {
             log.warn("Not sending null message to chat: {}", chatId);
             return;
@@ -618,9 +617,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
 
         String messageText = "```\n" + text + "```";
-        if (StringUtils.isNotBlank(afterText)) {
-            messageText += "\n" + afterText;
-        }
         message.setText(messageText);
 
         try {

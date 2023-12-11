@@ -19,6 +19,11 @@ public class VisionAuthenticatorService {
     private final GoogleCredentials credentials;
 
     public VisionAuthenticatorService(@Value("${vision.base64EncodedKey}") String base64EncodedKey) {
+        if (base64EncodedKey == null || base64EncodedKey.isEmpty()) {
+            log.warn("Google Credentials not initialized. Please provide a base64 encoded key in the 'vision.base64EncodedKey' property.");
+            credentials = null;
+            return;
+        }
         try {
             byte[] decodedJsonBytes = Base64.getDecoder().decode(base64EncodedKey);
             try (InputStream credentialsStream = new ByteArrayInputStream(decodedJsonBytes)) {

@@ -240,7 +240,7 @@ class ElekterBotServiceTest {
         verify(spyBotService).execute(sendMessageCaptor.capture());
         SendMessage sentMessage = sendMessageCaptor.getValue();
         assertThat(sentMessage.getChatId()).isEqualTo(String.valueOf(message.getChatId()));
-        assertThat(sentMessage.getText()).contains("Please send a CSV file.");
+        assertThat(sentMessage.getText()).contains("Please send a CSV or image file.");
     }
 
     @Test

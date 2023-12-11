@@ -66,7 +66,7 @@ public class Auto24Service implements CaptchaSolver {
         $(By.name("checksec1")).setValue(solveCaptcha);
         $("button[type='submit']").click();
         int count = 0;
-        while ($(".errorMessage").exists() && count++ < 7) {
+        while ($(".errorMessage").exists() && count++ < 15) {
             log.warn("Invalid captcha for regNr: {}", regNr);
             screenshot = $("#vpc_captcha").screenshot();
             assert screenshot != null;

@@ -33,7 +33,7 @@ public class RecaptchaSolverService {
         return waitForCaptchaResult(requestId);
     }
 
-    @Retryable(maxAttempts = 10, backoff = @Backoff(delay = 1000))
+    @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1000))
     public String solveCaptcha(byte[] captchaImage) {
         MultipartFile multipartFile = new ByteArrayMultipartFile(captchaImage, "file", CAPTCHA_IMAGE_NAME, CAPTCHA_IMAGE_TYPE);
         Map<String, Object> response = recaptchaClient.sendImageCaptcha(apiKey, "post", multipartFile, 1);

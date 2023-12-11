@@ -2,6 +2,7 @@ package ee.tenman.elektrihind.car.vision;
 
 import ee.tenman.elektrihind.car.vision.GoogleVisionApiResponse.EntityAnnotation;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import static ee.tenman.elektrihind.car.vision.GoogleVisionApiRequest.FeatureTyp
 import static ee.tenman.elektrihind.car.vision.GoogleVisionApiRequest.FeatureType.TEXT_DETECTION;
 
 @Service
+@Slf4j
 public class GoogleVisionService {
 
     private static final String REGEX = "\\b\\d{3}\\s?[A-Za-z]{3}\\b";

@@ -45,7 +45,8 @@ public class GoogleVisionService {
             log.debug("Vehicle registration plate detected: {}", hasVehicleRegistrationPlateNumber);
 
             Map<String, Object> response = new HashMap<>();
-            response.put("hasCar", hasCar(googleVisionApiResponse.getLabelAnnotations()));
+            Boolean hasCar = hasCar(googleVisionApiResponse.getLabelAnnotations());
+            response.put("hasCar", hasCar);
             if (!hasVehicleRegistrationPlateNumber) {
                 return response;
             }

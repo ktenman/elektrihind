@@ -18,7 +18,7 @@ import static ee.tenman.elektrihind.car.vision.GoogleVisionApiRequest.FeatureTyp
 @Slf4j
 public class GoogleVisionService {
 
-    private static final String REGEX = "\\b\\d{3}\\s?[A-Za-z]{3}\\b";
+    private static final String REGEX = "\\b\\d{3}\\s?[A-Z]{3}\\b";
     public static final Pattern CAR_PLATE_NUMBER_PATTERN = Pattern.compile(REGEX, Pattern.CASE_INSENSITIVE);
     private static final String VEHICLE_REGISTRATION_PLATE = "Vehicle registration plate";
 

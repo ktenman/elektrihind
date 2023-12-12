@@ -1,8 +1,8 @@
 package ee.tenman.elektrihind.car.vision;
 
-import ee.tenman.elektrihind.car.vision.GoogleVisionApiResponse.EntityAnnotation;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
@@ -48,10 +48,10 @@ public class GoogleVisionService {
 
             googleVisionApiRequest = new GoogleVisionApiRequest(base64EncodedImage, TEXT_DETECTION);
             googleVisionApiResponse = googleVisionClient.analyzeImage(googleVisionApiRequest);
+            String[] strings = googleVisionApiResponse.getTextAnnotations().stream().findFirst().map(s -> StringUtils.split(s.getDescription(), "\n")).orElse(new String[0]);
             log.info("Received text detection response: {}", googleVisionApiResponse);
 
-            for (EntityAnnotation textAnnotation : googleVisionApiResponse.getTextAnnotations()) {
-                String description = textAnnotation.getDescription();
+            for (String description : strings) {
                 log.debug("Processing text annotation: {}", description);
                 Matcher matcher = CAR_PLATE_NUMBER_PATTERN.matcher(description);
                 if (matcher.find()) {

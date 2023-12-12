@@ -2,7 +2,6 @@ package ee.tenman.elektrihind.car.vision;
 
 import lombok.Data;
 
-import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
@@ -12,10 +11,7 @@ import static ee.tenman.elektrihind.car.vision.GoogleVisionApiRequest.FeatureTyp
 
 @Data
 public class GoogleVisionApiRequest {
-    public GoogleVisionApiRequest(byte[] imageBytes, FeatureType... featureTypes) {
-        // Convert the image bytes to a base64 encoded string
-        String base64EncodedImage = Base64.getEncoder().encodeToString(imageBytes);
-
+    public GoogleVisionApiRequest(String base64EncodedImage, FeatureType... featureTypes) {
         // Set the content of the Image object
         Image image = new Image();
         image.setContent(base64EncodedImage);
@@ -41,7 +37,7 @@ public class GoogleVisionApiRequest {
 
     private List<AnnotateImageRequest> requests;
 
-    public static enum FeatureType {
+    public enum FeatureType {
         LABEL_DETECTION,
         TEXT_DETECTION;
     }

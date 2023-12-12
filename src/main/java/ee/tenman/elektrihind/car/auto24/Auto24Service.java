@@ -9,6 +9,7 @@ import ee.tenman.elektrihind.utility.CaptchaSolver;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.By;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -100,6 +101,48 @@ public class Auto24Service implements CaptchaSolver {
         log.info("Price for regNr: {} is {}", regNr, response);
         CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
         return result;
+    }
+
+    @SneakyThrows({IOException.class, InterruptedException.class})
+    public void solve(String regNr) {
+        log.info("Searching car price for regNr: {}", regNr);
+        Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");
+        TimeUnit.SECONDS.sleep(3);
+        SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
+        if (acceptCookies.exists()) {
+            acceptCookies.click();
+        }
+        $(By.name("vpc_reg_nr")).setValue(regNr);
+
+        File screenshot = $("#vpc_captcha").screenshot();
+        assert screenshot != null;
+        log.info("Solving price captcha for regNr: {}", regNr);
+        String solveCaptcha = recaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
+        $(By.name("checksec1")).setValue(solveCaptcha);
+        $("button[type='submit']").click();
+        int count = 0;
+        while ($(".errorMessage").exists() &&
+                "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 10) {
+            log.warn("Invalid captcha for regNr: {}", regNr);
+            screenshot = $("#vpc_captcha").screenshot();
+            assert screenshot != null;
+            log.info("Trying to solve price captcha for regNr: {}. Tries: {}", regNr, count);
+            solveCaptcha = recaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
+            $(By.name("checksec1")).setValue(solveCaptcha);
+            $("button[type='submit']").click();
+        }
+        SelenideElement errorMessage = $(".errorMessage");
+        if (errorMessage.exists() && !"Vale kontrollkood.".equalsIgnoreCase(errorMessage.text())) {
+            log.error("Error while solving price captcha for regNr: {}. Error: {}", regNr, errorMessage.text());
+            return;
+        }
+        log.info("Price captcha solved for regNr: {}", regNr);
+        boolean success = $$(By.tagName("div")).filter(Condition.text("Sõiduki keskmine hind"))
+                .last().exists();
+        if (success) {
+            FileUtils.copyFile(screenshot, new File("images3/" + solveCaptcha.toUpperCase() + ".png"));
+        }
+        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
     }
 
     @SneakyThrows({InterruptedException.class})

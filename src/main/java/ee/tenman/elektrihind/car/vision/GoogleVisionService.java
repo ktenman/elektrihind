@@ -7,6 +7,7 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
+import java.util.Base64;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,37 +22,49 @@ public class GoogleVisionService {
     private static final String REGEX = "\\b\\d{3}\\s?[A-Z]{3}\\b";
     public static final Pattern CAR_PLATE_NUMBER_PATTERN = Pattern.compile(REGEX, Pattern.CASE_INSENSITIVE);
     private static final String VEHICLE_REGISTRATION_PLATE = "Vehicle registration plate";
+    private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 
     @Resource
     private GoogleVisionClient googleVisionClient;
 
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     public Optional<String> getPlateNumber(byte[] imageBytes) {
-        String plateNr = null;
-        GoogleVisionApiRequest googleVisionApiRequest = new GoogleVisionApiRequest(imageBytes, LABEL_DETECTION);
+        log.debug("Starting plate number detection from image. Image size: {} bytes", imageBytes.length);
+        try {
+            String base64EncodedImage = BASE64_ENCODER.encodeToString(imageBytes);
+            log.debug("Encoded image to base64");
 
-        GoogleVisionApiResponse googleVisionApiResponse = googleVisionClient.analyzeImage(googleVisionApiRequest);
+            GoogleVisionApiRequest googleVisionApiRequest = new GoogleVisionApiRequest(base64EncodedImage, LABEL_DETECTION);
+            GoogleVisionApiResponse googleVisionApiResponse = googleVisionClient.analyzeImage(googleVisionApiRequest);
+            log.info("Received label detection response: {}", googleVisionApiResponse);
 
-        boolean hasVehicleRegistrationPlateNumber = googleVisionApiResponse.getLabelAnnotations().stream()
-                .anyMatch(labelAnnotation -> VEHICLE_REGISTRATION_PLATE.equalsIgnoreCase(labelAnnotation.getDescription()));
+            boolean hasVehicleRegistrationPlateNumber = googleVisionApiResponse.getLabelAnnotations().stream()
+                    .anyMatch(labelAnnotation -> VEHICLE_REGISTRATION_PLATE.equalsIgnoreCase(labelAnnotation.getDescription()));
+            log.debug("Vehicle registration plate detected: {}", hasVehicleRegistrationPlateNumber);
 
-        if (!hasVehicleRegistrationPlateNumber) {
+            if (!hasVehicleRegistrationPlateNumber) {
+                return Optional.empty();
+            }
+
+            googleVisionApiRequest = new GoogleVisionApiRequest(base64EncodedImage, TEXT_DETECTION);
+            googleVisionApiResponse = googleVisionClient.analyzeImage(googleVisionApiRequest);
+            log.info("Received text detection response: {}", googleVisionApiResponse);
+
+            for (EntityAnnotation textAnnotation : googleVisionApiResponse.getTextAnnotations()) {
+                String description = textAnnotation.getDescription();
+                log.debug("Processing text annotation: {}", description);
+                Matcher matcher = CAR_PLATE_NUMBER_PATTERN.matcher(description);
+                if (matcher.find()) {
+                    String plateNr = matcher.group().replace(" ", "").toUpperCase();
+                    log.debug("Plate number found: {}", plateNr);
+                    return Optional.of(plateNr);
+                }
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Error during plate number detection", e);
             return Optional.empty();
         }
-
-        googleVisionApiRequest = new GoogleVisionApiRequest(imageBytes, TEXT_DETECTION);
-        googleVisionApiResponse = googleVisionClient.analyzeImage(googleVisionApiRequest);
-
-        for (EntityAnnotation textAnnotation : googleVisionApiResponse.getTextAnnotations()) {
-            String description = textAnnotation.getDescription();
-            Matcher matcher = CAR_PLATE_NUMBER_PATTERN.matcher(description);
-            if (matcher.find()) {
-                plateNr = matcher.group().replace(" ", "").toUpperCase();
-                return Optional.of(plateNr);
-            }
-        }
-
-        return Optional.empty();
     }
 }
 

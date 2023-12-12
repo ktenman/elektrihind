@@ -8,7 +8,9 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.util.Base64;
-import java.util.Optional;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,7 +30,7 @@ public class GoogleVisionService {
     private GoogleVisionClient googleVisionClient;
 
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
-    public Optional<String> getPlateNumber(byte[] imageBytes) {
+    public Map<String, Object> getPlateNumber(byte[] imageBytes) {
         log.debug("Starting plate number detection from image. Image size: {} bytes", imageBytes.length);
         try {
             String base64EncodedImage = BASE64_ENCODER.encodeToString(imageBytes);
@@ -42,8 +44,10 @@ public class GoogleVisionService {
                     .anyMatch(labelAnnotation -> VEHICLE_REGISTRATION_PLATE.equalsIgnoreCase(labelAnnotation.getDescription()));
             log.debug("Vehicle registration plate detected: {}", hasVehicleRegistrationPlateNumber);
 
+            Map<String, Object> response = new HashMap<>();
+            response.put("hasCar", hasCar(googleVisionApiResponse.getLabelAnnotations()));
             if (!hasVehicleRegistrationPlateNumber) {
-                return Optional.empty();
+                return response;
             }
 
             googleVisionApiRequest = new GoogleVisionApiRequest(base64EncodedImage, TEXT_DETECTION);
@@ -57,14 +61,27 @@ public class GoogleVisionService {
                 if (matcher.find()) {
                     String plateNr = matcher.group().replace(" ", "").toUpperCase();
                     log.debug("Plate number found: {}", plateNr);
-                    return Optional.of(plateNr);
+                    response.put("plateNumber", plateNr);
+                    return response;
                 }
             }
-            return Optional.empty();
+            return response;
         } catch (Exception e) {
             log.error("Error during plate number detection", e);
-            return Optional.empty();
+            return Map.of();
         }
+    }
+
+    private Boolean hasCar(List<GoogleVisionApiResponse.EntityAnnotation> labelAnnotations) {
+        for (GoogleVisionApiResponse.EntityAnnotation labelAnnotation : labelAnnotations) {
+            if (labelAnnotation.getDescription().contains("car")) {
+                return Boolean.TRUE;
+            }
+            if (labelAnnotation.getDescription().contains("vehicle")) {
+                return Boolean.TRUE;
+            }
+        }
+        return Boolean.FALSE;
     }
 }
 

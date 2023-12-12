@@ -34,12 +34,18 @@ public class PlateDetectionService {
             }
             log.debug("EasyOcrService did not detect the plate [UUID: {}], trying GoogleVisionService", uuid);
 
-            plateNumber = googleVisionService.getPlateNumber(image);
+            plateNumber = Optional.ofNullable((String) googleVisionService.getPlateNumber(image).get("plateNumber"));
             if (plateNumber.isPresent()) {
                 log.info("Plate detected by GoogleVisionService [UUID: {}]: {}", uuid, plateNumber.get());
                 return plateNumber;
             }
             log.debug("GoogleVisionService did not detect the plate [UUID: {}], trying OpenAiVisionService", uuid);
+
+            boolean hasCar = (Boolean) googleVisionService.getPlateNumber(image).getOrDefault("hasCar", false);
+            if (!hasCar) {
+                log.debug("GoogleVisionService did not detect the car [UUID: {}]", uuid);
+                return Optional.empty();
+            }
 
             plateNumber = openAiVisionService.getPlateNumber(image);
             if (plateNumber.isPresent()) {

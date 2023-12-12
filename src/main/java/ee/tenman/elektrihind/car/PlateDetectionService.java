@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -23,35 +24,36 @@ public class PlateDetectionService {
     private OpenAiVisionService openAiVisionService;
 
     public Optional<String> detectPlate(byte[] image) {
-        log.debug("Starting plate detection. Image size: {} bytes", image.length);
+        UUID uuid = UUID.randomUUID();
+        log.debug("Starting plate detection [UUID: {}]. Image size: {} bytes", uuid, image.length);
         try {
             Optional<String> plateNumber = easyOcrService.getPlateNumber(image);
             if (plateNumber.isPresent()) {
-                log.info("Plate detected by EasyOcrService: {}", plateNumber.get());
+                log.info("Plate detected by EasyOcrService [UUID: {}]: {}", uuid, plateNumber.get());
                 return plateNumber;
             }
-            log.debug("EasyOcrService did not detect the plate, trying GoogleVisionService");
+            log.debug("EasyOcrService did not detect the plate [UUID: {}], trying GoogleVisionService", uuid);
 
             plateNumber = googleVisionService.getPlateNumber(image);
             if (plateNumber.isPresent()) {
-                log.info("Plate detected by GoogleVisionService: {}", plateNumber.get());
+                log.info("Plate detected by GoogleVisionService [UUID: {}]: {}", uuid, plateNumber.get());
                 return plateNumber;
             }
-            log.debug("GoogleVisionService did not detect the plate, trying OpenAiVisionService");
+            log.debug("GoogleVisionService did not detect the plate [UUID: {}], trying OpenAiVisionService", uuid);
 
             plateNumber = openAiVisionService.getPlateNumber(image);
             if (plateNumber.isPresent()) {
-                log.info("Plate detected by OpenAiVisionService: {}", plateNumber.get());
+                log.info("Plate detected by OpenAiVisionService [UUID: {}]: {}", uuid, plateNumber.get());
                 return plateNumber;
             }
-            log.debug("OpenAiVisionService did not detect the plate");
+            log.debug("OpenAiVisionService did not detect the plate [UUID: {}]", uuid);
 
             return Optional.empty();
         } catch (Exception e) {
-            log.error("Error during plate detection", e);
+            log.error("Error during plate detection [UUID: {}]", uuid, e);
             return Optional.empty();
         } finally {
-            log.debug("Plate detection process completed");
+            log.debug("Plate detection process completed [UUID: {}]", uuid);
         }
     }
 }

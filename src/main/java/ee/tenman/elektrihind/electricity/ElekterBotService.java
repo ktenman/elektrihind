@@ -178,7 +178,6 @@ public class ElekterBotService extends TelegramLongPollingBot {
         }
     }
 
-
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasCallbackQuery()) {

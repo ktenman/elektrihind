@@ -7,6 +7,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,14 +35,15 @@ public class PlateDetectionService {
             }
             log.debug("EasyOcrService did not detect the plate [UUID: {}], trying GoogleVisionService", uuid);
 
-            plateNumber = Optional.ofNullable((String) googleVisionService.getPlateNumber(image).get("plateNumber"));
+            Map<String, Object> googleVisionResponse = googleVisionService.getPlateNumber(image);
+            plateNumber = Optional.ofNullable((String) googleVisionResponse.get("plateNumber"));
             if (plateNumber.isPresent()) {
                 log.info("Plate detected by GoogleVisionService [UUID: {}]: {}", uuid, plateNumber.get());
                 return plateNumber;
             }
             log.debug("GoogleVisionService did not detect the plate [UUID: {}], trying OpenAiVisionService", uuid);
 
-            boolean hasCar = (Boolean) googleVisionService.getPlateNumber(image).getOrDefault("hasCar", false);
+            boolean hasCar = (Boolean) googleVisionResponse.getOrDefault("hasCar", false);
             if (!hasCar) {
                 log.debug("GoogleVisionService did not detect the car [UUID: {}]", uuid);
                 return Optional.empty();

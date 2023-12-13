@@ -22,7 +22,6 @@ import static ee.tenman.elektrihind.car.vision.GoogleVisionService.CAR_PLATE_NUM
 @Slf4j
 public class QueuePlateDetectionService {
 
-    @Resource
     private final Map<UUID, CompletableFuture<String>> plateDetectionFutures = new ConcurrentHashMap<>();
     @Resource
     private RedisMessagePublisher redisMessagePublisher;

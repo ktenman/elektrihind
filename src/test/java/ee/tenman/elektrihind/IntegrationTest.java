@@ -27,9 +27,11 @@ public @interface IntegrationTest {
 
 class RedisInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
+    private static final String REDIS_PASSWORD = "something";
     private static final DockerImageName REDIS_IMAGE = DockerImageName.parse("redis:7.2.3-alpine");
     private static final GenericContainer<?> redisContainer = new GenericContainer<>(REDIS_IMAGE)
-            .withExposedPorts(6379);
+            .withExposedPorts(6379)
+            .withCommand("redis-server", "--requirepass", REDIS_PASSWORD);
 
     static {
         redisContainer.start();
@@ -40,7 +42,8 @@ class RedisInitializer implements ApplicationContextInitializer<ConfigurableAppl
         TestPropertySourceUtils.addInlinedPropertiesToEnvironment(
                 applicationContext,
                 "spring.data.redis.host=" + redisContainer.getHost(),
-                "spring.data.redis.port=" + redisContainer.getFirstMappedPort()
+                "spring.data.redis.port=" + redisContainer.getFirstMappedPort(),
+                "spring.data.redis.password=" + REDIS_PASSWORD
         );
     }
 }

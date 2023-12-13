@@ -23,4 +23,9 @@ public class ThreadPoolConfig {
     public ExecutorService fourThreadExecutor() {
         return Executors.newFixedThreadPool(4);
     }
+
+    @Bean
+    public ExecutorService tenThreadExecutor() {
+        return Executors.newFixedThreadPool(10);
+    }
 }

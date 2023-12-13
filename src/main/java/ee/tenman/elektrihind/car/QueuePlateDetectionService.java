@@ -23,6 +23,7 @@ import static ee.tenman.elektrihind.utility.TimeUtility.durationInSeconds;
 @Slf4j
 public class QueuePlateDetectionService {
 
+    private static final int TIMEOUT = 1500;
     private final Map<UUID, CompletableFuture<String>> plateDetectionFutures = new ConcurrentHashMap<>();
     @Resource
     private RedisMessagePublisher redisMessagePublisher;
@@ -45,7 +46,7 @@ public class QueuePlateDetectionService {
         try {
             String extractedText = CompletableFuture.supplyAsync(() -> {
                 try {
-                    return detectionFuture.get(5, TimeUnit.SECONDS);
+                    return detectionFuture.get(TIMEOUT, TimeUnit.MILLISECONDS);
                 } catch (Exception e) {
                     throw new IllegalStateException("Timeout or interruption while waiting for plate number [UUID: " + uuid + "]", e);
                 }

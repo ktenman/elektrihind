@@ -1,6 +1,6 @@
 package ee.tenman.elektrihind.queue;
 
-import ee.tenman.elektrihind.car.PlateDetectionService;
+import ee.tenman.elektrihind.car.QueuePlateDetectionService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
@@ -14,7 +14,7 @@ import java.util.UUID;
 public class RedisMessageSubscriber implements MessageListener {
 
     @Resource
-    private PlateDetectionService plateDetectionService;
+    private QueuePlateDetectionService queuePlateDetectionService;
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
@@ -26,7 +26,7 @@ public class RedisMessageSubscriber implements MessageListener {
             String extractedTextFromImage = getExtractedTextFromImage(messageBody);
             log.info("Processing message [UUID: {}, Extracted text: {}]", uuid, extractedTextFromImage);
 
-            plateDetectionService.processDetectionResponse(uuid, extractedTextFromImage);
+            queuePlateDetectionService.processDetectionResponse(uuid, extractedTextFromImage);
         } catch (Exception e) {
             log.error("Error processing message from Redis queue", e);
         }

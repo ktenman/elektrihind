@@ -23,8 +23,9 @@ public class RedisConfig {
     public static final String ONE_YEAR_CACHE_1 = "one-year-cache-11";
     public static final String THIRTY_DAYS_CACHE_1 = "thirty-days-cache-11";
     public static final String MESSAGE_COUNTS_CACHE = "messageCounts-22";
-    public static final String IMAGE_QUEUE = "image-queue";
-    public static final String RESPONSE_QUEUE = "response-queue";
+
+    public static final String IMAGE_REQUEST_QUEUE = "image-request-queue";
+    public static final String IMAGE_RESPONSE_QUEUE = "image-response-queue";
 
     private static final Duration DEFAULT_TTL = Duration.ofMinutes(10);
 
@@ -33,7 +34,7 @@ public class RedisConfig {
                                             RedisMessageSubscriber subscriber) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        container.addMessageListener(subscriber, new PatternTopic(RESPONSE_QUEUE));
+        container.addMessageListener(subscriber, new PatternTopic(IMAGE_RESPONSE_QUEUE));
 
         return container;
     }

@@ -34,41 +34,41 @@ public class PlateDetectionService {
         UUID uuid = UUID.randomUUID();
         MDC.put("uuid", uuid.toString());
         String base64EncodedImage = BASE64_ENCODER.encodeToString(image);
-        log.debug("Starting plate detection [UUID: {}]. Image size: {} bytes", uuid, base64EncodedImage.getBytes().length);
+        log.debug("Starting plate detection. Image size: {} bytes", base64EncodedImage.getBytes().length);
 
         try {
             Optional<String> plateNumber = queuePlateDetectionService.detectPlate(base64EncodedImage, uuid);
             if (plateNumber.isPresent()) {
-                log.info("Plate detected via queue [UUID: {}]: {}", uuid, plateNumber.get());
+                log.info("Plate detected via queue: {}", plateNumber.get());
                 return plateNumber;
             }
 
-            Map<String, Object> googleVisionResponse = googleVisionService.getPlateNumber(base64EncodedImage);
+            Map<String, Object> googleVisionResponse = googleVisionService.getPlateNumber(base64EncodedImage, uuid);
             plateNumber = Optional.ofNullable((String) googleVisionResponse.get("plateNumber"));
             if (plateNumber.isPresent()) {
-                log.info("Plate detected by GoogleVisionService [UUID: {}]: {}", uuid, plateNumber.get());
+                log.info("Plate detected by GoogleVisionService: {}", plateNumber.get());
                 return plateNumber;
             }
 
             boolean hasCar = (Boolean) googleVisionResponse.getOrDefault("hasCar", false);
             if (!hasCar) {
-                log.debug("GoogleVisionService did not detect the car [UUID: {}]", uuid);
+                log.debug("GoogleVisionService did not detect the car");
                 return Optional.empty();
             }
 
-            plateNumber = openAiVisionService.getPlateNumber(base64EncodedImage);
+            plateNumber = openAiVisionService.getPlateNumber(base64EncodedImage, uuid);
             if (plateNumber.isPresent()) {
-                log.info("Plate detected by OpenAiVisionService [UUID: {}]: {}", uuid, plateNumber.get());
+                log.info("Plate detected by OpenAiVisionService: {}", plateNumber.get());
                 return plateNumber;
             }
 
             return Optional.empty();
         } catch (Exception e) {
-            log.error("Error during plate detection [UUID: {}]", uuid, e);
+            log.error("Error during plate detection", e);
             return Optional.empty();
         } finally {
-            log.debug("Plate detection process completed [UUID: {}] in {} seconds", uuid, durationInSeconds(startTime));
-            MDC.clear();
+            log.debug("Plate detection process completed in {} seconds", durationInSeconds(startTime));
+            MDC.remove("uuid");
         }
     }
 

@@ -2,6 +2,7 @@ package ee.tenman.elektrihind.car.openai;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Matcher;
 
 import static ee.tenman.elektrihind.car.vision.GoogleVisionService.CAR_PLATE_NUMBER_PATTERN;
@@ -22,8 +24,9 @@ public class OpenAiVisionService {
     private OpenAiClient openAiClient;
 
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
-    public Optional<String> getPlateNumber(String base64EncodedImage) {
-        log.debug("Encoded image to base64");
+    public Optional<String> getPlateNumber(String base64EncodedImage, UUID uuid) {
+        MDC.put("uuid", uuid.toString());
+        log.debug("Starting plate number detection from image. Image size: {} bytes", base64EncodedImage.getBytes().length);
 
         List<Map<String, Object>> messages = new ArrayList<>();
 
@@ -61,6 +64,8 @@ public class OpenAiVisionService {
         } catch (Exception e) {
             log.error("Error processing OpenAI response", e);
             return Optional.empty();
+        } finally {
+            MDC.remove("uuid");
         }
     }
 }

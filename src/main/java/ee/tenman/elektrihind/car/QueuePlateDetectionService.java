@@ -5,6 +5,7 @@ import ee.tenman.elektrihind.queue.RedisMessage;
 import ee.tenman.elektrihind.queue.RedisMessagePublisher;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -31,8 +32,9 @@ public class QueuePlateDetectionService {
     private ExecutorService executorService;
 
     public Optional<String> detectPlate(String base64EncodedImage, UUID uuid) {
+        MDC.put("uuid", uuid.toString());
         long startTime = System.nanoTime();
-        log.debug("Attempting plate detection via queue [UUID: {}]", uuid);
+        log.debug("Attempting plate detection via queue");
         CompletableFuture<String> detectionFuture = new CompletableFuture<>();
         plateDetectionFutures.put(uuid, detectionFuture);
 
@@ -53,36 +55,44 @@ public class QueuePlateDetectionService {
             }, executorService).get();
 
             if (extractedText == null) {
-                log.debug("No plate number received from queue within timeout [UUID: {}]", uuid);
+                log.debug("No plate number received from queue within timeout");
                 return Optional.empty();
             }
-            log.debug("Received extracted text from queue [UUID: {}]: {}", uuid, extractedText);
+            log.debug("Received extracted text from queue: {}", extractedText);
 
             Matcher matcher = CAR_PLATE_NUMBER_PATTERN.matcher(extractedText);
             if (matcher.find()) {
                 String plateNr = matcher.group().replace(" ", "").toUpperCase();
-                log.debug("Plate number found from queue [UUID: {}]: {} in {} seconds", uuid, plateNr, durationInSeconds(startTime));
+                log.debug("Plate number found from queue: {} in {} seconds", plateNr, durationInSeconds(startTime));
                 return Optional.of(plateNr);
             }
 
-            log.debug("No plate number found from queue [UUID: {}] in {} seconds", uuid, durationInSeconds(startTime));
+            log.debug("No plate number found from queue in {} seconds", durationInSeconds(startTime));
             return Optional.empty();
         } catch (Exception e) {
-            log.error("Error while awaiting plate detection response [UUID: {}]", uuid, e);
+            log.error("Error while awaiting plate detection response", e);
             return Optional.empty();
         } finally {
             plateDetectionFutures.remove(uuid);
-            log.debug("Removed future from plate detection futures map [UUID: {}]", uuid);
+            log.debug("Removed future from plate detection futures map");
+            MDC.remove("uuid");
         }
     }
 
     public void processDetectionResponse(UUID uuid, String plateNumber) {
-        CompletableFuture<String> detectionFuture = plateDetectionFutures.get(uuid);
-        if (detectionFuture == null) {
-            log.warn("Received a response for an unknown or timed out request [UUID: {}]", uuid);
-            return;
+        MDC.put("uuid", uuid.toString());
+        try {
+            CompletableFuture<String> detectionFuture = plateDetectionFutures.get(uuid);
+            if (detectionFuture == null) {
+                log.warn("Received a response for an unknown or timed out request");
+                return;
+            }
+            detectionFuture.complete(plateNumber);
+            log.debug("Completed future with plate number: {}", plateNumber);
+        } catch (Exception e) {
+            log.error("Error while processing detection response", e);
+        } finally {
+            MDC.clear();
         }
-        detectionFuture.complete(plateNumber);
-        log.debug("Completed future with plate number [UUID: {}]: {}", uuid, plateNumber);
     }
 }

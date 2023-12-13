@@ -4,15 +4,17 @@
 
     <logger name="org.springframework" level="INFO"/>
     <logger name="org.hibernate" level="WARN"/>
-
     <logger name="ee.tenman.elektrihind" level="DEBUG"/>
 
-    <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-    </root>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ,Europe/Tallinn} [%thread] %-5level %logger{36} [UUID: %X{uuid}] -
+                %msg%n
+            </pattern>
+        </encoder>
+    </appender>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
     </root>
-    <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ,Europe/Tallinn} [%thread] %-5level %logger{36} - %msg%n</pattern>
 </configuration>

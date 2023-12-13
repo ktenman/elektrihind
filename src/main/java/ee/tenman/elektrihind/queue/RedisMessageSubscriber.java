@@ -45,7 +45,7 @@ public class RedisMessageSubscriber implements MessageListener {
         try {
             return message.split(":")[1];
         } catch (Exception e) {
-            log.error("Error extracting plate number from message: {}", message, e);
+            log.error("Error extracting text from message: {}", message, e);
             throw e;
         }
     }

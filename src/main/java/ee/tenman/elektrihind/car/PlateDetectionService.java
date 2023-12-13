@@ -1,6 +1,5 @@
 package ee.tenman.elektrihind.car;
 
-import ee.tenman.elektrihind.car.easyocr.EasyOcrService;
 import ee.tenman.elektrihind.car.openai.OpenAiVisionService;
 import ee.tenman.elektrihind.car.vision.GoogleVisionService;
 import ee.tenman.elektrihind.config.RedisConfig;
@@ -23,9 +22,6 @@ import java.util.concurrent.TimeUnit;
 public class PlateDetectionService {
 
     @Resource
-    private EasyOcrService easyOcrService;
-
-    @Resource
     private GoogleVisionService googleVisionService;
 
     @Resource
@@ -44,6 +40,7 @@ public class PlateDetectionService {
         try {
             Optional<String> plateNumber = attemptPlateDetectionViaQueue(image, uuid);
             if (plateNumber.isPresent()) {
+                log.info("Plate detected via queue [UUID: {}]: {}", uuid, plateNumber.get());
                 return plateNumber;
             }
 
@@ -76,6 +73,7 @@ public class PlateDetectionService {
     }
 
     private Optional<String> attemptPlateDetectionViaQueue(byte[] image, UUID uuid) {
+        log.debug("Attempting plate detection via queue [UUID: {}]", uuid);
         CompletableFuture<String> detectionFuture = new CompletableFuture<>();
         plateDetectionFutures.put(uuid, detectionFuture);
 
@@ -90,9 +88,15 @@ public class PlateDetectionService {
                 try {
                     return detectionFuture.get(5, TimeUnit.SECONDS);
                 } catch (Exception e) {
-                    throw new IllegalStateException("Timeout or interruption while waiting for plate number", e);
+                    throw new IllegalStateException("Timeout or interruption while waiting for plate number [UUID: " + uuid + "]", e);
                 }
             }, executorService).get();
+
+            if (plateNumber != null) {
+                log.debug("Received plate number from queue [UUID: {}]: {}", uuid, plateNumber);
+            } else {
+                log.debug("No plate number received from queue within timeout [UUID: {}]", uuid);
+            }
 
             return Optional.ofNullable(plateNumber);
         } catch (Exception e) {
@@ -100,6 +104,7 @@ public class PlateDetectionService {
             return Optional.empty();
         } finally {
             plateDetectionFutures.remove(uuid);
+            log.debug("Removed future from plate detection futures map [UUID: {}]", uuid);
         }
     }
 
@@ -107,6 +112,7 @@ public class PlateDetectionService {
         CompletableFuture<String> detectionFuture = plateDetectionFutures.get(uuid);
         if (detectionFuture != null) {
             detectionFuture.complete(plateNumber);
+            log.debug("Completed future with plate number [UUID: {}]: {}", uuid, plateNumber);
         } else {
             log.warn("Received a response for an unknown or timed out request [UUID: {}]", uuid);
         }

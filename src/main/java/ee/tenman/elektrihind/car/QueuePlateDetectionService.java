@@ -23,7 +23,7 @@ import static ee.tenman.elektrihind.utility.TimeUtility.durationInSeconds;
 @Slf4j
 public class QueuePlateDetectionService {
 
-    private static final int TIMEOUT = 1500;
+    private static final int TIMEOUT = 1200;
     private final Map<UUID, CompletableFuture<String>> plateDetectionFutures = new ConcurrentHashMap<>();
     @Resource
     private RedisMessagePublisher redisMessagePublisher;

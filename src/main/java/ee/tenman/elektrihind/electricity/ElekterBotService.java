@@ -204,10 +204,11 @@ public class ElekterBotService extends TelegramLongPollingBot {
             return;
         }
 
-        // Get the highest quality photo
-        String fileId = photos.getLast().getFileId();
-        byte[] imageBytes = downloadImage(fileId); // Implement downloadImage to retrieve the photo as byte array
-        handlePlateNumberImage(message, imageBytes);
+        for (PhotoSize photo : photos) {
+            String fileId = photo.getFileId();
+            byte[] imageBytes = downloadImage(fileId);
+            handlePlateNumberImage(message, imageBytes);
+        }
     }
 
     private void handlePlateNumberImage(Message message, byte[] imageBytes) {

@@ -40,6 +40,8 @@ public class QueuePlateDetectionService {
 
         redisMessagePublisher.publish(RedisConfig.IMAGE_REQUEST_QUEUE, redisMessage);
 
+        long startTime = System.nanoTime();
+
         try {
             String extractedText = CompletableFuture.supplyAsync(() -> {
                 try {
@@ -58,11 +60,11 @@ public class QueuePlateDetectionService {
             Matcher matcher = CAR_PLATE_NUMBER_PATTERN.matcher(extractedText);
             if (matcher.find()) {
                 String plateNr = matcher.group().replace(" ", "").toUpperCase();
-                log.debug("Plate number found from queue [UUID: {}]: {}", uuid, plateNr);
+                log.debug("Plate number found from queue [UUID: {}]: {} in {} seconds", uuid, plateNr, durationInSeconds(startTime));
                 return Optional.of(plateNr);
             }
 
-            log.debug("No plate number found from queue [UUID: {}]", uuid);
+            log.debug("No plate number found from queue [UUID: {}] in {} seconds", uuid, durationInSeconds(startTime));
             return Optional.empty();
         } catch (Exception e) {
             log.error("Error while awaiting plate detection response [UUID: {}]", uuid, e);
@@ -71,6 +73,12 @@ public class QueuePlateDetectionService {
             plateDetectionFutures.remove(uuid);
             log.debug("Removed future from plate detection futures map [UUID: {}]", uuid);
         }
+    }
+
+    private String durationInSeconds(long startTime) {
+        long endTime = System.nanoTime();
+        double duration = (endTime - startTime) / 1_000_000_000.0;
+        return String.format("%.3f", duration);
     }
 
     public void processDetectionResponse(UUID uuid, String plateNumber) {

@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static ee.tenman.elektrihind.utility.TimeUtility.durationInSeconds;
+
 @Service
 @Slf4j
 public class PlateDetectionService {
@@ -27,6 +29,7 @@ public class PlateDetectionService {
     QueuePlateDetectionService queuePlateDetectionService;
 
     public Optional<String> detectPlate(byte[] image) {
+        long startTime = System.nanoTime();
         UUID uuid = UUID.randomUUID();
         String base64EncodedImage = BASE64_ENCODER.encodeToString(image);
         log.debug("Starting plate detection [UUID: {}]. Image size: {} bytes", uuid, base64EncodedImage.getBytes().length);
@@ -62,7 +65,8 @@ public class PlateDetectionService {
             log.error("Error during plate detection [UUID: {}]", uuid, e);
             return Optional.empty();
         } finally {
-            log.debug("Plate detection process completed [UUID: {}]", uuid);
+            log.debug("Plate detection process completed [UUID: {}] in {} seconds", uuid, durationInSeconds(startTime));
         }
     }
+
 }

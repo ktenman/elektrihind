@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 import static ee.tenman.elektrihind.car.vision.GoogleVisionService.CAR_PLATE_NUMBER_PATTERN;
+import static ee.tenman.elektrihind.utility.TimeUtility.durationInSeconds;
 
 @Service
 @Slf4j
@@ -29,6 +30,7 @@ public class QueuePlateDetectionService {
     private ExecutorService executorService;
 
     public Optional<String> detectPlate(String base64EncodedImage, UUID uuid) {
+        long startTime = System.nanoTime();
         log.debug("Attempting plate detection via queue [UUID: {}]", uuid);
         CompletableFuture<String> detectionFuture = new CompletableFuture<>();
         plateDetectionFutures.put(uuid, detectionFuture);
@@ -39,8 +41,6 @@ public class QueuePlateDetectionService {
                 .build();
 
         redisMessagePublisher.publish(RedisConfig.IMAGE_REQUEST_QUEUE, redisMessage);
-
-        long startTime = System.nanoTime();
 
         try {
             String extractedText = CompletableFuture.supplyAsync(() -> {
@@ -73,12 +73,6 @@ public class QueuePlateDetectionService {
             plateDetectionFutures.remove(uuid);
             log.debug("Removed future from plate detection futures map [UUID: {}]", uuid);
         }
-    }
-
-    private String durationInSeconds(long startTime) {
-        long endTime = System.nanoTime();
-        double duration = (endTime - startTime) / 1_000_000_000.0;
-        return String.format("%.3f", duration);
     }
 
     public void processDetectionResponse(UUID uuid, String plateNumber) {

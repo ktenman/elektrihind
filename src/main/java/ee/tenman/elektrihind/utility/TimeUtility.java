@@ -14,4 +14,10 @@ public class TimeUtility {
         int minuteOffset = startMinute % MINUTES_IN_HOUR;
         return electricityPrices.get(startHourIndex).getDate().plusMinutes(minuteOffset);
     }
+
+    public static String durationInSeconds(long startTime) {
+        long endTime = System.nanoTime();
+        double duration = (endTime - startTime) / 1_000_000_000.0;
+        return String.format("%.3f", duration);
+    }
 }

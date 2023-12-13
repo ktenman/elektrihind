@@ -7,7 +7,6 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,14 +18,11 @@ import static ee.tenman.elektrihind.car.vision.GoogleVisionService.CAR_PLATE_NUM
 @Slf4j
 public class OpenAiVisionService {
 
-    private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
-
     @Resource
     private OpenAiClient openAiClient;
 
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
-    public Optional<String> getPlateNumber(byte[] imageBytes) {
-        String base64Image = BASE64_ENCODER.encodeToString(imageBytes);
+    public Optional<String> getPlateNumber(String base64EncodedImage) {
         log.debug("Encoded image to base64");
 
         List<Map<String, Object>> messages = new ArrayList<>();
@@ -39,7 +35,7 @@ public class OpenAiVisionService {
         Map<String, Object> image = Map.of(
                 "type", "image_url",
                 "image_url", Map.of(
-                        "url", "data:image/jpeg;base64," + base64Image)
+                        "url", "data:image/jpeg;base64," + base64EncodedImage)
         );
 
         messages.add(Map.of(

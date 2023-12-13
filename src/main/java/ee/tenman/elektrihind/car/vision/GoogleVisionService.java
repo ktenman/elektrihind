@@ -30,10 +30,9 @@ public class GoogleVisionService {
     private GoogleVisionClient googleVisionClient;
 
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
-    public Map<String, Object> getPlateNumber(byte[] imageBytes) {
-        log.debug("Starting plate number detection from image. Image size: {} bytes", imageBytes.length);
+    public Map<String, Object> getPlateNumber(String base64EncodedImage) {
+        log.debug("Starting plate number detection from image. Image size: {} bytes", base64EncodedImage.getBytes().length);
         try {
-            String base64EncodedImage = BASE64_ENCODER.encodeToString(imageBytes);
             log.debug("Encoded image to base64");
 
             GoogleVisionApiRequest googleVisionApiRequest = new GoogleVisionApiRequest(base64EncodedImage, LABEL_DETECTION);

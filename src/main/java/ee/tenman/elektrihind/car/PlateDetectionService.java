@@ -9,6 +9,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,10 +17,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+
+import static ee.tenman.elektrihind.car.vision.GoogleVisionService.CAR_PLATE_NUMBER_PATTERN;
 
 @Service
 @Slf4j
 public class PlateDetectionService {
+
+    private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 
     @Resource
     private GoogleVisionService googleVisionService;
@@ -35,16 +41,17 @@ public class PlateDetectionService {
 
     public Optional<String> detectPlate(byte[] image) {
         UUID uuid = UUID.randomUUID();
-        log.debug("Starting plate detection [UUID: {}]. Image size: {} bytes", uuid, image.length);
+        String base64EncodedImage = BASE64_ENCODER.encodeToString(image);
+        log.debug("Starting plate detection [UUID: {}]. Image size: {} bytes", uuid, base64EncodedImage.getBytes().length);
 
         try {
-            Optional<String> plateNumber = attemptPlateDetectionViaQueue(image, uuid);
+            Optional<String> plateNumber = attemptPlateDetectionViaQueue(base64EncodedImage, uuid);
             if (plateNumber.isPresent()) {
                 log.info("Plate detected via queue [UUID: {}]: {}", uuid, plateNumber.get());
                 return plateNumber;
             }
 
-            Map<String, Object> googleVisionResponse = googleVisionService.getPlateNumber(image);
+            Map<String, Object> googleVisionResponse = googleVisionService.getPlateNumber(base64EncodedImage);
             plateNumber = Optional.ofNullable((String) googleVisionResponse.get("plateNumber"));
             if (plateNumber.isPresent()) {
                 log.info("Plate detected by GoogleVisionService [UUID: {}]: {}", uuid, plateNumber.get());
@@ -57,7 +64,7 @@ public class PlateDetectionService {
                 return Optional.empty();
             }
 
-            plateNumber = openAiVisionService.getPlateNumber(image);
+            plateNumber = openAiVisionService.getPlateNumber(base64EncodedImage);
             if (plateNumber.isPresent()) {
                 log.info("Plate detected by OpenAiVisionService [UUID: {}]: {}", uuid, plateNumber.get());
                 return plateNumber;
@@ -72,19 +79,20 @@ public class PlateDetectionService {
         }
     }
 
-    private Optional<String> attemptPlateDetectionViaQueue(byte[] image, UUID uuid) {
+    private Optional<String> attemptPlateDetectionViaQueue(String base64EncodedImage, UUID uuid) {
         log.debug("Attempting plate detection via queue [UUID: {}]", uuid);
         CompletableFuture<String> detectionFuture = new CompletableFuture<>();
         plateDetectionFutures.put(uuid, detectionFuture);
 
         RedisMessage redisMessage = RedisMessage.builder()
-                .imageData(image)
+                .base64EncodedImage(base64EncodedImage)
                 .uuid(uuid)
                 .build();
+
         redisMessagePublisher.publish(RedisConfig.IMAGE_QUEUE, redisMessage);
 
         try {
-            String plateNumber = CompletableFuture.supplyAsync(() -> {
+            String extractedText = CompletableFuture.supplyAsync(() -> {
                 try {
                     return detectionFuture.get(5, TimeUnit.SECONDS);
                 } catch (Exception e) {
@@ -92,13 +100,21 @@ public class PlateDetectionService {
                 }
             }, executorService).get();
 
-            if (plateNumber != null) {
-                log.debug("Received plate number from queue [UUID: {}]: {}", uuid, plateNumber);
-            } else {
+            if (extractedText == null) {
                 log.debug("No plate number received from queue within timeout [UUID: {}]", uuid);
+                return Optional.empty();
+            }
+            log.debug("Received extracted text from queue [UUID: {}]: {}", uuid, extractedText);
+
+            Matcher matcher = CAR_PLATE_NUMBER_PATTERN.matcher(extractedText);
+            if (matcher.find()) {
+                String plateNr = matcher.group().replace(" ", "").toUpperCase();
+                log.debug("Plate number found from queue [UUID: {}]: {}", uuid, plateNr);
+                return Optional.of(plateNr);
             }
 
-            return Optional.ofNullable(plateNumber);
+            log.debug("No plate number found from queue [UUID: {}]", uuid);
+            return Optional.empty();
         } catch (Exception e) {
             log.error("Error while awaiting plate detection response [UUID: {}]", uuid, e);
             return Optional.empty();
@@ -110,11 +126,11 @@ public class PlateDetectionService {
 
     public void processDetectionResponse(UUID uuid, String plateNumber) {
         CompletableFuture<String> detectionFuture = plateDetectionFutures.get(uuid);
-        if (detectionFuture != null) {
-            detectionFuture.complete(plateNumber);
-            log.debug("Completed future with plate number [UUID: {}]: {}", uuid, plateNumber);
-        } else {
+        if (detectionFuture == null) {
             log.warn("Received a response for an unknown or timed out request [UUID: {}]", uuid);
+            return;
         }
+        detectionFuture.complete(plateNumber);
+        log.debug("Completed future with plate number [UUID: {}]: {}", uuid, plateNumber);
     }
 }

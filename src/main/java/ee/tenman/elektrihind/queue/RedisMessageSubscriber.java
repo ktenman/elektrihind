@@ -23,10 +23,10 @@ public class RedisMessageSubscriber implements MessageListener {
 
         try {
             UUID uuid = extractUuidFromMessage(messageBody);
-            String plateNumber = extractPlateNumberFromMessage(messageBody);
-            log.info("Processing message [UUID: {}, PlateNumber: {}]", uuid, plateNumber);
+            String extractedTextFromImage = getExtractedTextFromImage(messageBody);
+            log.info("Processing message [UUID: {}, Extracted text: {}]", uuid, extractedTextFromImage);
 
-            plateDetectionService.processDetectionResponse(uuid, plateNumber);
+            plateDetectionService.processDetectionResponse(uuid, extractedTextFromImage);
         } catch (Exception e) {
             log.error("Error processing message from Redis queue", e);
         }
@@ -41,7 +41,7 @@ public class RedisMessageSubscriber implements MessageListener {
         }
     }
 
-    private String extractPlateNumberFromMessage(String message) {
+    private String getExtractedTextFromImage(String message) {
         try {
             return message.split(":")[1];
         } catch (Exception e) {

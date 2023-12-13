@@ -12,6 +12,11 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RedisMessage {
-    byte[] imageData;
+    String base64EncodedImage;
     private UUID uuid;
+
+    @Override
+    public String toString() {
+        return this.uuid.toString() + ":" + this.base64EncodedImage;
+    }
 }

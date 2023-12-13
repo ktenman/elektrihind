@@ -4,6 +4,7 @@ import ee.tenman.elektrihind.car.openai.OpenAiVisionService;
 import ee.tenman.elektrihind.car.vision.GoogleVisionService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
 import java.util.Base64;
@@ -31,6 +32,7 @@ public class PlateDetectionService {
     public Optional<String> detectPlate(byte[] image) {
         long startTime = System.nanoTime();
         UUID uuid = UUID.randomUUID();
+        MDC.put("uuid", uuid.toString());
         String base64EncodedImage = BASE64_ENCODER.encodeToString(image);
         log.debug("Starting plate detection [UUID: {}]. Image size: {} bytes", uuid, base64EncodedImage.getBytes().length);
 
@@ -66,6 +68,7 @@ public class PlateDetectionService {
             return Optional.empty();
         } finally {
             log.debug("Plate detection process completed [UUID: {}] in {} seconds", uuid, durationInSeconds(startTime));
+            MDC.clear();
         }
     }
 

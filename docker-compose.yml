@@ -17,6 +17,9 @@ services:
     volumes:
       - cache-volume:/app/cache
     restart: always
+    depends_on:
+      - redis
+
   redis:
     image: redis:7.2.3-alpine
     ports:

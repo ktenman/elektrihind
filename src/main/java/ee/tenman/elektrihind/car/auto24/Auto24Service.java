@@ -12,6 +12,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.By;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,7 @@ public class Auto24Service implements CaptchaSolver {
 
     @SneakyThrows({IOException.class, InterruptedException.class})
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
+    @Cacheable(value = "carPrice", key = "#regNr")
     public LinkedHashMap<String, String> carPrice(String regNr) {
         log.info("Searching car price for regNr: {}", regNr);
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");

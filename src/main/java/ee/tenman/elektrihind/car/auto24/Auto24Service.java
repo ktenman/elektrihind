@@ -23,7 +23,6 @@ import java.nio.file.Files;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -126,7 +125,7 @@ public class Auto24Service implements CaptchaSolver {
         result.put(split[0], split[1] + "\n");
         result.put("Reg nr", regNr);
         log.info("Price for regNr: {} is {}", regNr, response);
-        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
+//        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
         return result;
     }
 
@@ -169,7 +168,7 @@ public class Auto24Service implements CaptchaSolver {
         if (success) {
             FileUtils.copyFile(screenshot, new File("images3/" + solveCaptcha.toUpperCase() + ".png"));
         }
-        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
+//        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
     }
 
     @SneakyThrows({InterruptedException.class})
@@ -213,7 +212,7 @@ public class Auto24Service implements CaptchaSolver {
         }
 
         log.info("Found car details for regNr: {}", regNr);
-        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
+//        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
         return carDetails;
     }
 

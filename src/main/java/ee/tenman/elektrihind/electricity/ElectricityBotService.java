@@ -618,6 +618,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         message.setText(text);
 
         try {
+            log.info("Sending message to chat: {} with text: {}", chatId, text);
             execute(message);
         } catch (TelegramApiException e) {
             log.error("Failed to send message: {}", text, e);

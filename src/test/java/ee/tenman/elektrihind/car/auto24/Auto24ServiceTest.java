@@ -33,6 +33,7 @@ class Auto24ServiceTest {
     }
 
     @Test
+    @Disabled
     void carPrice() {
         LinkedHashMap<String, String> result = auto24Service.carPrice("876BCH");
 

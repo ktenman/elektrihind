@@ -263,9 +263,14 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         rowInline2.add(buttonMetric);
         rowInline2.add(buttonReboot);
 
+        List<InlineKeyboardButton> rowInline3 = new ArrayList<>();
+        InlineKeyboardButton autoMaticFetchingEnablingButton = getAutoMaticFetchingEnablingButton();
+        rowInline3.add(autoMaticFetchingEnablingButton);
+
         // Set the keyboard to the markup
         rowsInline.add(rowInline1);
         rowsInline.add(rowInline2);
+        rowsInline.add(rowInline3);
         markupInline.setKeyboard(rowsInline);
 
         // Creating a message and setting the markup
@@ -281,6 +286,13 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         }
     }
 
+    private InlineKeyboardButton getAutoMaticFetchingEnablingButton() {
+        InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
+        boolean automaticFetchingEnabled = cacheService.isAutomaticFetchingEnabled();
+        inlineKeyboardButton.setText(automaticFetchingEnabled ? "Disable automatic fetching" : "Enable automatic fetching");
+        inlineKeyboardButton.setCallbackData("automaticFetching " + !automaticFetchingEnabled);
+        return inlineKeyboardButton;
+    }
 
     private void handleTextMessage(Message message) {
         long chatId = message.getChatId();
@@ -486,15 +498,12 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         buttonCheckPlate.setText("Check car plate " + plateNumber);
         buttonCheckPlate.setCallbackData("ark " + plateNumber);
 
-        InlineKeyboardButton buttonCheckPlate2 = new InlineKeyboardButton();
-        boolean automaticFetchingEnabled = cacheService.isAutomaticFetchingEnabled();
-        buttonCheckPlate2.setText(automaticFetchingEnabled ? "Disable automatic fetching" : "Enable automatic fetching");
-        buttonCheckPlate2.setCallbackData("automaticFetching " + !automaticFetchingEnabled);
+        InlineKeyboardButton autoMaticFetchingEnablingButton = getAutoMaticFetchingEnablingButton();
 
         rowInline1.add(buttonCheckPlate);
-        rowInline2.add(buttonCheckPlate2);
+        rowInline2.add(autoMaticFetchingEnablingButton);
 
-        if (!automaticFetchingEnabled) {
+        if (!cacheService.isAutomaticFetchingEnabled()) {
             rowsInline.add(rowInline1);
         }
 

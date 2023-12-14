@@ -1,12 +1,13 @@
 package ee.tenman.elektrihind;
 
 import ee.tenman.elektrihind.cache.CacheService;
+import ee.tenman.elektrihind.electricity.ElectricityBotService;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
-import ee.tenman.elektrihind.electricity.ElekterBotService;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cache.CacheManager;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -19,13 +20,16 @@ import static org.mockito.Mockito.lenient;
 class CacheServiceIntegrationTest {
 
     @MockBean
-    ElekterBotService elekterBotService;
+    ElectricityBotService elekterBotService;
     @MockBean
     ElectricityPricesService electricityPricesService;
     @MockBean
     Clock clock;
     @Resource
     CacheService cacheService;
+
+    @Resource
+    private CacheManager cacheManager;
 
     @BeforeEach
     void setUp() {
@@ -42,5 +46,17 @@ class CacheServiceIntegrationTest {
 
         assertThat(cacheService.canSendMessageToday()).isFalse();
     }
+
+    @Test
+    void isAutomaticCachingEnabled() {
+        cacheService.setAutomaticFetchingEnabled(false);
+
+        assertThat(cacheService.isAutomaticFetchingEnabled()).isFalse();
+
+        cacheService.setAutomaticFetchingEnabled(true);
+
+        assertThat(cacheService.isAutomaticFetchingEnabled()).isTrue();
+    }
+
 
 }

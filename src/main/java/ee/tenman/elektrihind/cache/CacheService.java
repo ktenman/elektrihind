@@ -8,6 +8,8 @@ import jakarta.annotation.Resource;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -16,8 +18,10 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static ee.tenman.elektrihind.config.RedisConfig.MESSAGE_COUNTS_CACHE;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_YEAR_CACHE_1;
 
 @Service
 @Slf4j
@@ -36,6 +40,12 @@ public class CacheService {
     @Setter
     @Getter
     private List<ElectricityPrice> latestPrices = new ArrayList<>();
+
+    private Boolean automaticFetchingEnabled = Boolean.FALSE;
+    public static final String AUTOMATIC_FETCHING_KEY = "automaticFetching";
+
+    @Resource
+    private CacheManager cacheManager;
 
     @PostConstruct
     public void init() {
@@ -73,4 +83,22 @@ public class CacheService {
         log.info("Message counts cache cleared successfully.");
     }
 
+    public boolean isAutomaticFetchingEnabled() {
+        Cache cache = cacheManager.getCache(ONE_YEAR_CACHE_1);
+        if (cache != null && cache.get(AUTOMATIC_FETCHING_KEY) != null) {
+            return Optional.ofNullable(cache.get(AUTOMATIC_FETCHING_KEY))
+                    .map(Cache.ValueWrapper::get)
+                    .map(Boolean.class::cast)
+                    .orElse(Boolean.FALSE);
+        }
+        return automaticFetchingEnabled;
+    }
+
+    public void setAutomaticFetchingEnabled(Boolean automaticFetchingEnabled) {
+        this.automaticFetchingEnabled = automaticFetchingEnabled;
+        Cache cache = cacheManager.getCache(ONE_YEAR_CACHE_1);
+        if (cache != null) {
+            cache.put(AUTOMATIC_FETCHING_KEY, automaticFetchingEnabled);
+        }
+    }
 }

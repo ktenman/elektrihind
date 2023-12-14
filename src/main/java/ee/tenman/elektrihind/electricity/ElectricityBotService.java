@@ -69,7 +69,7 @@ import static ee.tenman.elektrihind.utility.DateTimeConstants.DATE_TIME_FORMATTE
 
 @Service
 @Slf4j
-public class ElekterBotService extends TelegramLongPollingBot {
+public class ElectricityBotService extends TelegramLongPollingBot {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
@@ -173,6 +173,14 @@ public class ElekterBotService extends TelegramLongPollingBot {
             case "reboot" -> {
                 digitalOceanService.rebootDroplet();
                 sendMessageCode(chatId, "Droplet reboot initiated!");
+            }
+            case "automaticFetching true" -> {
+                cacheService.setAutomaticFetchingEnabled(true);
+                sendMessage(chatId, "Automatic fetching enabled.");
+            }
+            case "automaticFetching false" -> {
+                cacheService.setAutomaticFetchingEnabled(false);
+                sendMessage(chatId, "Automatic fetching disabled.");
             }
             default -> sendMessage(chatId, "Command not recognized.");
         }
@@ -466,13 +474,28 @@ public class ElekterBotService extends TelegramLongPollingBot {
     private InlineKeyboardMarkup createInlineKeyboardForPlateNumber(String plateNumber) {
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+        List<InlineKeyboardButton> rowInline1 = new ArrayList<>();
+        List<InlineKeyboardButton> rowInline2 = new ArrayList<>();
 
         InlineKeyboardButton buttonCheckPlate = new InlineKeyboardButton();
-        buttonCheckPlate.setText("Check car plate #: " + plateNumber);
+        buttonCheckPlate.setText("Check car plate " + plateNumber);
         buttonCheckPlate.setCallbackData("ark " + plateNumber);
-        rowInline.add(buttonCheckPlate);
-        rowsInline.add(rowInline);
+
+        InlineKeyboardButton buttonCheckPlate2 = new InlineKeyboardButton();
+        boolean automaticFetchingEnabled = cacheService.isAutomaticFetchingEnabled();
+        buttonCheckPlate2.setText(automaticFetchingEnabled ? "Disable automatic fetching" : "Enable automatic fetching");
+        buttonCheckPlate2.setCallbackData("automaticFetching " + !automaticFetchingEnabled);
+
+        rowInline1.add(buttonCheckPlate);
+        rowInline2.add(buttonCheckPlate2);
+
+        if (!automaticFetchingEnabled) {
+            rowsInline.add(rowInline1);
+        }
+
+        rowsInline.add(rowInline2);
+
         markupInline.setKeyboard(rowsInline);
 
         return markupInline;

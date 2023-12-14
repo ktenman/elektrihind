@@ -33,8 +33,8 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 
-import static ee.tenman.elektrihind.electricity.ElekterBotService.CAR_REGISTRATION_PATTERN;
-import static ee.tenman.elektrihind.electricity.ElekterBotService.DURATION_PATTERN;
+import static ee.tenman.elektrihind.electricity.ElectricityBotService.CAR_REGISTRATION_PATTERN;
+import static ee.tenman.elektrihind.electricity.ElectricityBotService.DURATION_PATTERN;
 import static ee.tenman.elektrihind.electricity.PriceFinderServiceTest.ELECTRICITY_PRICES;
 import static java.time.ZoneOffset.UTC;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,7 +52,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ElekterBotServiceTest {
+class ElectricityBotServiceTest {
 
     @Mock
     private Update update;
@@ -82,7 +82,7 @@ class ElekterBotServiceTest {
     private Clock clock;
 
     @InjectMocks
-    private ElekterBotService botService;
+    private ElectricityBotService botService;
 
     @BeforeEach
     void setUp() {
@@ -148,7 +148,7 @@ class ElekterBotServiceTest {
         when(message.getText()).thenReturn("/start");
         String welcomeMessage = "Hello! I am an electricity bill calculator bot. Please send me a CSV file.";
 
-        ElekterBotService spyBotService = spy(botService);
+        ElectricityBotService spyBotService = spy(botService);
         spyBotService.onUpdateReceived(update);
 
         verify(spyBotService).execute(sendMessageCaptor.capture());
@@ -167,7 +167,7 @@ class ElekterBotServiceTest {
         when(telegramService.formatPricesForTelegram(any())).thenReturn("Sample Formatted Prices");
         when(priceFinderService.currentPrice(any())).thenReturn(Optional.of(ELECTRICITY_PRICES.get(47)));
 
-        ElekterBotService spyBotService = spy(botService);
+        ElectricityBotService spyBotService = spy(botService);
         spyBotService.onUpdateReceived(update);
 
         verify(spyBotService, times(1)).execute(sendMessageCaptor.capture());
@@ -212,7 +212,7 @@ class ElekterBotServiceTest {
         when(priceFinderService.calculateImmediateCost(any(), anyInt())).thenReturn(BigDecimal.valueOf(15.05));
 
 
-        ElekterBotService spyBotService = Mockito.spy(botService);
+        ElectricityBotService spyBotService = Mockito.spy(botService);
 
         spyBotService.onUpdateReceived(update);
 
@@ -233,7 +233,7 @@ class ElekterBotServiceTest {
         Document document = mock(Document.class);
         when(message.getDocument()).thenReturn(document);
         when(document.getFileName()).thenReturn("not_a_csv.txt");
-        ElekterBotService spyBotService = Mockito.spy(botService);
+        ElectricityBotService spyBotService = Mockito.spy(botService);
 
         spyBotService.onUpdateReceived(update);
 
@@ -251,7 +251,7 @@ class ElekterBotServiceTest {
         Document document = mock(Document.class);
         when(message.getDocument()).thenReturn(document);
         when(document.getFileName()).thenReturn("file.csv");
-        ElekterBotService spyBotService = spy(botService);
+        ElectricityBotService spyBotService = spy(botService);
         doNothing().when(spyBotService).handleCsvDocument(any(Document.class), anyLong());
 
         spyBotService.onUpdateReceived(update);
@@ -278,7 +278,7 @@ class ElekterBotServiceTest {
             "parim hind 3:27, 207",
     })
     void testDurationInMinutes(String input, int expectedDurationInMinutes) {
-        ElekterBotService service = new ElekterBotService();
+        ElectricityBotService service = new ElectricityBotService();
         Matcher matcher = DURATION_PATTERN.matcher(input);
         matcher.find();
 

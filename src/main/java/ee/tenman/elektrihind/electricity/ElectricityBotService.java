@@ -225,6 +225,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardForPlateNumber(regNr);
             SendMessage messageWithButton = createMessageWithInlineKeyboard(message, "Detected a potential plate number. Would you like to check it?", inlineKeyboardMarkup);
             executeSendMessage(messageWithButton);
+            if (cacheService.isAutomaticFetchingEnabled()) {
+                AtomicLong startTime = new AtomicLong();
+                search(startTime, message.getChatId(), regNr, message.getMessageId());
+            }
         }
     }
 

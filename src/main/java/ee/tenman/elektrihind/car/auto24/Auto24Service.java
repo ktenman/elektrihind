@@ -4,6 +4,7 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import ee.tenman.elektrihind.car.QueuePlateDetectionService;
 import ee.tenman.elektrihind.recaptcha.RecaptchaSolverService;
 import ee.tenman.elektrihind.utility.CaptchaSolver;
 import jakarta.annotation.Resource;
@@ -41,9 +42,12 @@ public class Auto24Service implements CaptchaSolver {
             "Kütusekulu linnas (l/100 km)",
             "Kütusekulu maanteel (l/100 km)"
     );
-
+//
     @Resource
     private RecaptchaSolverService recaptchaSolverService;
+//
+    @Resource
+    private QueuePlateDetectionService queuePlateDetectionService;
 
     @Resource(name = "fourThreadExecutor")
     private ExecutorService fourThreadExecutor;
@@ -63,10 +67,31 @@ public class Auto24Service implements CaptchaSolver {
         File screenshot = $("#vpc_captcha").screenshot();
         assert screenshot != null;
         log.info("Solving price captcha for regNr: {}", regNr);
-        String solveCaptcha = recaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
+        String solveCaptcha = queuePlateDetectionService.extractText(Files.readAllBytes(screenshot.toPath()))
+                .orElse("zzzz")
+                .replaceAll("[^a-zA-Z0-9]", "");
+        if (solveCaptcha.length() > 4) {
+            solveCaptcha = solveCaptcha.substring(0, 4);
+        }
         $(By.name("checksec1")).setValue(solveCaptcha);
         $("button[type='submit']").click();
         int count = 0;
+        while ($(".errorMessage").exists() &&
+                "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 50) {
+            log.warn("Invalid captcha for regNr: {}", regNr);
+            screenshot = $("#vpc_captcha").screenshot();
+            assert screenshot != null;
+            log.info("Trying to solve price captcha for regNr: {}. Tries: {}", regNr, count);
+            solveCaptcha = queuePlateDetectionService.extractText(Files.readAllBytes(screenshot.toPath()))
+                    .orElse("zzzz")
+                    .replaceAll("[^a-zA-Z0-9]", "");
+            if (solveCaptcha.length() > 4) {
+                solveCaptcha = solveCaptcha.substring(0, 4);
+            }
+            $(By.name("checksec1")).setValue(solveCaptcha);
+            $("button[type='submit']").click();
+        }
+        count = 0;
         while ($(".errorMessage").exists() &&
                 "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 10) {
             log.warn("Invalid captcha for regNr: {}", regNr);

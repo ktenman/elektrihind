@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -29,5 +30,12 @@ class Auto24ServiceTest {
         }
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    }
+
+    @Test
+    void carPrice() {
+        LinkedHashMap<String, String> result = auto24Service.carPrice("876BCH");
+
+        System.out.println(result);
     }
 }

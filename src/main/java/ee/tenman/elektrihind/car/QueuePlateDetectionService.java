@@ -31,7 +31,32 @@ public class QueuePlateDetectionService {
     @Resource(name = "tenThreadExecutor")
     private ExecutorService executorService;
 
+    public Optional<String> extractText(byte[] image) {
+        long startTime = System.nanoTime();
+        UUID uuid = UUID.randomUUID();
+        MDC.put("uuid", uuid.toString());
+        String base64EncodedImage = java.util.Base64.getEncoder().encodeToString(image);
+        log.debug("Starting text extraction. Image size: {} bytes", base64EncodedImage.getBytes().length);
+
+        try {
+            Optional<String> plateNumber = detectPlate(base64EncodedImage, uuid, false);
+            if (plateNumber.isPresent()) {
+                log.info("Extracted text via queue: {}", plateNumber.get());
+                return plateNumber;
+            }
+
+            log.debug("No text extracted in {} seconds", durationInSeconds(startTime));
+            return Optional.empty();
+        } finally {
+            MDC.remove("uuid");
+        }
+    }
+
     public Optional<String> detectPlate(String base64EncodedImage, UUID uuid) {
+        return detectPlate(base64EncodedImage, uuid, true);
+    }
+
+    public Optional<String> detectPlate(String base64EncodedImage, UUID uuid, boolean detectPlateNumber) {
         MDC.put("uuid", uuid.toString());
         long startTime = System.nanoTime();
         log.debug("Attempting plate detection via queue");
@@ -55,10 +80,14 @@ public class QueuePlateDetectionService {
             }, executorService).get();
 
             if (extractedText == null) {
-                log.debug("No plate number received from queue within timeout");
+                log.debug("No extracted text received from queue within timeout");
                 return Optional.empty();
             }
             log.debug("Received extracted text from queue: {}", extractedText);
+
+            if (!detectPlateNumber) {
+                return Optional.of(extractedText);
+            }
 
             Matcher matcher = CAR_PLATE_NUMBER_PATTERN.matcher(extractedText);
             if (matcher.find()) {

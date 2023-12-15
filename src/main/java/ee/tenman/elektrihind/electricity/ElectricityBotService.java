@@ -154,6 +154,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     private void handleCallbackQuery(CallbackQuery callbackQuery) {
+        AtomicLong startTime = new AtomicLong(System.nanoTime());
         String callData = callbackQuery.getData();
         long chatId = callbackQuery.getMessage().getChatId();
 
@@ -161,7 +162,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         if (arkMatcher.find()) {
             log.info("Received callback query for regNr: {}", arkMatcher.group(1));
             String regNr = arkMatcher.group(1).toUpperCase();
-            AtomicLong startTime = new AtomicLong();
             search(startTime, chatId, regNr, null);
             return;
         }
@@ -219,6 +219,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     private void handlePlateNumberImage(Message message, byte[] imageBytes) {
+        AtomicLong startTime = new AtomicLong(System.nanoTime());
         Optional<String> plateNumberOpt = plateDetectionService.detectPlate(imageBytes);
 
         if (plateNumberOpt.isPresent()) {
@@ -227,7 +228,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             SendMessage messageWithButton = createMessageWithInlineKeyboard(message, "Detected a potential plate number. Would you like to check it?", inlineKeyboardMarkup);
             executeSendMessage(messageWithButton);
             if (cacheService.isAutomaticFetchingEnabled()) {
-                AtomicLong startTime = new AtomicLong();
                 search(startTime, message.getChatId(), regNr, message.getMessageId());
             }
         }
@@ -296,6 +296,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     private void handleTextMessage(Message message) {
+        AtomicLong startTime = new AtomicLong(System.nanoTime());
         long chatId = message.getChatId();
         int messageId = message.getMessageId();
 
@@ -320,7 +321,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             sendMessageCode(chatId, messageId, euriborResonse);
         } else if (arkMatcher.find()) {
             String regNr = arkMatcher.group(1).toUpperCase();
-            AtomicLong startTime = new AtomicLong();
             search(startTime, chatId, regNr, messageId);
 
         } else if (messageText.equalsIgnoreCase("reboot")) {
@@ -336,7 +336,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
     private void search(AtomicLong startTime, long chatId, String regNr, Integer messageId) {
         CompletableFuture.supplyAsync(() -> {
-                    startTime.set(System.nanoTime());
+                    if (startTime.get() == 0) {
+                        startTime.set(System.nanoTime());
+                    }
                     sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
                     Map<String, String> response = carSearchService.search2(regNr);
                     return response;

@@ -67,14 +67,16 @@ public class PlateDetectionService {
                 return plateNumber;
             }
 
-            Map<String, Object> googleVisionResponse = googleVisionService.getPlateNumber(base64EncodedImage, uuid, encodedImageMD5);
-            plateNumber = Optional.ofNullable((String) googleVisionResponse.get("plateNumber"));
+            Map<String, String> googleVisionResponse = googleVisionService.getPlateNumber(base64EncodedImage, uuid, encodedImageMD5);
+            plateNumber = Optional.ofNullable(googleVisionResponse.get("plateNumber"));
             if (plateNumber.isPresent()) {
                 log.info("Plate detected by GoogleVisionService: {}", plateNumber.get());
                 return plateNumber;
             }
 
-            boolean hasCar = (Boolean) googleVisionResponse.getOrDefault("hasCar", false);
+            boolean hasCar = Optional.ofNullable(googleVisionResponse.get("hasCar"))
+                    .map(Boolean::valueOf)
+                    .orElse(false);
             if (!hasCar) {
                 log.debug("GoogleVisionService did not detect the car");
                 return Optional.empty();

@@ -9,9 +9,9 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,7 +31,7 @@ public class GoogleVisionService {
 
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     @Cacheable(value = THIRTY_DAYS_CACHE_1, key = "#encodedImageMD5")
-    public Map<String, Object> getPlateNumber(String base64EncodedImage, UUID uuid, String encodedImageMD5) {
+    public Map<String, String> getPlateNumber(String base64EncodedImage, UUID uuid, String encodedImageMD5) {
         MDC.put("uuid", uuid.toString());
         log.debug("Starting plate number detection from image. Image size: {} bytes", base64EncodedImage.getBytes().length);
         try {
@@ -45,8 +45,8 @@ public class GoogleVisionService {
                     .anyMatch(labelAnnotation -> VEHICLE_REGISTRATION_PLATE.equalsIgnoreCase(labelAnnotation.getDescription()));
             log.debug("Vehicle registration plate detected: {}", hasVehicleRegistrationPlateNumber);
 
-            Map<String, Object> response = new HashMap<>();
-            Boolean hasCar = hasCar(googleVisionApiResponse.getLabelAnnotations());
+            Map<String, String> response = new TreeMap<>();
+            String hasCar = hasCar(googleVisionApiResponse.getLabelAnnotations());
             response.put("hasCar", hasCar);
             if (!hasVehicleRegistrationPlateNumber) {
                 return response;
@@ -76,16 +76,16 @@ public class GoogleVisionService {
         }
     }
 
-    private Boolean hasCar(List<GoogleVisionApiResponse.EntityAnnotation> labelAnnotations) {
+    private String hasCar(List<GoogleVisionApiResponse.EntityAnnotation> labelAnnotations) {
         for (GoogleVisionApiResponse.EntityAnnotation labelAnnotation : labelAnnotations) {
             if (labelAnnotation.getDescription().contains("car")) {
-                return Boolean.TRUE;
+                return Boolean.TRUE.toString();
             }
             if (labelAnnotation.getDescription().contains("vehicle")) {
-                return Boolean.TRUE;
+                return Boolean.TRUE.toString();
             }
         }
-        return Boolean.FALSE;
+        return Boolean.FALSE.toString();
     }
 }
 

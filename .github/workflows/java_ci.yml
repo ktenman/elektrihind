@@ -43,7 +43,8 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }},${{ env.DOCKER_IMAGE_NAME }}:latest
+#          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }},${{ env.DOCKER_IMAGE_NAME }}:latest
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:latest
           cache-from: type=registry,ref=${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
           cache-to: type=inline
   #      - name: Scan the Docker image

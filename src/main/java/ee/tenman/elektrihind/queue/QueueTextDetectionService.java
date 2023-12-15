@@ -1,8 +1,6 @@
-package ee.tenman.elektrihind.car;
+package ee.tenman.elektrihind.queue;
 
 import ee.tenman.elektrihind.config.RedisConfig;
-import ee.tenman.elektrihind.queue.RedisMessage;
-import ee.tenman.elektrihind.queue.RedisMessagePublisher;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -22,7 +20,7 @@ import static ee.tenman.elektrihind.utility.TimeUtility.durationInSeconds;
 
 @Service
 @Slf4j
-public class QueuePlateDetectionService {
+public class QueueTextDetectionService {
 
     private static final int TIMEOUT = 1500;
     private final Map<UUID, CompletableFuture<String>> plateDetectionFutures = new ConcurrentHashMap<>();

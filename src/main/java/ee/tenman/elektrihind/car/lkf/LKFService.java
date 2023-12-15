@@ -2,7 +2,7 @@ package ee.tenman.elektrihind.car.lkf;
 
 import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.Selenide;
-import ee.tenman.elektrihind.recaptcha.RecaptchaSolverService;
+import ee.tenman.elektrihind.twocaptcha.TwoCaptchaSolverService;
 import ee.tenman.elektrihind.utility.CaptchaSolver;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
@@ -33,7 +33,7 @@ public class LKFService implements CaptchaSolver {
     private static final String PAGE_URL = "https://lkf.ee/et/kahjukontroll";
 
     @Resource
-    private RecaptchaSolverService recaptchaSolverService;
+    private TwoCaptchaSolverService recaptchaSolverService;
 
     @Resource(name = "fourThreadExecutor")
     private ExecutorService fourThreadExecutor;

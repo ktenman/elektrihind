@@ -4,7 +4,7 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
-import ee.tenman.elektrihind.recaptcha.RecaptchaSolverService;
+import ee.tenman.elektrihind.twocaptcha.TwoCaptchaSolverService;
 import ee.tenman.elektrihind.utility.CaptchaSolver;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
@@ -40,7 +40,7 @@ public class ArkService implements CaptchaSolver {
     private static final String PAGE_URL = "https://eteenindus.mnt.ee/public/soidukTaustakontroll.jsf";
 
     @Resource
-    private RecaptchaSolverService recaptchaSolverService;
+    private TwoCaptchaSolverService recaptchaSolverService;
 
     @Resource(name = "fourThreadExecutor")
     private ExecutorService fourThreadExecutor;

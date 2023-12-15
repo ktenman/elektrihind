@@ -4,8 +4,8 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
-import ee.tenman.elektrihind.car.QueuePlateDetectionService;
-import ee.tenman.elektrihind.recaptcha.RecaptchaSolverService;
+import ee.tenman.elektrihind.queue.QueueTextDetectionService;
+import ee.tenman.elektrihind.twocaptcha.TwoCaptchaSolverService;
 import ee.tenman.elektrihind.utility.CaptchaSolver;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
@@ -45,10 +45,10 @@ public class Auto24Service implements CaptchaSolver {
     );
 //
     @Resource
-    private RecaptchaSolverService recaptchaSolverService;
+    private TwoCaptchaSolverService recaptchaSolverService;
 //
     @Resource
-    private QueuePlateDetectionService queuePlateDetectionService;
+    private QueueTextDetectionService queueTextDetectionService;
 
     @Resource(name = "fourThreadExecutor")
     private ExecutorService fourThreadExecutor;
@@ -69,7 +69,7 @@ public class Auto24Service implements CaptchaSolver {
         File screenshot = $("#vpc_captcha").screenshot();
         assert screenshot != null;
         log.info("Solving price captcha for regNr: {}", regNr);
-        String solveCaptcha = queuePlateDetectionService.extractText(Files.readAllBytes(screenshot.toPath()))
+        String solveCaptcha = queueTextDetectionService.extractText(Files.readAllBytes(screenshot.toPath()))
                 .orElse("zzzz")
                 .replaceAll("[^a-zA-Z0-9]", "");
         if (solveCaptcha.length() > 4) {
@@ -84,7 +84,7 @@ public class Auto24Service implements CaptchaSolver {
             screenshot = $("#vpc_captcha").screenshot();
             assert screenshot != null;
             log.info("Trying to solve price captcha for regNr with queue: {}. Tries: {}", regNr, count);
-            solveCaptcha = queuePlateDetectionService.extractText(Files.readAllBytes(screenshot.toPath()))
+            solveCaptcha = queueTextDetectionService.extractText(Files.readAllBytes(screenshot.toPath()))
                     .orElse("zzzz")
                     .replaceAll("[^a-zA-Z0-9]", "");
             if (solveCaptcha.length() > 4) {

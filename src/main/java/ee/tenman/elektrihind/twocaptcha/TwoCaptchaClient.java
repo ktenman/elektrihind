@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind.recaptcha;
+package ee.tenman.elektrihind.twocaptcha;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
@@ -13,8 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
-@FeignClient(name = RecaptchaClient.CLIENT_NAME, url = RecaptchaClient.CLIENT_URL, configuration = RecaptchaClient.Configuration.class)
-public interface RecaptchaClient {
+@FeignClient(name = TwoCaptchaClient.CLIENT_NAME, url = TwoCaptchaClient.CLIENT_URL, configuration = TwoCaptchaClient.Configuration.class)
+public interface TwoCaptchaClient {
 
     String CLIENT_NAME = "recaptchaClient";
     String CLIENT_URL = "http://2captcha.com";

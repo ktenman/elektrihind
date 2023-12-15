@@ -2,6 +2,7 @@ package ee.tenman.elektrihind.car;
 
 import ee.tenman.elektrihind.car.openai.OpenAiVisionService;
 import ee.tenman.elektrihind.car.vision.GoogleVisionService;
+import ee.tenman.elektrihind.queue.QueueTextDetectionService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -27,7 +28,7 @@ public class PlateDetectionService {
     private OpenAiVisionService openAiVisionService;
 
     @Resource
-    QueuePlateDetectionService queuePlateDetectionService;
+    QueueTextDetectionService queueTextDetectionService;
 
     public Optional<String> detectPlate(byte[] image) {
         long startTime = System.nanoTime();
@@ -37,7 +38,7 @@ public class PlateDetectionService {
         log.debug("Starting plate detection. Image size: {} bytes", base64EncodedImage.getBytes().length);
 
         try {
-            Optional<String> plateNumber = queuePlateDetectionService.detectPlate(base64EncodedImage, uuid);
+            Optional<String> plateNumber = queueTextDetectionService.detectPlate(base64EncodedImage, uuid);
             if (plateNumber.isPresent()) {
                 log.info("Plate detected via queue: {}", plateNumber.get());
                 return plateNumber;

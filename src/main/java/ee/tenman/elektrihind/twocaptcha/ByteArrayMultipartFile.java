@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind.recaptcha;
+package ee.tenman.elektrihind.twocaptcha;
 
 import org.springframework.web.multipart.MultipartFile;
 

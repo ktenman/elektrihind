@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind.recaptcha;
+package ee.tenman.elektrihind.twocaptcha;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
-public class RecaptchaSolverService {
+public class TwoCaptchaSolverService {
 
     private static final String CAPTCHA_IMAGE_NAME = "captcha.png";
     private static final String CAPTCHA_IMAGE_TYPE = "image/png";
@@ -20,11 +20,11 @@ public class RecaptchaSolverService {
     private static final long RETRY_DELAY_MS = 666;
 
     @Resource
-    private RecaptchaClient recaptchaClient;
+    private TwoCaptchaClient twoCaptchaClient;
 
     @Retryable(maxAttempts = 5, backoff = @Backoff(delay = 1000))
     public String solveCaptcha(String siteKey, String pageUrl) {
-        Map<String, Object> response = recaptchaClient.submitTextCaptcha("userrecaptcha", siteKey, pageUrl);
+        Map<String, Object> response = twoCaptchaClient.submitTextCaptcha("userrecaptcha", siteKey, pageUrl);
         String requestId = (String) response.get("request");
         return waitForCaptchaResult(requestId);
     }
@@ -32,7 +32,7 @@ public class RecaptchaSolverService {
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1000))
     public String solveCaptcha(byte[] captchaImage) {
         MultipartFile multipartFile = new ByteArrayMultipartFile(captchaImage, "file", CAPTCHA_IMAGE_NAME, CAPTCHA_IMAGE_TYPE);
-        Map<String, Object> response = recaptchaClient.submitImageCaptcha("post", multipartFile);
+        Map<String, Object> response = twoCaptchaClient.submitImageCaptcha("post", multipartFile);
         String requestId = (String) response.get("request");
         return waitForCaptchaResult(requestId);
     }
@@ -41,7 +41,7 @@ public class RecaptchaSolverService {
         for (int i = 0; i < MAX_RETRIES; i++) {
             try {
                 TimeUnit.MILLISECONDS.sleep(RETRY_DELAY_MS);
-                Map<String, Object> captchaResponse = recaptchaClient.retrieveCaptchaResult("get", requestId);
+                Map<String, Object> captchaResponse = twoCaptchaClient.retrieveCaptchaResult("get", requestId);
                 if ((int) captchaResponse.get("status") == 1) {
                     return (String) captchaResponse.get("request");
                 }

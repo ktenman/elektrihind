@@ -79,7 +79,7 @@ public class Auto24Service implements CaptchaSolver {
         $("button[type='submit']").click();
         int count = 0;
         while ($(".errorMessage").exists() &&
-                "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 40) {
+                "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 5) {
             log.warn("Invalid captcha for regNr: {}", regNr);
             screenshot = $("#vpc_captcha").screenshot();
             assert screenshot != null;
@@ -126,7 +126,7 @@ public class Auto24Service implements CaptchaSolver {
         result.put(split[0], split[1] + "\n");
         result.put("Reg nr", regNr);
         log.info("Price for regNr: {} is {}", regNr, response);
-//        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
+        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
         return result;
     }
 
@@ -169,7 +169,7 @@ public class Auto24Service implements CaptchaSolver {
         if (success) {
             FileUtils.copyFile(screenshot, new File("images3/" + solveCaptcha.toUpperCase() + ".png"));
         }
-//        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
+        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
     }
 
     @SneakyThrows({InterruptedException.class})

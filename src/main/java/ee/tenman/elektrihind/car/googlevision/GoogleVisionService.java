@@ -1,14 +1,14 @@
-package ee.tenman.elektrihind.car.vision;
+package ee.tenman.elektrihind.car.googlevision;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,8 +16,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static ee.tenman.elektrihind.car.vision.GoogleVisionApiRequest.FeatureType.LABEL_DETECTION;
-import static ee.tenman.elektrihind.car.vision.GoogleVisionApiRequest.FeatureType.TEXT_DETECTION;
+import static ee.tenman.elektrihind.config.RedisConfig.THIRTY_DAYS_CACHE_1;
 
 @Service
 @Slf4j
@@ -26,19 +25,19 @@ public class GoogleVisionService {
     private static final String REGEX = "\\b\\d{3}\\s?[A-Z]{3}\\b";
     public static final Pattern CAR_PLATE_NUMBER_PATTERN = Pattern.compile(REGEX, Pattern.CASE_INSENSITIVE);
     private static final String VEHICLE_REGISTRATION_PLATE = "Vehicle registration plate";
-    private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 
     @Resource
     private GoogleVisionClient googleVisionClient;
 
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
+    @Cacheable(value = THIRTY_DAYS_CACHE_1, key = "#base64EncodedImage")
     public Map<String, Object> getPlateNumber(String base64EncodedImage, UUID uuid) {
         MDC.put("uuid", uuid.toString());
         log.debug("Starting plate number detection from image. Image size: {} bytes", base64EncodedImage.getBytes().length);
         try {
             log.debug("Encoded image to base64");
 
-            GoogleVisionApiRequest googleVisionApiRequest = new GoogleVisionApiRequest(base64EncodedImage, LABEL_DETECTION);
+            GoogleVisionApiRequest googleVisionApiRequest = new GoogleVisionApiRequest(base64EncodedImage, GoogleVisionApiRequest.FeatureType.LABEL_DETECTION);
             GoogleVisionApiResponse googleVisionApiResponse = googleVisionClient.analyzeImage(googleVisionApiRequest);
             log.info("Received label detection response: {}", googleVisionApiResponse);
 
@@ -53,7 +52,7 @@ public class GoogleVisionService {
                 return response;
             }
 
-            googleVisionApiRequest = new GoogleVisionApiRequest(base64EncodedImage, TEXT_DETECTION);
+            googleVisionApiRequest = new GoogleVisionApiRequest(base64EncodedImage, GoogleVisionApiRequest.FeatureType.TEXT_DETECTION);
             googleVisionApiResponse = googleVisionClient.analyzeImage(googleVisionApiRequest);
             String[] strings = googleVisionApiResponse.getTextAnnotations().stream().findFirst().map(s -> StringUtils.split(s.getDescription(), "\n")).orElse(new String[0]);
             log.info("Received text detection response: {}", googleVisionApiResponse);

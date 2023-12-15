@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind.car.vision;
+package ee.tenman.elektrihind.car.googlevision;
 
 import lombok.Data;
 
@@ -6,8 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static ee.tenman.elektrihind.car.vision.GoogleVisionApiRequest.FeatureType.LABEL_DETECTION;
-import static ee.tenman.elektrihind.car.vision.GoogleVisionApiRequest.FeatureType.TEXT_DETECTION;
+import static ee.tenman.elektrihind.car.googlevision.GoogleVisionApiRequest.FeatureType.LABEL_DETECTION;
+import static ee.tenman.elektrihind.car.googlevision.GoogleVisionApiRequest.FeatureType.TEXT_DETECTION;
 
 @Data
 public class GoogleVisionApiRequest {

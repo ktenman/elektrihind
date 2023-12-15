@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
-import static ee.tenman.elektrihind.car.vision.GoogleVisionService.CAR_PLATE_NUMBER_PATTERN;
+import static ee.tenman.elektrihind.car.googlevision.GoogleVisionService.CAR_PLATE_NUMBER_PATTERN;
 import static ee.tenman.elektrihind.utility.TimeUtility.durationInSeconds;
 
 @Service

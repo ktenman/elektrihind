@@ -1,7 +1,7 @@
 package ee.tenman.elektrihind.car;
 
+import ee.tenman.elektrihind.car.googlevision.GoogleVisionService;
 import ee.tenman.elektrihind.car.openai.OpenAiVisionService;
-import ee.tenman.elektrihind.car.vision.GoogleVisionService;
 import ee.tenman.elektrihind.queue.QueueTextDetectionService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;

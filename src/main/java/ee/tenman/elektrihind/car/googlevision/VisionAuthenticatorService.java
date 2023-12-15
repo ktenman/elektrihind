@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind.car.vision;
+package ee.tenman.elektrihind.car.googlevision;
 
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;

@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind.car.vision;
+package ee.tenman.elektrihind.car.googlevision;
 
 import java.io.IOException;
 import java.nio.file.Files;

@@ -4,7 +4,6 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
-import ee.tenman.elektrihind.queue.QueueTextDetectionService;
 import ee.tenman.elektrihind.twocaptcha.TwoCaptchaSolverService;
 import ee.tenman.elektrihind.utility.CaptchaSolver;
 import jakarta.annotation.Resource;
@@ -43,10 +42,7 @@ public class Auto24Service implements CaptchaSolver {
     );
 
     @Resource
-    private TwoCaptchaSolverService recaptchaSolverService;
-    @Resource
-    private QueueTextDetectionService queueTextDetectionService;
-
+    private TwoCaptchaSolverService twoCaptchaSolverService;
 
     @SneakyThrows({IOException.class, InterruptedException.class})
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
@@ -64,38 +60,17 @@ public class Auto24Service implements CaptchaSolver {
         File screenshot = $("#vpc_captcha").screenshot();
         assert screenshot != null;
         log.info("Solving price captcha for regNr: {}", regNr);
-        String solveCaptcha = queueTextDetectionService.extractText(Files.readAllBytes(screenshot.toPath()))
-                .orElse("zzzz")
-                .replaceAll("[^a-zA-Z0-9]", "");
-        if (solveCaptcha.length() > 4) {
-            solveCaptcha = solveCaptcha.substring(0, 4);
-        }
+        String solveCaptcha = twoCaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
         $(By.name("checksec1")).setValue(solveCaptcha);
         $("button[type='submit']").click();
         int count = 0;
-        while ($(".errorMessage").exists() &&
-                "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 1) {
-            log.warn("Invalid captcha for regNr: {}", regNr);
-            screenshot = $("#vpc_captcha").screenshot();
-            assert screenshot != null;
-            log.info("Trying to solve price captcha for regNr with queue: {}. Tries: {}", regNr, count);
-            solveCaptcha = queueTextDetectionService.extractText(Files.readAllBytes(screenshot.toPath()))
-                    .orElse("zzzz")
-                    .replaceAll("[^a-zA-Z0-9]", "");
-            if (solveCaptcha.length() > 4) {
-                solveCaptcha = solveCaptcha.substring(0, 4);
-            }
-            $(By.name("checksec1")).setValue(solveCaptcha);
-            $("button[type='submit']").click();
-        }
-        count = 0;
         while ($(".errorMessage").exists() &&
                 "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 10) {
             log.warn("Invalid captcha for regNr: {}", regNr);
             screenshot = $("#vpc_captcha").screenshot();
             assert screenshot != null;
             log.info("Trying to solve price captcha for regNr: {}. Tries: {}", regNr, count);
-            solveCaptcha = recaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
+            solveCaptcha = twoCaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
             $(By.name("checksec1")).setValue(solveCaptcha);
             $("button[type='submit']").click();
         }
@@ -138,7 +113,7 @@ public class Auto24Service implements CaptchaSolver {
         File screenshot = $("#vpc_captcha").screenshot();
         assert screenshot != null;
         log.info("Solving price captcha for regNr: {}", regNr);
-        String solveCaptcha = recaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
+        String solveCaptcha = twoCaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
         $(By.name("checksec1")).setValue(solveCaptcha);
         $("button[type='submit']").click();
         int count = 0;
@@ -148,7 +123,7 @@ public class Auto24Service implements CaptchaSolver {
             screenshot = $("#vpc_captcha").screenshot();
             assert screenshot != null;
             log.info("Trying to solve price captcha for regNr: {}. Tries: {}", regNr, count);
-            solveCaptcha = recaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
+            solveCaptcha = twoCaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
             $(By.name("checksec1")).setValue(solveCaptcha);
             $("button[type='submit']").click();
         }
@@ -216,7 +191,7 @@ public class Auto24Service implements CaptchaSolver {
     @Override
     public String getCaptchaToken() {
         log.info("Solving auto24 captcha");
-        String token = recaptchaSolverService.solveCaptcha(SITE_KEY, PAGE_URL);
+        String token = twoCaptchaSolverService.solveCaptcha(SITE_KEY, PAGE_URL);
         log.info("Auto24 captcha solved");
         return token;
     }

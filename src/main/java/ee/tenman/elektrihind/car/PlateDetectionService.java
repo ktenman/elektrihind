@@ -8,6 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
@@ -20,6 +23,15 @@ import static ee.tenman.elektrihind.utility.TimeUtility.durationInSeconds;
 public class PlateDetectionService {
 
     private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+    private static final MessageDigest MESSAGE_DIGEST;
+
+    static {
+        try {
+            MESSAGE_DIGEST = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Resource
     private GoogleVisionService googleVisionService;
@@ -30,11 +42,22 @@ public class PlateDetectionService {
     @Resource
     QueueTextDetectionService queueTextDetectionService;
 
+    public String buildMD5(String input) {
+        byte[] hashInBytes = MESSAGE_DIGEST.digest(input.getBytes(StandardCharsets.UTF_8));
+
+        StringBuilder stringBuilder = new StringBuilder();
+        for (byte b : hashInBytes) {
+            stringBuilder.append(String.format("%02x", b));
+        }
+        return stringBuilder.toString();
+    }
+
     public Optional<String> detectPlate(byte[] image) {
         long startTime = System.nanoTime();
         UUID uuid = UUID.randomUUID();
         MDC.put("uuid", uuid.toString());
         String base64EncodedImage = BASE64_ENCODER.encodeToString(image);
+        String encodedImageMD5 = buildMD5(base64EncodedImage);
         log.debug("Starting plate detection. Image size: {} bytes", base64EncodedImage.getBytes().length);
 
         try {
@@ -44,7 +67,7 @@ public class PlateDetectionService {
                 return plateNumber;
             }
 
-            Map<String, Object> googleVisionResponse = googleVisionService.getPlateNumber(base64EncodedImage, uuid);
+            Map<String, Object> googleVisionResponse = googleVisionService.getPlateNumber(base64EncodedImage, uuid, encodedImageMD5);
             plateNumber = Optional.ofNullable((String) googleVisionResponse.get("plateNumber"));
             if (plateNumber.isPresent()) {
                 log.info("Plate detected by GoogleVisionService: {}", plateNumber.get());
@@ -57,7 +80,7 @@ public class PlateDetectionService {
                 return Optional.empty();
             }
 
-            plateNumber = openAiVisionService.getPlateNumber(base64EncodedImage, uuid);
+            plateNumber = openAiVisionService.getPlateNumber(base64EncodedImage, uuid, encodedImageMD5);
             if (plateNumber.isPresent()) {
                 log.info("Plate detected by OpenAiVisionService: {}", plateNumber.get());
                 return plateNumber;

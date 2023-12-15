@@ -116,7 +116,6 @@ public class CarSearchService {
             response.putAll(auto24details);
         }
         CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
-        CompletableFuture.runAsync(Selenide::closeWebDriver, fourThreadExecutor);
         return response;
     }
 

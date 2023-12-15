@@ -23,8 +23,6 @@ import java.nio.file.Files;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static com.codeborne.selenide.Selenide.$;
@@ -43,15 +41,12 @@ public class Auto24Service implements CaptchaSolver {
             "Kütusekulu linnas (l/100 km)",
             "Kütusekulu maanteel (l/100 km)"
     );
-//
+
     @Resource
     private TwoCaptchaSolverService recaptchaSolverService;
-//
     @Resource
     private QueueTextDetectionService queueTextDetectionService;
 
-    @Resource(name = "fourThreadExecutor")
-    private ExecutorService fourThreadExecutor;
 
     @SneakyThrows({IOException.class, InterruptedException.class})
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
@@ -126,7 +121,6 @@ public class Auto24Service implements CaptchaSolver {
         result.put(split[0], split[1] + "\n");
         result.put("Reg nr", regNr);
         log.info("Price for regNr: {} is {}", regNr, response);
-        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
         return result;
     }
 
@@ -169,7 +163,6 @@ public class Auto24Service implements CaptchaSolver {
         if (success) {
             FileUtils.copyFile(screenshot, new File("images3/" + solveCaptcha.toUpperCase() + ".png"));
         }
-        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
     }
 
     @SneakyThrows({InterruptedException.class})
@@ -213,7 +206,6 @@ public class Auto24Service implements CaptchaSolver {
         }
 
         log.info("Found car details for regNr: {}", regNr);
-        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
         return carDetails;
     }
 

@@ -23,8 +23,6 @@ import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static com.codeborne.selenide.Selenide.$$;
@@ -41,9 +39,6 @@ public class ArkService implements CaptchaSolver {
 
     @Resource
     private TwoCaptchaSolverService recaptchaSolverService;
-
-    @Resource(name = "fourThreadExecutor")
-    private ExecutorService fourThreadExecutor;
 
     public static void downloadImage(String imageUrl, String destinationFile) throws IOException {
         try (InputStream in = new BufferedInputStream(new URL(imageUrl).openStream());
@@ -121,7 +116,6 @@ public class ArkService implements CaptchaSolver {
             carDetails.put(key, value);
         }
         log.info("Found car details for regNr: {}", regNr);
-        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
         return carDetails;
     }
 }

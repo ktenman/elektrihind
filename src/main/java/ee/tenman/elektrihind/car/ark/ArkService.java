@@ -37,6 +37,7 @@ public class ArkService implements CaptchaSolver {
 
     private static final String SITE_KEY = "6LepmygUAAAAAJB-Oalk-YSrlPj1dilm95QRY66J";
     private static final String PAGE_URL = "https://eteenindus.mnt.ee/public/soidukTaustakontroll.jsf";
+    private static final String REGISTRATION_DOCUMENT = "Registreerimistunnistus";
 
     @Resource
     private TwoCaptchaSolverService recaptchaSolverService;
@@ -125,6 +126,7 @@ public class ArkService implements CaptchaSolver {
             String value = td.get(1).getText();
             carDetails.put(key, value);
         }
+        carDetails.remove(REGISTRATION_DOCUMENT);
         log.info("Found car details for regNr: {}", regNr);
         return carDetails;
     }

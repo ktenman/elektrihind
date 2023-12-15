@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class DigitalOceanService {
@@ -54,6 +55,6 @@ public class DigitalOceanService {
     }
 
     public void rebootDroplet() {
-        return;
+        digitalOceanClient.rebootDroplet(DROPLET_ID, Map.of("type", "reboot"));
     }
 }

@@ -1,47 +1,55 @@
 package ee.tenman.elektrihind.digitalocean;
 
 import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
 
-@Service
+
+@Resource
 public class DigitalOceanService {
-
     private static final String DROPLET_ID = "384443548";
-
     @Resource
     private DigitalOceanClient digitalOceanClient;
 
-    public void rebootDroplet() {
-        digitalOceanClient.rebootDroplet(DROPLET_ID, Map.of("type", "reboot"));
+    public double getCpuUsagePercentage() {
+        DigitalOceanResponse response = getDropletCpuMetricsForPastMinute();
+        return calculateCpuUsagePercentage(response);
     }
 
-    public double getCpuUsagePercentage() {
-        Instant now = Instant.now();
-        Instant oneMinuteAgo = now.minus(1, ChronoUnit.MINUTES);
+    private DigitalOceanResponse getDropletCpuMetricsForPastMinute() {
+        return digitalOceanClient.getDropletCpuMetrics(DROPLET_ID,
+                String.valueOf(Instant.now().minus(1, ChronoUnit.MINUTES).getEpochSecond()),
+                String.valueOf(Instant.now().getEpochSecond()));
+    }
 
-        String start = String.valueOf(oneMinuteAgo.getEpochSecond());
-        String end = String.valueOf(now.getEpochSecond());
-
-        DigitalOceanResponse response = digitalOceanClient.getDropletCpuMetrics(DROPLET_ID, start, end);
-
+    private double calculateCpuUsagePercentage(DigitalOceanResponse response) {
         double totalCpuTime = 0.0001;
         double idleTime = 0;
-
         for (Result result : response.getData().getResult()) {
-            for (List<String> value : result.getValues()) {
-                double cpuTime = Double.parseDouble(value.get(1));
-                totalCpuTime += cpuTime;
-                if (result.getMetric().getMode().equals("idle")) {
-                    idleTime += cpuTime;
-                }
+            Pair<Double, Double> cpuTimes = calculateCpuTimesFor(result);
+            totalCpuTime += cpuTimes.getKey();
+            idleTime += cpuTimes.getValue();
+        }
+        return calculatePercentage(totalCpuTime, idleTime);
+    }
+
+    private Pair<Double, Double> calculateCpuTimesFor(Result result) {
+        double totalCpuTime = 0;
+        double idleTime = 0;
+        for (List<String> value : result.getValues()) {
+            double cpuTime = Double.parseDouble(value.get(1));
+            totalCpuTime += cpuTime;
+            if (result.getMetric().getMode().equals("idle")) {
+                idleTime += cpuTime;
             }
         }
+        return Pair.of(totalCpuTime, idleTime);
+    }
 
+    private double calculatePercentage(double totalCpuTime, double idleTime) {
         return 100 * (totalCpuTime - idleTime) / totalCpuTime;
     }
 }

@@ -37,3 +37,16 @@ vision:
 
 openai:
   token: ${OPENAI_API_TOKEN}
+
+logging:
+  level:
+    root: INFO
+    org:
+      springframework: INFO
+      hibernate: WARN
+    ee:
+      tenman:
+        elektrihind: DEBUG
+  pattern:
+    console: '%d{yyyy-MM-dd''T''HH:mm:ss.SSSZ,Europe/Tallinn} [%thread] %-5level %logger{36} [UUID: %X{uuid}] - %msg%n'
+

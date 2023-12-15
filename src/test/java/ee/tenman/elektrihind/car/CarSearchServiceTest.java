@@ -31,7 +31,7 @@ class CarSearchServiceTest {
     void search2() {
         Configuration.headless = false;
         long start = System.nanoTime();
-        Map<String, String> search = carSearchService.search2("329SAH");
+        Map<String, String> search = carSearchService.search2("624PQB");
 
         long end = System.nanoTime();
         double duration = (end - start) / 1_000_000_000.0;

@@ -79,7 +79,16 @@ public class ArkService implements CaptchaSolver {
                 .setValue(regNr);
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
         $$(By.tagName("button")).find(Condition.text("OTSIN")).click();
-        ElementsCollection titles = Selenide.$(By.className("content-title")).findAll(By.tagName("p"));
+
+        TimeUnit.SECONDS.sleep(1);
+
+        SelenideElement contentTitle = Selenide.$(By.className("content-title"));
+        if (!contentTitle.exists()) {
+            log.info("No car found for regNr: {}", regNr);
+            return new LinkedHashMap<>();
+        }
+
+        ElementsCollection titles = contentTitle.findAll(By.tagName("p"));
         String carName = Optional.of(titles)
                 .map(ElementsCollection::first)
                 .map(SelenideElement::text)

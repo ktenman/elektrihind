@@ -108,7 +108,7 @@ public class CarSearchService {
                 .get();
         response.putAll(crashes);
 
-        if (!response.containsKey("Läbisõit")) {
+        if (!response.containsKey("Läbisõit") && response.containsKey("Vin")) {
             String captchaToken = auto24Service.getCaptchaToken();
             Map<String, String> auto24details = CompletableFuture.supplyAsync(() -> auto24Service.carDetails(response, captchaToken), fourThreadExecutor)
                     .orTimeout(timeout, timeUnit)
@@ -116,6 +116,10 @@ public class CarSearchService {
             response.putAll(auto24details);
         }
         CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
+
+        if (response.size() <= 1) {
+            return Map.of("Viga", "Andmeid ei leitud '" + regNr + "' kohta");
+        }
         return response;
     }
 

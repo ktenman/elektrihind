@@ -9,9 +9,9 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,7 +45,7 @@ public class GoogleVisionService {
                     .anyMatch(labelAnnotation -> VEHICLE_REGISTRATION_PLATE.equalsIgnoreCase(labelAnnotation.getDescription()));
             log.debug("Vehicle registration plate detected: {}", hasVehicleRegistrationPlateNumber);
 
-            Map<String, String> response = new TreeMap<>();
+            Map<String, String> response = new HashMap<>();
             String hasCar = hasCar(googleVisionApiResponse.getLabelAnnotations());
             response.put("hasCar", hasCar);
             if (!hasVehicleRegistrationPlateNumber) {

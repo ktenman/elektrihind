@@ -21,7 +21,7 @@ public class RedisConfig {
     public static final String ONE_DAY_CACHE_3 = "one-day-cache-3";
     public static final String ONE_DAY_CACHE_4 = "one-day-cache-44";
     public static final String ONE_YEAR_CACHE_1 = "one-year-cache-1";
-    public static final String THIRTY_DAYS_CACHE_1 = "thirty-days-cache-2";
+    public static final String THIRTY_DAYS_CACHE_1 = "thirty-days-cache-3";
     public static final String MESSAGE_COUNTS_CACHE = "message-counts-cache-1";
 
     public static final String IMAGE_REQUEST_QUEUE = "image-request-queue";

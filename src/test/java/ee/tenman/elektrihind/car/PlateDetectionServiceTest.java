@@ -19,9 +19,13 @@ class PlateDetectionServiceTest {
     @Test
     @Disabled
     void detectPlate() throws IOException {
-        byte[] bytes = Files.readAllBytes(Paths.get("image-detector/car2.jpg"));
+        byte[] bytes = Files.readAllBytes(Paths.get("image-detector/car1.jpg"));
 
         String plate = plateDetectionService.detectPlate(bytes).orElseThrow();
+
+
+
+         plate = plateDetectionService.detectPlate(bytes).orElseThrow();
 
         System.out.println();
     }

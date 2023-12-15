@@ -24,6 +24,7 @@ public class PlateDetectionService {
 
     private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
     private static final MessageDigest MESSAGE_DIGEST;
+    public static final String PLATE_NUMBER = "plateNumber";
 
     static {
         try {
@@ -68,10 +69,9 @@ public class PlateDetectionService {
             }
 
             Map<String, String> googleVisionResponse = googleVisionService.getPlateNumber(base64EncodedImage, uuid, encodedImageMD5);
-            plateNumber = Optional.ofNullable(googleVisionResponse.get("plateNumber"));
-            if (plateNumber.isPresent()) {
-                log.info("Plate detected by GoogleVisionService: {}", plateNumber.get());
-                return plateNumber;
+            if (googleVisionResponse.containsKey(PLATE_NUMBER)) {
+                log.info("Plate detected by GoogleVisionService: {}", googleVisionResponse.get(PLATE_NUMBER));
+                return Optional.of(googleVisionResponse.get(PLATE_NUMBER));
             }
 
             boolean hasCar = Optional.ofNullable(googleVisionResponse.get("hasCar"))

@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Base64;
 
+import static ee.tenman.elektrihind.electricity.ElectricityBotService.buildMD5;
+
 @IntegrationTest
 class PlateDetectionServiceTest {
 
@@ -21,25 +23,12 @@ class PlateDetectionServiceTest {
     void detectPlate() throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get("image-detector/car1.jpg"));
 
-        String plate = plateDetectionService.detectPlate(bytes).orElseThrow();
-
-
-
-         plate = plateDetectionService.detectPlate(bytes).orElseThrow();
-
-        System.out.println();
-    }
-
-    @Test
-    @Disabled
-    void detectPlate2() throws IOException {
-        byte[] bytes = Files.readAllBytes(Paths.get("image-detector/car2.jpg"));
-
         Base64.Encoder encoder = Base64.getEncoder();
+        String string = encoder.encodeToString(bytes);
+        String encodedImageMD5 = buildMD5(string);
+        String plate = plateDetectionService.detectPlate(string, encodedImageMD5).orElseThrow();
 
-        String base64EncodedImage = encoder.encodeToString(bytes);
-
-        String plate = plateDetectionService.buildMD5(base64EncodedImage);
+         plate =  plateDetectionService.detectPlate(string, encodedImageMD5).orElseThrow();
 
         System.out.println();
     }

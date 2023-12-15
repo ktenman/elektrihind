@@ -42,8 +42,11 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -52,6 +55,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -71,11 +75,20 @@ import static ee.tenman.elektrihind.utility.DateTimeConstants.DATE_TIME_FORMATTE
 @Slf4j
 public class ElectricityBotService extends TelegramLongPollingBot {
 
+    private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
     public static final Pattern CAR_REGISTRATION_PATTERN = Pattern.compile("^ark\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
     private static final String EURIBOR = "euribor";
     private static final String METRIC = "metric";
+    private static final MessageDigest MESSAGE_DIGEST;
+    static {
+        try {
+            MESSAGE_DIGEST = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Resource
     private HolidaysConfiguration holidaysConfiguration;
@@ -115,6 +128,16 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
     @Value("${telegram.elektriteemu.username}")
     private String username;
+
+    public static String buildMD5(String input) {
+        byte[] hashInBytes = MESSAGE_DIGEST.digest(input.getBytes(StandardCharsets.UTF_8));
+
+        StringBuilder stringBuilder = new StringBuilder();
+        for (byte b : hashInBytes) {
+            stringBuilder.append(String.format("%02x", b));
+        }
+        return stringBuilder.toString();
+    }
 
     List<String[]> readCsv(String filePath) {
         List<String[]> data = new ArrayList<>();
@@ -220,7 +243,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
     private void handlePlateNumberImage(Message message, byte[] imageBytes) {
         AtomicLong startTime = new AtomicLong(System.nanoTime());
-        Optional<String> plateNumberOpt = plateDetectionService.detectPlate(imageBytes);
+        String base64EncodedImage = BASE64_ENCODER.encodeToString(imageBytes);
+        String encodedImageMD5 = buildMD5(base64EncodedImage);
+        Optional<String> plateNumberOpt = plateDetectionService.detectPlate(base64EncodedImage, encodedImageMD5);
 
         if (plateNumberOpt.isPresent()) {
             String regNr = plateNumberOpt.get();

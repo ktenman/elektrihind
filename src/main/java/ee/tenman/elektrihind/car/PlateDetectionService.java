@@ -2,15 +2,14 @@ package ee.tenman.elektrihind.car;
 
 import ee.tenman.elektrihind.car.googlevision.GoogleVisionService;
 import ee.tenman.elektrihind.car.openai.OpenAiVisionService;
+import ee.tenman.elektrihind.config.RedisConfig;
 import ee.tenman.elektrihind.queue.QueueTextDetectionService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
@@ -23,16 +22,7 @@ import static ee.tenman.elektrihind.utility.TimeUtility.durationInSeconds;
 public class PlateDetectionService {
 
     private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
-    private static final MessageDigest MESSAGE_DIGEST;
     public static final String PLATE_NUMBER = "plateNumber";
-
-    static {
-        try {
-            MESSAGE_DIGEST = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @Resource
     private GoogleVisionService googleVisionService;
@@ -43,22 +33,11 @@ public class PlateDetectionService {
     @Resource
     QueueTextDetectionService queueTextDetectionService;
 
-    public String buildMD5(String input) {
-        byte[] hashInBytes = MESSAGE_DIGEST.digest(input.getBytes(StandardCharsets.UTF_8));
-
-        StringBuilder stringBuilder = new StringBuilder();
-        for (byte b : hashInBytes) {
-            stringBuilder.append(String.format("%02x", b));
-        }
-        return stringBuilder.toString();
-    }
-
-    public Optional<String> detectPlate(byte[] image) {
+    @Cacheable(value = RedisConfig.ONE_YEAR_CACHE_1, key = "#md5")
+    public Optional<String> detectPlate(String base64EncodedImage, String md5) {
         long startTime = System.nanoTime();
         UUID uuid = UUID.randomUUID();
         MDC.put("uuid", uuid.toString());
-        String base64EncodedImage = BASE64_ENCODER.encodeToString(image);
-        String encodedImageMD5 = buildMD5(base64EncodedImage);
         log.debug("Starting plate detection. Image size: {} bytes", base64EncodedImage.getBytes().length);
 
         try {
@@ -68,7 +47,7 @@ public class PlateDetectionService {
                 return plateNumber;
             }
 
-            Map<String, String> googleVisionResponse = googleVisionService.getPlateNumber(base64EncodedImage, uuid, encodedImageMD5);
+            Map<String, String> googleVisionResponse = googleVisionService.getPlateNumber(base64EncodedImage, uuid);
             if (googleVisionResponse.containsKey(PLATE_NUMBER)) {
                 log.info("Plate detected by GoogleVisionService: {}", googleVisionResponse.get(PLATE_NUMBER));
                 return Optional.of(googleVisionResponse.get(PLATE_NUMBER));
@@ -82,7 +61,7 @@ public class PlateDetectionService {
                 return Optional.empty();
             }
 
-            plateNumber = openAiVisionService.getPlateNumber(base64EncodedImage, uuid, encodedImageMD5);
+            plateNumber = openAiVisionService.getPlateNumber(base64EncodedImage, uuid);
             if (plateNumber.isPresent()) {
                 log.info("Plate detected by OpenAiVisionService: {}", plateNumber.get());
                 return plateNumber;

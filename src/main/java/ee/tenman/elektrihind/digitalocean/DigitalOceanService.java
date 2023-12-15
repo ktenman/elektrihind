@@ -52,4 +52,8 @@ public class DigitalOceanService {
     private double calculatePercentage(double totalCpuTime, double idleTime) {
         return 100 * (totalCpuTime - idleTime) / totalCpuTime;
     }
+
+    public void rebootDroplet() {
+        return;
+    }
 }

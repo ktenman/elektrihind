@@ -12,16 +12,24 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Map;
 
-@FeignClient(name = "digitalOceanClient", url = "https://api.digitalocean.com/v2", configuration = DigitalOceanClient.Configuration.class)
+import static ee.tenman.elektrihind.digitalocean.DigitalOceanClient.CLIENT_NAME;
+import static ee.tenman.elektrihind.digitalocean.DigitalOceanClient.CLIENT_URL;
+
+@FeignClient(name = CLIENT_NAME, url = CLIENT_URL, configuration = DigitalOceanClient.Configuration.class)
 public interface DigitalOceanClient {
+
+    String CLIENT_NAME = "digitalOceanClient";
+    String CLIENT_URL = "https://api.digitalocean.com/v2";
 
     @PostMapping(value = "/droplets/{dropletId}/actions")
     void rebootDroplet(@PathVariable("dropletId") String dropletId, @RequestBody Map<String, String> action);
 
     @GetMapping(value = "/monitoring/metrics/droplet/cpu")
-    DigitalOceanResponse getDropletCpuMetrics(@RequestParam("host_id") String hostId,
-                                              @RequestParam("start") String start,
-                                              @RequestParam("end") String end);
+    DigitalOceanResponse getDropletCpuMetrics(
+            @RequestParam("host_id") String hostId,
+            @RequestParam("start") String start,
+            @RequestParam("end") String end
+    );
 
     class Configuration {
         @Value("${digitalocean.token}")

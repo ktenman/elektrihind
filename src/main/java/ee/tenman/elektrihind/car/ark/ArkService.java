@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.car.ark;
 
+import com.codeborne.selenide.CollectionCondition;
 import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
@@ -20,10 +21,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
@@ -62,16 +63,18 @@ public class ArkService implements CaptchaSolver {
         return token;
     }
 
-    @SneakyThrows({InterruptedException.class})
+    @SneakyThrows
     @Cacheable(value = THIRTY_DAYS_CACHE_1, key = "#regNr")
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public Map<String, String> carDetails(String regNr, String captchaToken) {
         log.info("Searching car details for regNr: {}", regNr);
         Selenide.open(PAGE_URL);
         getWebDriver().manage().window().maximize();
-        TimeUnit.SECONDS.sleep(1);
 
         ElementsCollection spanCollection = $$(By.tagName("span"));
+
+        spanCollection.shouldBe(CollectionCondition.sizeGreaterThan(1), Duration.ofSeconds(2));
+
         spanCollection.find(Condition.text("Registreerimismärk"))
                 .parent() // Move to the parent td of the span
                 .sibling(0) // Move to the next td sibling
@@ -79,10 +82,8 @@ public class ArkService implements CaptchaSolver {
                 .setValue(regNr);
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
         $$(By.tagName("button")).find(Condition.text("OTSIN")).click();
-
-        TimeUnit.SECONDS.sleep(1);
-
         SelenideElement contentTitle = Selenide.$(By.className("content-title"));
+        contentTitle.shouldBe(Condition.exist, Duration.ofSeconds(3));
         if (!contentTitle.exists()) {
             log.info("No car found for regNr: {}", regNr);
             return new LinkedHashMap<>();

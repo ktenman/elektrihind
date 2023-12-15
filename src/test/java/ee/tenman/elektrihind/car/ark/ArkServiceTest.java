@@ -19,7 +19,7 @@ class ArkServiceTest {
     void carDetails() {
         Configuration.headless = false;
         String captchaToken = arkService.getCaptchaToken();
-        Map<String, String> details = arkService.carDetails("876BCH", captchaToken);
+        Map<String, String> details = arkService.carDetails("402LGR", captchaToken);
 
         System.out.println();
     }

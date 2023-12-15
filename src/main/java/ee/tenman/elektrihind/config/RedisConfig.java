@@ -16,13 +16,13 @@ import java.util.Map;
 @Configuration
 public class RedisConfig {
 
-    public static final String ONE_DAY_CACHE_1 = "one-day-cache-11";
-    public static final String ONE_DAY_CACHE_2 = "one-day-cache-22";
-    public static final String ONE_DAY_CACHE_3 = "one-day-cache-33";
-    public static final String ONE_DAY_CACHE_4 = "one-day-cache-4";
-    public static final String ONE_YEAR_CACHE_1 = "one-year-cache-11";
-    public static final String THIRTY_DAYS_CACHE_1 = "thirty-days-cache-11";
-    public static final String MESSAGE_COUNTS_CACHE = "messageCounts-22";
+    public static final String ONE_DAY_CACHE_1 = "one-day-cache-1";
+    public static final String ONE_DAY_CACHE_2 = "one-day-cache-2";
+    public static final String ONE_DAY_CACHE_3 = "one-day-cache-3";
+    public static final String ONE_DAY_CACHE_4 = "one-day-cache-44";
+    public static final String ONE_YEAR_CACHE_1 = "one-year-cache-1";
+    public static final String THIRTY_DAYS_CACHE_1 = "thirty-days-cache-1";
+    public static final String MESSAGE_COUNTS_CACHE = "message-counts-cache-1";
 
     public static final String IMAGE_REQUEST_QUEUE = "image-request-queue";
     public static final String IMAGE_RESPONSE_QUEUE = "image-response-queue";

@@ -6,7 +6,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
@@ -17,9 +16,6 @@ import java.util.TreeMap;
 @Service
 @Slf4j
 public class ScrapeninjaService {
-
-    @Value("${scrapeninja.key}")
-    private String apiKey;
 
     @Resource
     private ScrapeninjaClient scrapeninjaClient;
@@ -33,7 +29,7 @@ public class ScrapeninjaService {
         request.setMethod("POST");
         request.setData(String.format("vin=%s&reg_nr=%s&g-recaptcha-response=%s&vpc_reg_search=1", vinCode, regNr, captchaToken));
 
-        ScrapeninjaResponse response = scrapeninjaClient.scrape(apiKey, request);
+        ScrapeninjaResponse response = scrapeninjaClient.scrape(request);
         Document document = Jsoup.parse(response.getBody());
 
         Map<String, String> result = new TreeMap<>();

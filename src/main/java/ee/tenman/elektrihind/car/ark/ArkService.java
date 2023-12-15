@@ -23,6 +23,7 @@ import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -120,7 +121,7 @@ public class ArkService implements CaptchaSolver {
             carDetails.put(key, value);
         }
         log.info("Found car details for regNr: {}", regNr);
-//        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
+        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
         return carDetails;
     }
 }

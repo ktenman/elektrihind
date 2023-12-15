@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -78,11 +79,11 @@ public class Auto24Service implements CaptchaSolver {
         $("button[type='submit']").click();
         int count = 0;
         while ($(".errorMessage").exists() &&
-                "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 5) {
+                "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 40) {
             log.warn("Invalid captcha for regNr: {}", regNr);
             screenshot = $("#vpc_captcha").screenshot();
             assert screenshot != null;
-            log.info("Trying to solve price captcha for regNr: {}. Tries: {}", regNr, count);
+            log.info("Trying to solve price captcha for regNr with queue: {}. Tries: {}", regNr, count);
             solveCaptcha = queuePlateDetectionService.extractText(Files.readAllBytes(screenshot.toPath()))
                     .orElse("zzzz")
                     .replaceAll("[^a-zA-Z0-9]", "");
@@ -212,7 +213,7 @@ public class Auto24Service implements CaptchaSolver {
         }
 
         log.info("Found car details for regNr: {}", regNr);
-//        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
+        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
         return carDetails;
     }
 

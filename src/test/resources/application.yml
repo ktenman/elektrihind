@@ -23,8 +23,7 @@ imdb-api:
   url: http://localhost:${wiremock.server.port}
 
 digitalocean:
-  api:
-    token:
+  token:
 
 spring:
   data:

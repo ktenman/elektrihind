@@ -23,8 +23,7 @@ imdb-api:
   url: https://imdb-api.projects.thetuhin.com
 
 digitalocean:
-  api:
-    token: ${DIGITAL_OCEAN_API_TOKEN}
+  token: ${DIGITAL_OCEAN_API_TOKEN}
 
 spring:
   data:

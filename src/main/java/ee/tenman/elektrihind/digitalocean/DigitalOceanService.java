@@ -2,13 +2,13 @@ package ee.tenman.elektrihind.digitalocean;
 
 import jakarta.annotation.Resource;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-
-@Resource
+@Service
 public class DigitalOceanService {
     private static final String DROPLET_ID = "384443548";
     @Resource

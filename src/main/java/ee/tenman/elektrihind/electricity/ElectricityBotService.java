@@ -159,6 +159,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
         Matcher arkMatcher = CAR_REGISTRATION_PATTERN.matcher(callData);
         if (arkMatcher.find()) {
+            log.info("Received callback query for regNr: {}", arkMatcher.group(1));
             String regNr = arkMatcher.group(1).toUpperCase();
             AtomicLong startTime = new AtomicLong();
             search(startTime, chatId, regNr, null);

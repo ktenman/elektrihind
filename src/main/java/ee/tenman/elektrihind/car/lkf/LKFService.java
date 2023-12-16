@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static com.codeborne.selenide.Selenide.$$;
@@ -29,6 +30,8 @@ public class LKFService implements CaptchaSolver {
 
     private static final String SITE_KEY = "6LcKDjIUAAAAALL0hvZVDGSKpVVeumbgkeryE3DP";
     private static final String PAGE_URL = "https://lkf.ee/et/kahjukontroll";
+    @Resource(name = "fourThreadExecutor")
+    private ExecutorService fourThreadExecutor;
 
     @Resource
     private TwoCaptchaSolverService recaptchaSolverService;
@@ -56,6 +59,7 @@ public class LKFService implements CaptchaSolver {
         log.info("Found lkf car crashes for regNr: {}", regNr);
         Map<String, String> result = new LinkedHashMap<>();
         result.put("Avariide arv", String.valueOf(crashes));
+        fourThreadExecutor.submit(Selenide::closeWindow);
         return result;
     }
 

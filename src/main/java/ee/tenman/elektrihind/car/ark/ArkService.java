@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
@@ -38,6 +39,9 @@ public class ArkService implements CaptchaSolver {
     private static final String SITE_KEY = "6LepmygUAAAAAJB-Oalk-YSrlPj1dilm95QRY66J";
     private static final String PAGE_URL = "https://eteenindus.mnt.ee/public/soidukTaustakontroll.jsf";
     private static final String REGISTRATION_DOCUMENT = "Registreerimistunnistus";
+
+    @Resource(name = "fourThreadExecutor")
+    private ExecutorService fourThreadExecutor;
 
     @Resource
     private TwoCaptchaSolverService recaptchaSolverService;
@@ -128,6 +132,7 @@ public class ArkService implements CaptchaSolver {
         }
         carDetails.remove(REGISTRATION_DOCUMENT);
         log.info("Found car details for regNr: {}", regNr);
+        fourThreadExecutor.submit(Selenide::closeWindow);
         return carDetails;
     }
 }

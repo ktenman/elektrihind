@@ -1,6 +1,5 @@
 package ee.tenman.elektrihind.car;
 
-import com.codeborne.selenide.Selenide;
 import ee.tenman.elektrihind.car.ark.ArkService;
 import ee.tenman.elektrihind.car.auto24.Auto24Service;
 import ee.tenman.elektrihind.car.lkf.LKFService;
@@ -115,7 +114,6 @@ public class CarSearchService {
                     .get();
             response.putAll(auto24details);
         }
-        CompletableFuture.runAsync(Selenide::closeWindow, fourThreadExecutor);
 
         if (response.size() <= 1) {
             return Map.of("Viga", "Andmeid ei leitud '" + regNr + "' kohta");

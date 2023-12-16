@@ -10,7 +10,6 @@ import org.slf4j.MDC;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,7 +20,6 @@ import static ee.tenman.elektrihind.utility.TimeUtility.durationInSeconds;
 @Slf4j
 public class PlateDetectionService {
 
-    private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
     public static final String PLATE_NUMBER = "plateNumber";
 
     @Resource

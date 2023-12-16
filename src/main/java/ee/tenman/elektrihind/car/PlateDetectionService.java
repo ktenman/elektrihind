@@ -33,8 +33,8 @@ public class PlateDetectionService {
     @Resource
     QueueTextDetectionService queueTextDetectionService;
 
-    @Cacheable(value = RedisConfig.ONE_YEAR_CACHE_1, key = "#md5")
-    public Optional<String> detectPlate(String base64EncodedImage, String md5) {
+    @Cacheable(value = RedisConfig.ONE_YEAR_CACHE_1, key = "#imageHashValue")
+    public Optional<String> detectPlate(String base64EncodedImage, String imageHashValue) {
         long startTime = System.nanoTime();
         UUID uuid = UUID.randomUUID();
         MDC.put("uuid", uuid.toString());

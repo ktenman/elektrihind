@@ -81,10 +81,12 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     public static final Pattern CAR_REGISTRATION_PATTERN = Pattern.compile("^ark\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
     private static final String EURIBOR = "euribor";
     private static final String METRIC = "metric";
-    private static final MessageDigest MESSAGE_DIGEST;
+    private static final MessageDigest SHA_256_DIGEST;
+    private static final String SHA256_ALGORITHM = "SHA-256";
+
     static {
         try {
-            MESSAGE_DIGEST = MessageDigest.getInstance("MD5");
+            SHA_256_DIGEST = MessageDigest.getInstance(SHA256_ALGORITHM);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
@@ -129,9 +131,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     @Value("${telegram.elektriteemu.username}")
     private String username;
 
-    public static String buildMD5(String input) {
-        byte[] hashInBytes = MESSAGE_DIGEST.digest(input.getBytes(StandardCharsets.UTF_8));
-
+    public static String buildSHA256(String input) {
+        byte[] hashInBytes = SHA_256_DIGEST.digest(input.getBytes(StandardCharsets.UTF_8));
         StringBuilder stringBuilder = new StringBuilder();
         for (byte b : hashInBytes) {
             stringBuilder.append(String.format("%02x", b));
@@ -244,17 +245,18 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private void handlePlateNumberImage(Message message, byte[] imageBytes) {
         AtomicLong startTime = new AtomicLong(System.nanoTime());
         String base64EncodedImage = BASE64_ENCODER.encodeToString(imageBytes);
-        String encodedImageMD5 = buildMD5(base64EncodedImage);
-        Optional<String> plateNumberOpt = plateDetectionService.detectPlate(base64EncodedImage, encodedImageMD5);
+        String imageHashValue = buildSHA256(base64EncodedImage);
+        Optional<String> detectedPlate = plateDetectionService.detectPlate(base64EncodedImage, imageHashValue);
 
-        if (plateNumberOpt.isPresent()) {
-            String regNr = plateNumberOpt.get();
-            InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardForPlateNumber(regNr);
-            SendMessage messageWithButton = createMessageWithInlineKeyboard(message, "Detected a potential plate number. Would you like to check it?", inlineKeyboardMarkup);
-            executeSendMessage(messageWithButton);
-            if (cacheService.isAutomaticFetchingEnabled()) {
-                search(startTime, message.getChatId(), regNr, message.getMessageId());
-            }
+        if (detectedPlate.isEmpty()) {
+           return;
+        }
+        String plateNumber = detectedPlate.get();
+        InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardForPlateNumber(plateNumber);
+        SendMessage messageWithButton = createMessageWithInlineKeyboard(message, "Detected a potential plate number. Would you like to check it?", inlineKeyboardMarkup);
+        executeSendMessage(messageWithButton);
+        if (cacheService.isAutomaticFetchingEnabled()) {
+            search(startTime, message.getChatId(), plateNumber, message.getMessageId());
         }
     }
 

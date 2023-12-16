@@ -249,7 +249,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         Optional<String> detectedPlate = plateDetectionService.detectPlate(base64EncodedImage, imageHashValue);
 
         if (detectedPlate.isEmpty()) {
-           return;
+            return;
         }
         String plateNumber = detectedPlate.get();
         InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardForPlateNumber(plateNumber);

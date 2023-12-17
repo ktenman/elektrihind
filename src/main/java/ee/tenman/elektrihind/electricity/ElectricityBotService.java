@@ -473,7 +473,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             return;
         }
 
-        if (fileName.matches(".*(\\.jpg|\\.png)")) {
+        if (fileName.toLowerCase().matches(".*(\\.jpg|\\.png)")) {
             byte[] imageBytes = downloadImage(document.getFileId());
             handlePlateNumberImage(message, imageBytes);
             return;

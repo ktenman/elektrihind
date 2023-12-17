@@ -2,6 +2,7 @@ package ee.tenman.elektrihind.queue;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import java.util.UUID;
 
 @Component
 @Slf4j
+@ConditionalOnProperty(name = "app.messaging.type", havingValue = "redis")
 public class RedisMessageSubscriber implements MessageListener {
 
     @Resource

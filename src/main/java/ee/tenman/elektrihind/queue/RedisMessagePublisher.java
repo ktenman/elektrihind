@@ -1,20 +1,25 @@
 package ee.tenman.elektrihind.queue;
 
+import ee.tenman.elektrihind.config.RedisConfig;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class RedisMessagePublisher {
+@ConditionalOnProperty(name = "app.messaging.type", havingValue = "redis")
+public class RedisMessagePublisher implements MessagePublisher {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
-    public void publish(String queueName, RedisMessage redisMessage) {
-        log.debug("Publishing message [UUID: {}] to queue [QueueName: {}]", redisMessage.getUuid(), queueName);
-        stringRedisTemplate.convertAndSend(queueName, redisMessage.toString());
-        log.info("Published message [UUID: {}] to queue [QueueName: {}]", redisMessage.getUuid(), queueName);
+    @Override
+    public void publish(RedisMessage redisMessage) {
+        String imageRequestQueue = RedisConfig.IMAGE_REQUEST_QUEUE;
+        log.debug("Publishing message [UUID: {}] to queue [QueueName: {}]", redisMessage.getUuid(), imageRequestQueue);
+        stringRedisTemplate.convertAndSend(imageRequestQueue, redisMessage.toString());
+        log.info("Published message [UUID: {}] to queue [QueueName: {}]", redisMessage.getUuid(), imageRequestQueue);
     }
 }

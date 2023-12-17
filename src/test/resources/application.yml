@@ -32,6 +32,8 @@ spring:
       port: 6379
       password: something
 
+app.messaging.type: rabbitmq
+
 vision:
   base64EncodedKey:
 

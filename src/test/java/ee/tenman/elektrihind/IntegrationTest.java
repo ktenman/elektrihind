@@ -27,14 +27,24 @@ public @interface IntegrationTest {
 
 class RedisInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-    private static final String REDIS_PASSWORD = "something";
+    private static final String CUSTOM_USERNAME = "user";
+    private static final String CUSTOM_PASSWORD = "something";
+
     private static final DockerImageName REDIS_IMAGE = DockerImageName.parse("redis:7.2.3-alpine");
+    private static final DockerImageName RABBITMQ_IMAGE = DockerImageName.parse("rabbitmq:3.9-management-alpine");
+
+    private static final GenericContainer<?> rabbitMQContainer = new GenericContainer<>(RABBITMQ_IMAGE)
+            .withExposedPorts(5672, 15672);
+
     private static final GenericContainer<?> redisContainer = new GenericContainer<>(REDIS_IMAGE)
             .withExposedPorts(6379)
-            .withCommand("redis-server", "--requirepass", REDIS_PASSWORD);
+            .withCommand("redis-server", "--requirepass", CUSTOM_PASSWORD)
+            .withEnv("RABBITMQ_DEFAULT_USER", CUSTOM_USERNAME)
+            .withEnv("RABBITMQ_DEFAULT_PASS", CUSTOM_PASSWORD);
 
     static {
         redisContainer.start();
+        rabbitMQContainer.start();
     }
 
     @Override
@@ -43,7 +53,12 @@ class RedisInitializer implements ApplicationContextInitializer<ConfigurableAppl
                 applicationContext,
                 "spring.data.redis.host=" + redisContainer.getHost(),
                 "spring.data.redis.port=" + redisContainer.getFirstMappedPort(),
-                "spring.data.redis.password=" + REDIS_PASSWORD
+                "spring.data.redis.password=" + CUSTOM_PASSWORD,
+
+                "spring.rabbitmq.host=" + rabbitMQContainer.getHost(),
+                "spring.rabbitmq.port=" + rabbitMQContainer.getMappedPort(5672),
+                "spring.rabbitmq.username=" + CUSTOM_USERNAME,
+                "spring.rabbitmq.password=" + CUSTOM_PASSWORD
         );
     }
 }

@@ -15,11 +15,14 @@ services:
       - VISION_BASE64_ENCODED_KEY=${VISION_BASE64_ENCODED_KEY}
       - OPENAI_API_TOKEN=${OPENAI_API_TOKEN}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
     volumes:
       - cache-volume:/app/cache
     restart: always
     depends_on:
       - redis
+      - rabbitmq
 
   redis:
     image: redis:7.2.3-alpine
@@ -34,10 +37,27 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+  rabbitmq:
+    image: rabbitmq:3.9-management-alpine
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    restart: always
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 volumes:
   cache-volume:
   redis-data:
+  rabbitmq-data:
 
 networks:
   mynetwork:

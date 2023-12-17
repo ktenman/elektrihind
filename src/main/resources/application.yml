@@ -25,12 +25,28 @@ imdb-api:
 digitalocean:
   token: ${DIGITAL_OCEAN_API_TOKEN}
 
+app.messaging.type: redis
+
 spring:
   data:
     redis:
       host: redis
       port: 6379
       password: ${REDIS_PASSWORD}
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+  cloud:
+    function:
+      definition: rabbitmqPublisher;rabbitmqConsumer
+    stream:
+      bindings:
+        rabbitmqPublisher-out-0:
+          destination: picture-request-queue
+        rabbitmqConsumer-in-0:
+          destination: picture-response-queue
 
 vision:
   base64EncodedKey: ${VISION_BASE64_ENCODED_KEY}

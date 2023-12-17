@@ -1,6 +1,5 @@
 package ee.tenman.elektrihind.queue;
 
-import ee.tenman.elektrihind.config.RedisConfig;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -25,7 +24,7 @@ public class QueueTextDetectionService {
     private static final int TIMEOUT = 1500;
     private final Map<UUID, CompletableFuture<String>> plateDetectionFutures = new ConcurrentHashMap<>();
     @Resource
-    private RedisMessagePublisher redisMessagePublisher;
+    private MessagePublisher messagePublisher;
     @Resource(name = "tenThreadExecutor")
     private ExecutorService executorService;
 
@@ -66,7 +65,7 @@ public class QueueTextDetectionService {
                 .uuid(uuid)
                 .build();
 
-        redisMessagePublisher.publish(RedisConfig.IMAGE_REQUEST_QUEUE, redisMessage);
+        messagePublisher.publish(redisMessage);
 
         try {
             String extractedText = CompletableFuture.supplyAsync(() -> {

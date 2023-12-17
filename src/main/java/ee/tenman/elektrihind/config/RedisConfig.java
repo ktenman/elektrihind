@@ -1,6 +1,7 @@
 package ee.tenman.elektrihind.config;
 
 import ee.tenman.elektrihind.queue.RedisMessageSubscriber;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -31,12 +32,14 @@ public class RedisConfig {
     private static final Duration DEFAULT_TTL = Duration.ofMinutes(10);
 
     @Bean
-    RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory,
-                                            RedisMessageSubscriber subscriber) {
+    @ConditionalOnProperty(name = "app.messaging.type", havingValue = "redis")
+    RedisMessageListenerContainer container(
+            RedisConnectionFactory connectionFactory,
+            RedisMessageSubscriber subscriber
+    ) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         container.addMessageListener(subscriber, new PatternTopic(IMAGE_RESPONSE_QUEUE));
-
         return container;
     }
 

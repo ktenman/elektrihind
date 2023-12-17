@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.queue;
 
+import ee.tenman.elektrihind.car.googlevision.FileToBase64;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -32,7 +33,7 @@ public class QueueTextDetectionService {
         long startTime = System.nanoTime();
         UUID uuid = UUID.randomUUID();
         MDC.put("uuid", uuid.toString());
-        String base64EncodedImage = java.util.Base64.getEncoder().encodeToString(image);
+        String base64EncodedImage = FileToBase64.encodeToBase64(image);
         log.debug("Starting text extraction. Image size: {} bytes", base64EncodedImage.getBytes().length);
 
         try {

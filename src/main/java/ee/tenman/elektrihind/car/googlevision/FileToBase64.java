@@ -1,22 +1,32 @@
 package ee.tenman.elektrihind.car.googlevision;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Base64;
 
+@Slf4j
 public class FileToBase64 {
 
-    public static String encodeFileToBase64(String filePath) throws IOException {
-        // Read file to byte array
-        byte[] fileContent = Files.readAllBytes(Paths.get(filePath));
+    private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+    private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
-        // Encode bytes to base64
-        return Base64.getEncoder().encodeToString(fileContent);
+    public static String encodeToBase64(String filePath) throws IOException {
+        try {
+            return encodeToBase64(Files.readAllBytes(Paths.get(filePath)));
+        } catch (IOException e) {
+            log.error("Error reading file: {}", filePath, e);
+            throw new IOException("Error reading file: " + filePath, e);
+        }
     }
 
-    public static void main(String[] args) throws IOException {
-        String base64EncodedFile = encodeFileToBase64("tenmanee-4c14800add13.json");
-        System.out.println(base64EncodedFile);
+    public static String encodeToBase64(byte[] fileContent) {
+        return BASE64_ENCODER.encodeToString(fileContent);
+    }
+
+    public static byte[] decode(String base64EncodedKey) {
+        return BASE64_DECODER.decode(base64EncodedKey);
     }
 }

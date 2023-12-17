@@ -3,6 +3,7 @@ package ee.tenman.elektrihind.electricity;
 import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.car.CarSearchService;
 import ee.tenman.elektrihind.car.PlateDetectionService;
+import ee.tenman.elektrihind.car.googlevision.FileToBase64;
 import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.digitalocean.DigitalOceanService;
@@ -55,7 +56,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -74,7 +74,6 @@ import static ee.tenman.elektrihind.utility.DateTimeConstants.DATE_TIME_FORMATTE
 @Slf4j
 public class ElectricityBotService extends TelegramLongPollingBot {
 
-    private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
     public static final Pattern CAR_REGISTRATION_PATTERN = Pattern.compile("^ark\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
@@ -243,7 +242,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
     private void handlePlateNumberImage(Message message, byte[] imageBytes) {
         AtomicLong startTime = new AtomicLong(System.nanoTime());
-        String base64EncodedImage = BASE64_ENCODER.encodeToString(imageBytes);
+        String base64EncodedImage = FileToBase64.encodeToBase64(imageBytes);
         String imageHashValue = buildSHA256(base64EncodedImage);
         Optional<String> detectedPlate = plateDetectionService.detectPlate(base64EncodedImage, imageHashValue);
 

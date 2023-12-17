@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Base64;
 import java.util.Collections;
 
 @Service
@@ -25,7 +24,7 @@ public class VisionAuthenticatorService {
             return;
         }
         try {
-            byte[] decodedJsonBytes = Base64.getDecoder().decode(base64EncodedKey);
+            byte[] decodedJsonBytes = FileToBase64.decode(base64EncodedKey);
             try (InputStream credentialsStream = new ByteArrayInputStream(decodedJsonBytes)) {
                 credentials = GoogleCredentials.fromStream(credentialsStream)
                         .createScoped(Collections.singleton("https://www.googleapis.com/auth/cloud-platform"));

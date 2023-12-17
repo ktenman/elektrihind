@@ -25,7 +25,7 @@ imdb-api:
 digitalocean:
   token: ${DIGITAL_OCEAN_API_TOKEN}
 
-app.messaging.type: redis
+app.messaging.type: rabbitmq # rabbitmq or redis
 
 spring:
   data:

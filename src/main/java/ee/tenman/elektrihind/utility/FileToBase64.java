@@ -13,6 +13,9 @@ public class FileToBase64 {
     private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
     private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
+    private FileToBase64() {
+    }
+
     public static String encodeToBase64(String filePath) throws IOException {
         try {
             return encodeToBase64(Files.readAllBytes(Paths.get(filePath)));

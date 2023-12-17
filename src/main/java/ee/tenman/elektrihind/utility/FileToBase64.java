@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind.car.googlevision;
+package ee.tenman.elektrihind.utility;
 
 import lombok.extern.slf4j.Slf4j;
 

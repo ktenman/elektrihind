@@ -1,6 +1,6 @@
 package ee.tenman.elektrihind.queue;
 
-import ee.tenman.elektrihind.car.googlevision.FileToBase64;
+import ee.tenman.elektrihind.utility.FileToBase64;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;

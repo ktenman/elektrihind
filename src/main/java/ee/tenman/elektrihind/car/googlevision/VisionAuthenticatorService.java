@@ -2,6 +2,7 @@ package ee.tenman.elektrihind.car.googlevision;
 
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
+import ee.tenman.elektrihind.utility.FileToBase64;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

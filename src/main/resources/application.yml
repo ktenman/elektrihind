@@ -38,15 +38,6 @@ spring:
     port: 5672
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
-  cloud:
-    function:
-      definition: rabbitmqPublisher;rabbitmqConsumer
-    stream:
-      bindings:
-        rabbitmqPublisher-out-0:
-          destination: picture-request-queue
-        rabbitmqConsumer-in-0:
-          destination: picture-response-queue
 
 vision:
   base64EncodedKey: ${VISION_BASE64_ENCODED_KEY}

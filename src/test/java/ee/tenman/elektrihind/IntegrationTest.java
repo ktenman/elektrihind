@@ -34,13 +34,13 @@ class RedisInitializer implements ApplicationContextInitializer<ConfigurableAppl
     private static final DockerImageName RABBITMQ_IMAGE = DockerImageName.parse("rabbitmq:3.9-management-alpine");
 
     private static final GenericContainer<?> RABBIT_MQ_CONTAINER = new GenericContainer<>(RABBITMQ_IMAGE)
-            .withExposedPorts(5672, 15672);
+            .withExposedPorts(5672, 15672)
+            .withEnv("RABBITMQ_DEFAULT_USER", CUSTOM_USERNAME)
+            .withEnv("RABBITMQ_DEFAULT_PASS", CUSTOM_PASSWORD);
 
     private static final GenericContainer<?> REDIS_CONTAINER = new GenericContainer<>(REDIS_IMAGE)
             .withExposedPorts(6379)
-            .withCommand("redis-server", "--requirepass", CUSTOM_PASSWORD)
-            .withEnv("RABBITMQ_DEFAULT_USER", CUSTOM_USERNAME)
-            .withEnv("RABBITMQ_DEFAULT_PASS", CUSTOM_PASSWORD);
+            .withCommand("redis-server", "--requirepass", CUSTOM_PASSWORD);
 
     static {
         REDIS_CONTAINER.start();

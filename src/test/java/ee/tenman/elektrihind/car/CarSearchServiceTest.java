@@ -29,9 +29,10 @@ class CarSearchServiceTest {
     @Test
     @Disabled
     void search2() {
+//        Configuration.browser = "chrome";
         Configuration.headless = false;
         long start = System.nanoTime();
-        Map<String, String> search = carSearchService.search2("624PQB");
+        Map<String, String> search = carSearchService.search2("57DV");
 
         long end = System.nanoTime();
         double duration = (end - start) / 1_000_000_000.0;

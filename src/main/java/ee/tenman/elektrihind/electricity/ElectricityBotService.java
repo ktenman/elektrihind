@@ -58,7 +58,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -367,8 +366,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                         startTime.set(System.nanoTime());
                     }
                     sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
-                    Map<String, String> response = carSearchService.search2(regNr);
-                    return response;
+                    return carSearchService.search2(regNr);
                 }, singleThreadExecutor)
                 .orTimeout(20, TimeUnit.MINUTES)
                 .handle((search, throwable) -> { // Handle both completion and exception

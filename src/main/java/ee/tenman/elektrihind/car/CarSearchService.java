@@ -71,7 +71,7 @@ public class CarSearchService {
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
     @Cacheable(value = ONE_DAY_CACHE_4, key = "#regNr")
     public Map<String, String> search2(String regNr) {
-        int timeout = 4;
+        int timeout = 5;
         TimeUnit timeUnit = TimeUnit.MINUTES;
         CompletableFuture<LinkedHashMap<String, String>> carPriceFuture = CompletableFuture.supplyAsync(() -> auto24Service.carPrice(regNr), fourThreadExecutor)
                 .orTimeout(timeout, timeUnit);

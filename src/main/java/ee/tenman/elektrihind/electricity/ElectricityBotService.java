@@ -678,22 +678,35 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             return;
         }
 
-        SendMessage message = new SendMessage();
-        message.setParseMode("MarkdownV2");
-        message.enableMarkdown(true);
-        message.enableMarkdownV2(true);
-        message.setChatId(String.valueOf(chatId));
-        if (replyToMessageId != null) {
-            message.setReplyToMessageId(replyToMessageId);
-        }
+        // MarkdownV2 format adds extra characters for backticks and new lines
+        int maxTextLength = 4096 - 8; // Accounting for triple backticks and new lines
 
-        String messageText = "```\n" + text + "```";
-        message.setText(messageText);
+        int start = 0;
+        boolean isFirstMessage = true;
+        while (start < text.length()) {
+            int end = Math.min(start + maxTextLength, text.length());
+            String chunk = text.substring(start, end);
 
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Failed to send message to chat: {} with text: {}", chatId, text, e);
+            SendMessage message = new SendMessage();
+            message.setParseMode("MarkdownV2");
+            message.enableMarkdown(true);
+            message.enableMarkdownV2(true);
+            message.setChatId(String.valueOf(chatId));
+            if (isFirstMessage && replyToMessageId != null) {
+                message.setReplyToMessageId(replyToMessageId);
+            }
+
+            String messageText = "```\n" + chunk + "\n```";
+            message.setText(messageText);
+
+            try {
+                execute(message);
+            } catch (TelegramApiException e) {
+                log.error("Failed to send message to chat: {} with text: {}", chatId, chunk, e);
+            }
+
+            isFirstMessage = false;
+            start = end;
         }
     }
 

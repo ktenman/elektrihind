@@ -10,6 +10,7 @@ import ee.tenman.elektrihind.euribor.EuriborRateFetcher;
 import ee.tenman.elektrihind.queue.ChatService;
 import ee.tenman.elektrihind.telegram.TelegramService;
 import ee.tenman.elektrihind.utility.FileToBase64;
+import ee.tenman.elektrihind.utility.TextUtility;
 import ee.tenman.elektrihind.utility.TimeUtility;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
@@ -650,6 +651,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             log.warn("Not sending null message to chat: {}", chatId);
             return;
         }
+        text = TextUtility.escapeMarkdown(text);
+
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
         message.setText(text);
@@ -678,6 +681,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             log.warn("Not sending null message to chat: {}", chatId);
             return;
         }
+        text = TextUtility.escapeMarkdown(text);
 
         // MarkdownV2 format adds extra characters for backticks and new lines
         int maxTextLength = 4096 - 8; // Accounting for triple backticks and new lines
@@ -716,6 +720,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             log.warn("Not sending null message to chat: {}", chatId);
             return;
         }
+        text = TextUtility.escapeMarkdown(text);
 
         SendMessage message = new SendMessage();
         message.setParseMode("MarkdownV2");

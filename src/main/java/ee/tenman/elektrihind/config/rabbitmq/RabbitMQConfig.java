@@ -1,7 +1,5 @@
-package ee.tenman.elektrihind.config;
+package ee.tenman.elektrihind.config.rabbitmq;
 
-import ee.tenman.elektrihind.queue.RabbitMQConsumer;
-import ee.tenman.elektrihind.queue.RabbitMQPublisher;
 import org.springframework.amqp.core.Queue;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -13,12 +11,22 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue pictureRequestQueue() {
-        return new Queue(RabbitMQPublisher.REQUEST_QUEUE, true);
+        return new Queue(RabbitMQConstants.IMAGE_REQUEST_QUEUE, true);
     }
 
     @Bean
     public Queue pictureResponseQueue() {
-        return new Queue(RabbitMQConsumer.RESPONSE_QUEUE, true);
+        return new Queue(RabbitMQConstants.IMAGE_RESPONSE_QUEUE, true);
     }
 
+    @Bean
+    public Queue textRequestQueue() {
+        return new Queue(RabbitMQConstants.TEXT_REQUEST_QUEUE, true);
+    }
+
+    @Bean
+    public Queue textResponseQueue() {
+        return new Queue(RabbitMQConstants.TEXT_RESPONSE_QUEUE, true);
+    }
 }
+

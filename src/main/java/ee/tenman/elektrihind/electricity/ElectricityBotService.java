@@ -7,6 +7,7 @@ import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.digitalocean.DigitalOceanService;
 import ee.tenman.elektrihind.euribor.EuriborRateFetcher;
+import ee.tenman.elektrihind.queue.ChatService;
 import ee.tenman.elektrihind.telegram.TelegramService;
 import ee.tenman.elektrihind.utility.FileToBase64;
 import jakarta.annotation.PostConstruct;
@@ -77,6 +78,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
     public static final Pattern CAR_REGISTRATION_PATTERN = Pattern.compile("^ark\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
+    public static final Pattern CHAT_PATTERN = Pattern.compile("^chat\\s+(.+)$", Pattern.CASE_INSENSITIVE);
     private static final String EURIBOR = "euribor";
     private static final String METRIC = "metric";
     private static final MessageDigest SHA_256_DIGEST;
@@ -122,6 +124,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
     @Resource
     private EuriborRateFetcher euriborRateFetcher;
+
+    @Resource
+    private ChatService chatService;
 
     @Value("${telegram.elektriteemu.token}")
     private String token;
@@ -328,6 +333,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         String messageText = message.getText();
         Matcher matcher = DURATION_PATTERN.matcher(messageText);
         Matcher arkMatcher = CAR_REGISTRATION_PATTERN.matcher(messageText);
+        Matcher chatMatcher = CHAT_PATTERN.matcher(messageText);
 
         boolean showMenu = false;
         if ("/start".equalsIgnoreCase(messageText)) {
@@ -347,7 +353,14 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         } else if (arkMatcher.find()) {
             String regNr = arkMatcher.group(1).toUpperCase();
             search(startTime, chatId, regNr, messageId);
-
+        } else if (chatMatcher.find()) {
+            String text = chatMatcher.group(1);
+            Optional<String> response = chatService.sendMessage(text);
+            if (response.isPresent()) {
+                sendMessageCode(chatId, messageId, response.get());
+            } else {
+                sendMessageCode(chatId, messageId, "Response timeout or Macbook is sleeping.");
+            }
         } else if (messageText.equalsIgnoreCase("reboot")) {
             digitalOceanService.rebootDroplet();
             sendMessageCode(chatId, messageId, "Droplet reboot initiated!");

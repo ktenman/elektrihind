@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class ChatService {
 
-    private static final int TIMEOUT = 10000; // milliseconds
+    private static final int TIMEOUT = 60000; // milliseconds
     private final Map<UUID, CompletableFuture<String>> chatFutures = new ConcurrentHashMap<>();
     @Resource
     private RabbitMQPublisher rabbitMQPublisher;

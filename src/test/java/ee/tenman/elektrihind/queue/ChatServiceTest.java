@@ -16,7 +16,7 @@ class ChatServiceTest {
     @Test
     @Disabled
     void sendMessage() {
-        Optional<String> response = chatService.sendMessage("2+2");
+        Optional<String> response = chatService.sendMessage("2+3");
 
         System.out.println();
     }

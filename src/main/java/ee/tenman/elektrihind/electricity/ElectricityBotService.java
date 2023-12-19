@@ -10,6 +10,7 @@ import ee.tenman.elektrihind.euribor.EuriborRateFetcher;
 import ee.tenman.elektrihind.queue.ChatService;
 import ee.tenman.elektrihind.telegram.TelegramService;
 import ee.tenman.elektrihind.utility.FileToBase64;
+import ee.tenman.elektrihind.utility.TimeUtility;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
@@ -355,7 +356,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             search(startTime, chatId, regNr, messageId);
         } else if (chatMatcher.find()) {
             String text = chatMatcher.group(1);
-            String response = chatService.sendMessage(text).orElse("Response timeout or Macbook is sleeping.");
+            String response = chatService.sendMessage(text).map(t -> t + "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime)).orElse("Response timeout or Macbook is sleeping.");
             sendMessageCode(chatId, messageId, response);
         } else if (messageText.equalsIgnoreCase("reboot")) {
             digitalOceanService.rebootDroplet();

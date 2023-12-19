@@ -356,7 +356,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             search(startTime, chatId, regNr, messageId);
         } else if (chatMatcher.find()) {
             String text = chatMatcher.group(1);
-            String response = chatService.sendMessage(text).map(t -> t + "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime)).orElse("Response timeout or Macbook is sleeping.");
+            String response = chatService.sendMessage(text).map(t -> t + "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime) + " seconds").orElse("Response timeout or Macbook is sleeping.");
             sendMessageCode(chatId, messageId, response);
         } else if (messageText.equalsIgnoreCase("reboot")) {
             digitalOceanService.rebootDroplet();

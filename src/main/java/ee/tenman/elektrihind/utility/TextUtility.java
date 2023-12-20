@@ -12,7 +12,7 @@ public class TextUtility {
             Map.entry("(", "\\("),
             Map.entry(")", "\\)"),
             Map.entry("~", "\\~"),
-            Map.entry("`", "\\`"),
+//            Map.entry("`", "\\`"),
             Map.entry(">", "\\>"),
             Map.entry("#", "\\#"),
             Map.entry("+", "\\+"),

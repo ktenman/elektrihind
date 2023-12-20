@@ -651,8 +651,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             log.warn("Not sending null message to chat: {}", chatId);
             return;
         }
-        text = TextUtility.escapeMarkdown(text);
-
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
         message.setText(text);
@@ -701,7 +699,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 message.setReplyToMessageId(replyToMessageId);
             }
 
-            String messageText = chunk.contains("`") ? chunk : "```\n" + chunk + "\n```";
+            String messageText = "```\n" + chunk + "\n```";
             message.setText(messageText);
 
             try {
@@ -727,7 +725,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         message.enableMarkdown(true);
         message.enableMarkdownV2(true);
         message.setChatId(String.valueOf(chatId));
-        message.setText(text.contains("`") ? text : "```\n" + text + "```");
+        message.setText("```\n" + text + "```");
 
         try {
             execute(message);

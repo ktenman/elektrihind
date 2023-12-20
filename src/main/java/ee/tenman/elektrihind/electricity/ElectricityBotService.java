@@ -258,7 +258,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         }
         String plateNumber = detectedPlate.get();
         InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardForPlateNumber(plateNumber);
-        SendMessage messageWithButton = createMessageWithInlineKeyboard(message, "Detected a potential plate number. Would you like to check it?", inlineKeyboardMarkup);
+        SendMessage messageWithButton = createMessageWithInlineKeyboard(message, cacheService.isAutomaticFetchingEnabled() ?
+                "Detected a plate number: " + plateNumber :
+                "Detected a potential plate number. Would you like to check it?", inlineKeyboardMarkup);
         executeSendMessage(messageWithButton);
         if (cacheService.isAutomaticFetchingEnabled()) {
             search(startTime, message.getChatId(), plateNumber, message.getMessageId());

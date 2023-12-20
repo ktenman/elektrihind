@@ -727,8 +727,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         message.enableMarkdown(true);
         message.enableMarkdownV2(true);
         message.setChatId(String.valueOf(chatId));
-
-        message.setText("```\n" + text + "```");
+        message.setText(text.contains("```") ? text : "```\n" + text + "```");
 
         try {
             execute(message);

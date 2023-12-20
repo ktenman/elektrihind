@@ -32,7 +32,7 @@ public class TwoCaptchaSolverService {
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1000))
     public String solveCaptcha(byte[] captchaImage) {
         MultipartFile multipartFile = new ByteArrayMultipartFile(captchaImage, "file", CAPTCHA_IMAGE_NAME, CAPTCHA_IMAGE_TYPE);
-        Map<String, Object> response = twoCaptchaClient.submitImageCaptcha("post", multipartFile);
+        Map<String, Object> response = twoCaptchaClient.submitImageCaptcha("post", multipartFile, 4, 4, 2);
         String requestId = (String) response.get("request");
         return waitForCaptchaResult(requestId);
     }

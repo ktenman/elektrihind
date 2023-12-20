@@ -22,7 +22,11 @@ public interface TwoCaptchaClient {
     @PostMapping(value = "/in.php", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     Map<String, Object> submitImageCaptcha(
             @RequestPart("method") String method,
-            @RequestPart("file") MultipartFile file
+            @RequestPart("file") MultipartFile file,
+            @RequestPart("min_len") Integer minLen,
+            @RequestPart("max_len") Integer maxLen,
+            @RequestPart("language") Integer language // 0 - not specified, 1 - Cyrillic, 2 - Latin
+
     );
 
     @PostMapping("/in.php")

@@ -256,15 +256,24 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         if (detectedPlate.isEmpty()) {
             return;
         }
+
         String plateNumber = detectedPlate.get();
         InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardForPlateNumber(plateNumber);
-        SendMessage messageWithButton = createMessageWithInlineKeyboard(message, cacheService.isAutomaticFetchingEnabled() ?
+
+        String messageContent = cacheService.isAutomaticFetchingEnabled() ?
                 "Detected a plate number: " + plateNumber :
-                "Detected a potential plate number. Would you like to check it?", inlineKeyboardMarkup);
+                "Detected a potential plate number. Would you like to check it?";
+
+        SendMessage messageWithButton = createMessageWithInlineKeyboard(message, messageContent, inlineKeyboardMarkup);
         executeSendMessage(messageWithButton);
-        if (cacheService.isAutomaticFetchingEnabled()) {
-            search(startTime, message.getChatId(), plateNumber, message.getMessageId());
+        performSearchIfAutoFetchingEnabled(startTime, message, plateNumber);
+    }
+
+    private void performSearchIfAutoFetchingEnabled(AtomicLong startTime, Message message, String plateNumber) {
+        if (!cacheService.isAutomaticFetchingEnabled()) {
+            return;
         }
+        search(startTime, message.getChatId(), plateNumber, message.getMessageId());
     }
 
     private void displayMenu(long chatId) {

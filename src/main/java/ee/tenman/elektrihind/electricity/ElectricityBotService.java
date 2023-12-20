@@ -701,7 +701,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 message.setReplyToMessageId(replyToMessageId);
             }
 
-            String messageText = "```\n" + chunk + "\n```";
+            String messageText = chunk.contains("`") ? chunk : "```\n" + chunk + "\n```";
             message.setText(messageText);
 
             try {

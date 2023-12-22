@@ -115,10 +115,23 @@ public class CarSearchService {
             response.putAll(auto24details);
         }
 
+        if (response.containsKey("Läbisõit")) {
+            response.put("Läbisõit", formatMileage(response.get("Läbisõit")));
+        }
+
         if (response.size() <= 1) {
             return Map.of("Viga", "Andmeid ei leitud '" + regNr + "' kohta");
         }
         return response;
+    }
+
+    private String formatMileage(String mileageStr) {
+        try {
+            int mileage = Integer.parseInt(mileageStr);
+            return mileage + " km";
+        } catch (NumberFormatException e) {
+            return "0 km";
+        }
     }
 
 }

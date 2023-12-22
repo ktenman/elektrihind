@@ -30,7 +30,7 @@ import java.util.concurrent.ExecutorService;
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
 import static com.codeborne.selenide.WebDriverRunner.getWebDriver;
-import static ee.tenman.elektrihind.config.RedisConfig.THIRTY_DAYS_CACHE_1;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_5;
 
 @Service
 @Slf4j
@@ -69,7 +69,7 @@ public class ArkService implements CaptchaSolver {
     }
 
     @SneakyThrows
-    @Cacheable(value = THIRTY_DAYS_CACHE_1, key = "#regNr")
+    @Cacheable(value = ONE_MONTH_CACHE_5, key = "#regNr")
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public Map<String, String> carDetails(String regNr, String captchaToken) {
         log.info("Searching car details for regNr: {}", regNr);

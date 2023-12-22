@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
 import static com.codeborne.selenide.WebDriverRunner.getWebDriver;
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE_1;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_1;
 
 @Service
 @Slf4j
@@ -37,7 +37,7 @@ public class LKFService implements CaptchaSolver {
     private TwoCaptchaSolverService recaptchaSolverService;
 
     @SneakyThrows({InterruptedException.class})
-    @Cacheable(value = ONE_DAY_CACHE_1, key = "#regNr")
+    @Cacheable(value = ONE_MONTH_CACHE_1, key = "#regNr")
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 2000))
     public Map<String, String> carDetails(String regNr, String captchaToken) {
         log.info("Searching lkf car details for regNr: {}", regNr);

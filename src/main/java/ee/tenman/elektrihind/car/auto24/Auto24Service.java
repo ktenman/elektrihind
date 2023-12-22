@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_4;
 
 @Service
 @Slf4j
@@ -50,7 +51,7 @@ public class Auto24Service implements CaptchaSolver {
 
     @SneakyThrows({IOException.class, InterruptedException.class})
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
-    @Cacheable(value = "carPrice", key = "#regNr")
+    @Cacheable(value = ONE_MONTH_CACHE_4, key = "#regNr")
     public LinkedHashMap<String, String> carPrice(String regNr) {
         log.info("Searching car price for regNr: {}", regNr);
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");

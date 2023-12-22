@@ -17,8 +17,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE_2;
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE_4;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_2;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_3;
 
 @Service
 public class CarSearchService {
@@ -40,7 +40,7 @@ public class CarSearchService {
 
     @SneakyThrows
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
-    @Cacheable(value = ONE_DAY_CACHE_2, key = "#regNr")
+    @Cacheable(value = ONE_MONTH_CACHE_2, key = "#regNr")
     public Map<String, String> search(String regNr) {
         CompletableFuture<LinkedHashMap<String, String>> carPriceFuture = CompletableFuture.supplyAsync(() -> auto24Service.carPrice(regNr), fourThreadExecutor);
         CompletableFuture<String> arkCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> arkService.getCaptchaToken(), fourThreadExecutor);
@@ -69,7 +69,7 @@ public class CarSearchService {
 
     @SneakyThrows
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 1500))
-    @Cacheable(value = ONE_DAY_CACHE_4, key = "#regNr")
+    @Cacheable(value = ONE_MONTH_CACHE_3, key = "#regNr")
     public Map<String, String> search2(String regNr) {
         int timeout = 5;
         TimeUnit timeUnit = TimeUnit.MINUTES;

@@ -21,9 +21,13 @@ public class RedisConfig {
     public static final String ONE_DAY_CACHE_2 = "one-day-cache-2";
     public static final String ONE_DAY_CACHE_3 = "one-day-cache-3";
     public static final String ONE_DAY_CACHE_4 = "one-day-cache-44";
+    public static final String ONE_MONTH_CACHE_1 = "one-day-month_1";
+    public static final String ONE_MONTH_CACHE_2 = "one-day-month_2";
+    public static final String ONE_MONTH_CACHE_3 = "one-day-month_3";
+    public static final String ONE_MONTH_CACHE_4 = "one-day-month_4";
+    public static final String ONE_MONTH_CACHE_5 = "thirty-days-cache-3";
     public static final String ONE_YEAR_CACHE_1 = "one-year-cache-1";
     public static final String ONE_YEAR_CACHE_2 = "one-year-cache-2";
-    public static final String THIRTY_DAYS_CACHE_1 = "thirty-days-cache-3";
     public static final String MESSAGE_COUNTS_CACHE = "message-counts-cache-1";
 
     public static final String IMAGE_REQUEST_QUEUE = "image-request-queue";
@@ -50,9 +54,13 @@ public class RedisConfig {
         cacheConfigurations.put(ONE_DAY_CACHE_2, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(1)));
         cacheConfigurations.put(ONE_DAY_CACHE_3, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(1)));
         cacheConfigurations.put(ONE_DAY_CACHE_4, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(1)));
+        cacheConfigurations.put(ONE_MONTH_CACHE_1, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(43830)));
+        cacheConfigurations.put(ONE_MONTH_CACHE_2, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(43830)));
+        cacheConfigurations.put(ONE_MONTH_CACHE_3, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(43830)));
+        cacheConfigurations.put(ONE_MONTH_CACHE_4, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(43830)));
+        cacheConfigurations.put(ONE_MONTH_CACHE_5, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(43830)));
         cacheConfigurations.put(ONE_YEAR_CACHE_1, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(365)));
         cacheConfigurations.put(ONE_YEAR_CACHE_2, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(365)));
-        cacheConfigurations.put(THIRTY_DAYS_CACHE_1, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(30)));
         cacheConfigurations.put(MESSAGE_COUNTS_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(1)));
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig().entryTtl(DEFAULT_TTL);
         return RedisCacheManager.builder(connectionFactory)

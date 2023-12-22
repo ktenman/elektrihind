@@ -117,7 +117,7 @@ public class CarSearchService {
 
         if (response.containsKey("Läbisõit")) {
             String string = response.get("Läbisõit");
-            if (string.equalsIgnoreCase("Maanteeamet")) {
+            if (string.toLowerCase().contains("maanteeamet")) {
                 response.remove("Läbisõit");
             }
         }

@@ -1,7 +1,6 @@
 package ee.tenman.elektrihind.telegram;
 
 import feign.RequestInterceptor;
-import feign.RequestTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.context.annotation.Bean;
@@ -15,17 +14,18 @@ import org.springframework.web.multipart.MultipartFile;
 import static ee.tenman.elektrihind.telegram.TelegramClient.CLIENT_NAME;
 import static ee.tenman.elektrihind.telegram.TelegramClient.CLIENT_URL;
 
-@FeignClient(name = CLIENT_NAME, url = CLIENT_URL)
+@FeignClient(name = CLIENT_NAME, url = CLIENT_URL, configuration = TelegramClient.Configuration.class)
 public interface TelegramClient {
 
     String CLIENT_NAME = "telegramClient";
-    String CLIENT_URL = "https://api.telegram.org";
+    String CLIENT_URL = "https://api.telegram.org/bot${telegram.botToken}/";
 
-    @GetMapping("/bot${telegram.botToken}/sendMessage")
+    @GetMapping("sendMessage")
     String sendMessage(@RequestParam("text") String message);
 
-    @PostMapping(value = "/bot${telegram.botToken}/sendDocument", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "sendDocument", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     String sendDocument(@RequestPart("document") MultipartFile file);
+
 
     class Configuration {
         @Value("${telegram.monitoringChatId}")
@@ -33,7 +33,7 @@ public interface TelegramClient {
 
         @Bean
         public RequestInterceptor requestInterceptor() {
-            return (RequestTemplate requestTemplate) -> requestTemplate.query("chat_id", monitoringChatId);
+            return template -> template.query("chat_id", monitoringChatId);
         }
     }
 

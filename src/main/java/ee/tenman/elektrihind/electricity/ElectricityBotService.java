@@ -85,6 +85,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final String METRIC = "metric";
     private static final MessageDigest SHA_256_DIGEST;
     private static final String SHA256_ALGORITHM = "SHA-256";
+    private static final String REBOOT_COMMAND = "reboot";
 
     static {
         try {
@@ -200,7 +201,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             case "car_plate_query" -> sendMessage(chatId, "Please enter the car plate number with the 'ark' command.");
             case EURIBOR -> sendMessageCode(chatId, euriborRateFetcher.getEuriborRateResponse());
             case METRIC -> sendMessageCode(chatId, getSystemMetrics());
-            case "reboot" -> {
+            case REBOOT_COMMAND -> {
                 digitalOceanService.rebootDroplet();
                 sendMessageCode(chatId, "Droplet reboot initiated!");
             }
@@ -295,7 +296,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         buttonMetric.setCallbackData(METRIC);
 
         InlineKeyboardButton buttonReboot = new InlineKeyboardButton("Reboot");
-        buttonReboot.setCallbackData("reboot");
+        buttonReboot.setCallbackData(REBOOT_COMMAND);
 
         // Adding buttons to the keyboard
         List<InlineKeyboardButton> rowInline1 = new ArrayList<>();
@@ -370,7 +371,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             String text = chatMatcher.group(1);
             String response = chatService.sendMessage(text).map(t -> t + "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime) + " seconds").orElse("Response timeout or Macbook is sleeping.");
             sendMessageCode(chatId, messageId, response);
-        } else if (messageText.equalsIgnoreCase("reboot")) {
+        } else if (messageText.equalsIgnoreCase(REBOOT_COMMAND)) {
             digitalOceanService.rebootDroplet();
             sendMessageCode(chatId, messageId, "Droplet reboot initiated!");
         } else if (matcher.find()) {

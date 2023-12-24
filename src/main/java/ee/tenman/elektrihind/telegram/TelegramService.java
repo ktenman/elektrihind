@@ -29,9 +29,6 @@ public class TelegramService {
     @Autowired
     private TelegramClient telegramClient;
 
-    @Value("${telegram.monitoringChatId}")
-    private String monitoringChatId;
-
     @Value("${telegram.privateChatId}")
     private String privateChatId;
 
@@ -45,7 +42,7 @@ public class TelegramService {
 //        log.info("Message sent to private chat");
 
         log.info("Sending message to Monitoring chat: {}", message);
-        telegramClient.sendMessage(monitoringChatId, message);
+        telegramClient.sendMessage(message);
         log.info("Message sent to Monitoring chat");
     }
 
@@ -112,7 +109,7 @@ public class TelegramService {
             }
         };
 
-        telegramClient.sendDocument(monitoringChatId, multipartFile);
+        telegramClient.sendDocument(multipartFile);
         log.info("CSV sent to Monitoring chat");
     }
 

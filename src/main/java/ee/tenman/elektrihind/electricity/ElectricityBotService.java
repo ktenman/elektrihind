@@ -80,7 +80,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
     public static final Pattern CAR_REGISTRATION_PATTERN = Pattern.compile("^ark\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
-    public static final Pattern CHAT_PATTERN = Pattern.compile("^chat\\s+(.+)$", Pattern.CASE_INSENSITIVE);
+    public static final Pattern CHAT_PATTERN = Pattern.compile("(?s)^chat\\s+(.+)$", Pattern.CASE_INSENSITIVE);
     private static final String EURIBOR = "euribor";
     private static final String METRIC = "metric";
     private static final MessageDigest SHA_256_DIGEST;

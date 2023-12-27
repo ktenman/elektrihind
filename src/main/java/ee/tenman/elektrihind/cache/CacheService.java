@@ -42,7 +42,9 @@ public class CacheService {
     private List<ElectricityPrice> latestPrices = new ArrayList<>();
 
     private Boolean automaticFetchingEnabled = Boolean.FALSE;
+    public static final String AUTOMAKS_KEY = "automaks";
     public static final String AUTOMATIC_FETCHING_KEY = "automaticFetching";
+    private Boolean automaksEnabled = Boolean.FALSE;
 
     @Resource
     private CacheManager cacheManager;
@@ -84,21 +86,37 @@ public class CacheService {
     }
 
     public boolean isAutomaticFetchingEnabled() {
+        return getBooleanFromCache(AUTOMATIC_FETCHING_KEY);
+    }
+
+    public void setAutomaticFetchingEnabled(Boolean automaticFetchingEnabled) {
+        setBooleanInCache(AUTOMATIC_FETCHING_KEY, automaticFetchingEnabled);
+    }
+
+    public boolean isAutomaksEnabled() {
+        return getBooleanFromCache(AUTOMAKS_KEY);
+    }
+
+    public void setAutomaksEnabled(Boolean automaticFetchingEnabled) {
+        setBooleanInCache(AUTOMAKS_KEY, automaticFetchingEnabled);
+    }
+
+    private boolean getBooleanFromCache(String key) {
         Cache cache = cacheManager.getCache(ONE_YEAR_CACHE_1);
-        if (cache != null && cache.get(AUTOMATIC_FETCHING_KEY) != null) {
-            return Optional.ofNullable(cache.get(AUTOMATIC_FETCHING_KEY))
+        if (cache != null && cache.get(key) != null) {
+            return Optional.ofNullable(cache.get(key))
                     .map(Cache.ValueWrapper::get)
                     .map(Boolean.class::cast)
                     .orElse(Boolean.FALSE);
         }
-        return automaticFetchingEnabled;
+        return false;
     }
 
-    public void setAutomaticFetchingEnabled(Boolean automaticFetchingEnabled) {
-        this.automaticFetchingEnabled = automaticFetchingEnabled;
+    private void setBooleanInCache(String key, Boolean value) {
         Cache cache = cacheManager.getCache(ONE_YEAR_CACHE_1);
         if (cache != null) {
-            cache.put(AUTOMATIC_FETCHING_KEY, automaticFetchingEnabled);
+            cache.put(key, value);
         }
     }
+
 }

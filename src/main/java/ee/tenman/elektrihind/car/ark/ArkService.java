@@ -5,6 +5,7 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.twocaptcha.TwoCaptchaSolverService;
 import ee.tenman.elektrihind.utility.CaptchaSolver;
 import jakarta.annotation.Resource;
@@ -44,6 +45,9 @@ public class ArkService implements CaptchaSolver {
 
     @Resource
     private TwoCaptchaSolverService recaptchaSolverService;
+
+    @Resource
+    private CacheService cacheService;
 
     @Override
     public String getCaptchaToken() {
@@ -229,12 +233,14 @@ public class ArkService implements CaptchaSolver {
             carDetails.put(key, value);
         }
 
-        ElementsCollection carTitles = $$(By.className("title"));
-        extractCarDetail(carTitles, "CO2 (NEDC)").ifPresent(s -> carDetails.put("CO2 (NEDC)", s));
-        extractCarDetail(carTitles, "CO2 (WLTP)").ifPresent(s -> carDetails.put("CO2 (WLTP)", s));
-        extractCarDetail(carTitles, "Täismass").ifPresent(s -> carDetails.put("Täismass", s));
-        extractCarDetail(carTitles, "Tühimass").ifPresent(s -> carDetails.put("Tühimass", s));
-        getAutoMaks(carDetails, regNr);
+        if (cacheService.isAutomaksEnabled()) {
+            ElementsCollection carTitles = $$(By.className("title"));
+            extractCarDetail(carTitles, "CO2 (NEDC)").ifPresent(s -> carDetails.put("CO2 (NEDC)", s));
+            extractCarDetail(carTitles, "CO2 (WLTP)").ifPresent(s -> carDetails.put("CO2 (WLTP)", s));
+            extractCarDetail(carTitles, "Täismass").ifPresent(s -> carDetails.put("Täismass", s));
+            extractCarDetail(carTitles, "Tühimass").ifPresent(s -> carDetails.put("Tühimass", s));
+            getAutoMaks(carDetails, regNr);
+        }
 
         log.info("Found car details for regNr: {}", regNr);
 

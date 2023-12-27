@@ -213,6 +213,14 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 cacheService.setAutomaticFetchingEnabled(false);
                 sendMessage(chatId, "Automatic fetching disabled.");
             }
+            case "automaks true" -> {
+                cacheService.setAutomaksEnabled(true);
+                sendMessage(chatId, "Automaks enabled.");
+            }
+            case "automaks false" -> {
+                cacheService.setAutomaksEnabled(false);
+                sendMessage(chatId, "Automaks disabled.");
+            }
             default -> sendMessage(chatId, "Command not recognized.");
         }
     }
@@ -312,10 +320,15 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         InlineKeyboardButton autoMaticFetchingEnablingButton = getAutoMaticFetchingEnablingButton();
         rowInline3.add(autoMaticFetchingEnablingButton);
 
+        List<InlineKeyboardButton> rowInline4 = new ArrayList<>();
+        InlineKeyboardButton automaksEnablingButton = getAutomaksEnablingButton();
+        rowInline4.add(automaksEnablingButton);
+
         // Set the keyboard to the markup
         rowsInline.add(rowInline1);
         rowsInline.add(rowInline2);
         rowsInline.add(rowInline3);
+        rowsInline.add(rowInline4);
         markupInline.setKeyboard(rowsInline);
 
         // Creating a message and setting the markup
@@ -336,6 +349,14 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         boolean automaticFetchingEnabled = cacheService.isAutomaticFetchingEnabled();
         inlineKeyboardButton.setText(automaticFetchingEnabled ? "Disable automatic fetching" : "Enable automatic fetching");
         inlineKeyboardButton.setCallbackData("automaticFetching " + !automaticFetchingEnabled);
+        return inlineKeyboardButton;
+    }
+
+    private InlineKeyboardButton getAutomaksEnablingButton() {
+        InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
+        boolean isAutomaksEnabled = cacheService.isAutomaksEnabled();
+        inlineKeyboardButton.setText(isAutomaksEnabled ? "Disable automaks" : "Enable automaks");
+        inlineKeyboardButton.setCallbackData("automaks " + !isAutomaksEnabled);
         return inlineKeyboardButton;
     }
 

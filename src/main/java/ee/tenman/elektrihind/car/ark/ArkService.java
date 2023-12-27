@@ -86,7 +86,7 @@ public class ArkService implements CaptchaSolver {
     }
 
     public static Map<String, String> getAutoMaks(Map<String, String> carDetails) {
-        log.info("Getting automaks");
+        log.info("Getting automaks for {}", carDetails.get("Mark"));
 
         if (!"sõiduauto".equalsIgnoreCase(carDetails.get("Kategooria"))) {
             log.warn("Skipping. Car is not sõiduauto: {}", carDetails);

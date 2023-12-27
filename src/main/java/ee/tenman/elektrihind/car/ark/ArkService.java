@@ -102,9 +102,9 @@ public class ArkService implements CaptchaSolver {
             return carDetails;
         }
 
-        Optional<String> co2 = Optional.ofNullable(carDetails.get("CO2 (NEDC)"))
+        Optional<String> co2 = Optional.ofNullable(carDetails.get("CO2 (WLTP)"))
                 .map(s -> s.replaceAll("\\D", ""))
-                .or(() -> Optional.ofNullable(carDetails.get("CO2 (WLTP)"))
+                .or(() -> Optional.ofNullable(carDetails.get("CO2 (NEDC)"))
                         .map(s -> s.replaceAll("\\D", "")));
 
         if (co2.isEmpty()) {
@@ -122,7 +122,7 @@ public class ArkService implements CaptchaSolver {
                     .map(s -> s.split(" "))
                     .stream()
                     .flatMap(Arrays::stream)
-                    .map(s -> s.replaceAll("\\D", ""))
+                    .filter(s -> s.matches("\\d{2}") || s.matches("\\d{3}"))
                     .findFirst()
                     .ifPresent(s -> Selenide.$(By.name("vehicle-enginekW")).setValue(s));
 
@@ -132,8 +132,10 @@ public class ArkService implements CaptchaSolver {
                     Selenide.$$(By.tagName("label")).find(Condition.text("diisel")).click();
                 }
             }
-
+        } else if (carDetails.containsKey("CO2 (WLTP)")) {
+            log.info("Leaving default as is. CO2 (WLTP) for {} - {}", carDetails.get("Mark"), regNr);
         } else if (carDetails.containsKey("CO2 (NEDC)")) {
+            log.info("Selecting. Found CO2 (NEDC) for {} - {}", carDetails.get("Mark"), regNr);
             Selenide.$$(By.tagName("label")).find(Condition.text("NEDC")).click();
         }
 

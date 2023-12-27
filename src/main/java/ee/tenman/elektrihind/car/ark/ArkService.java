@@ -10,6 +10,7 @@ import ee.tenman.elektrihind.utility.CaptchaSolver;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.By;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.retry.annotation.Backoff;
@@ -66,6 +67,14 @@ public class ArkService implements CaptchaSolver {
         String token = recaptchaSolverService.solveCaptcha(SITE_KEY, PAGE_URL);
         log.info("Ark captcha solved");
         return token;
+    }
+
+    static Optional<String> extractCarDetail(ElementsCollection elements, String conditionText) {
+        return Optional.of(elements.find(Condition.text(conditionText)))
+                .map(s -> s.sibling(0))
+                .map(SelenideElement::text)
+                .map(s -> s.replace("-", ""))
+                .filter(StringUtils::isNotBlank);
     }
 
     @SneakyThrows
@@ -131,8 +140,16 @@ public class ArkService implements CaptchaSolver {
             carDetails.put(key, value);
         }
         carDetails.remove(REGISTRATION_DOCUMENT);
+
+        ElementsCollection carTitles = $$(By.className("title"));
+
+        extractCarDetail(carTitles, "CO2 (NEDC)").ifPresent(s -> carDetails.put("CO2 (NEDC)", s));
+        extractCarDetail(carTitles, "CO2 (WLTP)").ifPresent(s -> carDetails.put("CO2 (WLTP)", s));
+        extractCarDetail(carTitles, "Täismass").ifPresent(s -> carDetails.put("Täismass", s));
+
         log.info("Found car details for regNr: {}", regNr);
         fourThreadExecutor.submit(Selenide::closeWindow);
         return carDetails;
     }
+
 }

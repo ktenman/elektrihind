@@ -16,13 +16,13 @@ public class FileToBase64 {
     private FileToBase64() {
     }
 
-    public static String encodeToBase64(String filePath) throws IOException {
+    public static String encodeToBase64(String filePath) {
         try {
             return encodeToBase64(Files.readAllBytes(Paths.get(filePath)));
         } catch (IOException e) {
             log.error("Error reading file: {}", filePath, e);
-            throw new IOException("Error reading file: " + filePath, e);
         }
+        return "";
     }
 
     public static String encodeToBase64(byte[] fileContent) {

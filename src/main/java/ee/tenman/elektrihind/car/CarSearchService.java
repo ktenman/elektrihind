@@ -23,6 +23,8 @@ import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_3;
 @Service
 public class CarSearchService {
 
+    private static final String REGISTRATION_DOCUMENT = "Registreerimistunnistus";
+
     @Resource
     private ArkService arkService;
 
@@ -37,6 +39,17 @@ public class CarSearchService {
 
     @Resource(name = "fourThreadExecutor")
     private ExecutorService fourThreadExecutor;
+
+    private static void removeRedundantInformation(Map<String, String> response) {
+        if (response.isEmpty()) {
+            return;
+        }
+        response.remove(REGISTRATION_DOCUMENT);
+        response.remove("Täismass");
+        response.remove("Tühimass");
+        response.remove("CO2 (NEDC)");
+        response.remove("CO2 (WLTP)");
+    }
 
     @SneakyThrows
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
@@ -63,6 +76,8 @@ public class CarSearchService {
         String lkfCaptchaToken = lkfCaptchaTokenFuture.get();
         Map<String, String> crashes = lkfService.carDetails(regNr, lkfCaptchaToken);
         response.putAll(crashes);
+
+        removeRedundantInformation(response);
 
         return response;
     }
@@ -125,6 +140,9 @@ public class CarSearchService {
         if (response.size() <= 1) {
             return Map.of("Viga", "Andmeid ei leitud '" + regNr + "' kohta");
         }
+
+        removeRedundantInformation(response);
+
         return response;
     }
 

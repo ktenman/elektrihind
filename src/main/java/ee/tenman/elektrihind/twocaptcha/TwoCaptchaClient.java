@@ -2,6 +2,7 @@ package ee.tenman.elektrihind.twocaptcha;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.context.annotation.Bean;
@@ -48,6 +49,9 @@ public interface TwoCaptchaClient {
 
         @Bean
         public RequestInterceptor requestInterceptor() {
+            if (StringUtils.isBlank(apiKey)) {
+                throw new RuntimeException("2Captcha API key not provided. Please provide a key in the 'twocaptcha.key' property.");
+            }
             return (RequestTemplate requestTemplate) -> {
                 requestTemplate.query("key", apiKey);
                 requestTemplate.query("json", "1");

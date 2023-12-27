@@ -5,11 +5,13 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import ee.tenman.elektrihind.car.automaks.AutoMaksService;
 import ee.tenman.elektrihind.twocaptcha.TwoCaptchaSolverService;
 import ee.tenman.elektrihind.utility.CaptchaSolver;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.By;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.retry.annotation.Backoff;
@@ -38,10 +40,12 @@ public class ArkService implements CaptchaSolver {
 
     private static final String SITE_KEY = "6LepmygUAAAAAJB-Oalk-YSrlPj1dilm95QRY66J";
     private static final String PAGE_URL = "https://eteenindus.mnt.ee/public/soidukTaustakontroll.jsf";
-    private static final String REGISTRATION_DOCUMENT = "Registreerimistunnistus";
 
     @Resource(name = "fourThreadExecutor")
     private ExecutorService fourThreadExecutor;
+
+    @Resource
+    private AutoMaksService autoMaksService;
 
     @Resource
     private TwoCaptchaSolverService recaptchaSolverService;
@@ -68,10 +72,21 @@ public class ArkService implements CaptchaSolver {
         return token;
     }
 
+    static Optional<String> extractCarDetail(ElementsCollection elements, String conditionText) {
+        return Optional.of(elements.find(Condition.text(conditionText)))
+                .map(s -> s.sibling(0))
+                .map(SelenideElement::text)
+                .map(s -> s.replace("-", ""))
+                .filter(StringUtils::isNotBlank);
+    }
+
     @SneakyThrows
     @Cacheable(value = ONE_MONTH_CACHE_5, key = "#regNr")
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public Map<String, String> carDetails(String regNr, String captchaToken) {
+        if (StringUtils.isBlank(captchaToken)) {
+            throw new RuntimeException("Captcha token is blank");
+        }
         log.info("Searching car details for regNr: {}", regNr);
         Selenide.open(PAGE_URL);
         getWebDriver().manage().window().maximize();
@@ -119,8 +134,8 @@ public class ArkService implements CaptchaSolver {
         ElementsCollection rows = Selenide.$(By.className("asset-details")).findAll(By.tagName("tr"));
         Map<String, String> carDetails = new LinkedHashMap<>();
 
-        carDetails.put("Mark", carName + "\n");
-        carDetails.put("Vin", vin + "\n");
+        carDetails.put("Mark", carName);
+        carDetails.put("Vin", vin);
         if (logo != null) {
             carDetails.put("Logo", logo);
         }
@@ -130,9 +145,23 @@ public class ArkService implements CaptchaSolver {
             String value = td.get(1).getText();
             carDetails.put(key, value);
         }
-        carDetails.remove(REGISTRATION_DOCUMENT);
+
+        ElementsCollection carTitles = $$(By.className("title"));
+
+        extractCarDetail(carTitles, "CO2 (NEDC)").ifPresent(s -> carDetails.put("CO2 (NEDC)", s));
+        extractCarDetail(carTitles, "CO2 (WLTP)").ifPresent(s -> carDetails.put("CO2 (WLTP)", s));
+        extractCarDetail(carTitles, "Täismass").ifPresent(s -> carDetails.put("Täismass", s));
+        extractCarDetail(carTitles, "Tühimass").ifPresent(s -> carDetails.put("Tühimass", s));
+
+        try {
+            autoMaksService.getAutoMaks(carDetails);
+        } catch (Exception e) {
+            log.error("Error while getting autoMaks", e);
+        }
+
         log.info("Found car details for regNr: {}", regNr);
         fourThreadExecutor.submit(Selenide::closeWindow);
         return carDetails;
     }
+
 }

@@ -17,11 +17,6 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -48,20 +43,6 @@ public class ArkService implements CaptchaSolver {
     @Resource
     private TwoCaptchaSolverService recaptchaSolverService;
 
-    public static void downloadImage(String imageUrl, String destinationFile) throws IOException {
-        try (InputStream in = new BufferedInputStream(new URL(imageUrl).openStream());
-             FileOutputStream fileOutputStream = new FileOutputStream(destinationFile)) {
-            byte dataBuffer[] = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
-                fileOutputStream.write(dataBuffer, 0, bytesRead);
-            }
-        } catch (IOException e) {
-            // handle exception
-            throw e;
-        }
-    }
-
     @Override
     public String getCaptchaToken() {
         log.info("Solving ark captcha");
@@ -70,7 +51,7 @@ public class ArkService implements CaptchaSolver {
         return token;
     }
 
-    static Optional<String> extractCarDetail(ElementsCollection elements, String conditionText) {
+    private Optional<String> extractCarDetail(ElementsCollection elements, String conditionText) {
         return Optional.of(elements.find(Condition.text(conditionText)))
                 .map(s -> s.sibling(0))
                 .map(SelenideElement::text)
@@ -78,14 +59,14 @@ public class ArkService implements CaptchaSolver {
                 .filter(StringUtils::isNotBlank);
     }
 
-    private static void parseKeyValuePairs(Map<String, String> carDetails, String input) {
+    private void parseKeyValuePairs(Map<String, String> carDetails, String input) {
         String[] lines = input.split("\n");
         for (int i = 0; i < lines.length; i += 2) {
             carDetails.put(lines[i], lines[i + 1]);
         }
     }
 
-    public static Map<String, String> getAutoMaks(Map<String, String> carDetails) {
+    private Map<String, String> getAutoMaks(Map<String, String> carDetails) {
         log.info("Getting automaks for {}", carDetails.get("Mark"));
 
         if (!"sõiduauto".equalsIgnoreCase(carDetails.get("Kategooria"))) {

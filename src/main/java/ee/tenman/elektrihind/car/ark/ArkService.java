@@ -5,6 +5,7 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import ee.tenman.elektrihind.car.automaks.AutoMaksService;
 import ee.tenman.elektrihind.twocaptcha.TwoCaptchaSolverService;
 import ee.tenman.elektrihind.utility.CaptchaSolver;
 import jakarta.annotation.Resource;
@@ -27,6 +28,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
@@ -149,9 +154,29 @@ public class ArkService implements CaptchaSolver {
         extractCarDetail(carTitles, "Täismass").ifPresent(s -> carDetails.put("Täismass", s));
         extractCarDetail(carTitles, "Tühimass").ifPresent(s -> carDetails.put("Tühimass", s));
 
+        addAutomaks(carDetails);
+
         log.info("Found car details for regNr: {}", regNr);
+
         fourThreadExecutor.submit(Selenide::closeWindow);
         return carDetails;
+    }
+
+    private void addAutomaks(Map<String, String> response) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<?> future = executor.submit(() -> {
+                log.info("Getting automaks");
+                AutoMaksService.getAutoMaks(response);
+            });
+            future.get(30, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            log.error("The operation timed out after 30 seconds", e);
+        } catch (Exception e) {
+            log.error("Error while getting automaks", e);
+        } finally {
+            executor.shutdownNow();  // Ensure the executor is properly shut down
+        }
     }
 
 }

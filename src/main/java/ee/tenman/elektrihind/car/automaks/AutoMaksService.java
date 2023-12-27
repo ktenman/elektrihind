@@ -6,13 +6,11 @@ import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
-import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 
-@Service
 @Slf4j
 public class AutoMaksService {
 
@@ -25,7 +23,7 @@ public class AutoMaksService {
         }
     }
 
-    public Map<String, String> getAutoMaks(Map<String, String> carDetails) {
+    public static Map<String, String> getAutoMaks(Map<String, String> carDetails) {
         log.info("Getting automaks");
 
         if (!"sõiduauto".equalsIgnoreCase(carDetails.get("Kategooria"))) {

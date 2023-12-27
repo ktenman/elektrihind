@@ -2,7 +2,6 @@ package ee.tenman.elektrihind.car;
 
 import ee.tenman.elektrihind.car.ark.ArkService;
 import ee.tenman.elektrihind.car.auto24.Auto24Service;
-import ee.tenman.elektrihind.car.automaks.AutoMaksService;
 import ee.tenman.elektrihind.car.lkf.LKFService;
 import ee.tenman.elektrihind.car.scrapeninja.ScrapeninjaService;
 import jakarta.annotation.Resource;
@@ -17,10 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_2;
 import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_3;
@@ -42,9 +38,6 @@ public class CarSearchService {
 
     @Resource
     private ScrapeninjaService scrapeninjaService;
-
-    @Resource
-    private AutoMaksService autoMaksService;
 
     @Resource(name = "fourThreadExecutor")
     private ExecutorService fourThreadExecutor;
@@ -85,8 +78,6 @@ public class CarSearchService {
         String lkfCaptchaToken = lkfCaptchaTokenFuture.get();
         Map<String, String> crashes = lkfService.carDetails(regNr, lkfCaptchaToken);
         response.putAll(crashes);
-
-        addAutomaks(response);
 
         removeRedundantInformation(response);
 
@@ -152,28 +143,9 @@ public class CarSearchService {
             return Map.of("Viga", "Andmeid ei leitud '" + regNr + "' kohta");
         }
 
-        addAutomaks(response);
-
         removeRedundantInformation(response);
 
         return response;
-    }
-
-    private void addAutomaks(Map<String, String> response) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        try {
-            Future<?> future = executor.submit(() -> {
-                log.info("Getting automaks");
-                autoMaksService.getAutoMaks(response);
-            });
-            future.get(30, TimeUnit.SECONDS);
-        } catch (TimeoutException e) {
-            log.error("The operation timed out after 30 seconds", e);
-        } catch (Exception e) {
-            log.error("Error while getting automaks", e);
-        } finally {
-            executor.shutdownNow();  // Ensure the executor is properly shut down
-        }
     }
 
 }

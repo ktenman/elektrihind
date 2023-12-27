@@ -23,6 +23,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
@@ -91,11 +93,7 @@ public class ArkService implements CaptchaSolver {
         }
 
         Optional<String> taismass = Optional.ofNullable(carDetails.get("Täismass"))
-                .map(s -> s.split(" "))
-                .stream()
-                .flatMap(Arrays::stream)
-                .map(s -> s.replaceAll("\\D", ""))
-                .findFirst();
+                .map(this::extractNumericValue);
 
         if (taismass.isEmpty()) {
             log.warn("Could not find taismass from car details: {}", carDetails);
@@ -103,27 +101,18 @@ public class ArkService implements CaptchaSolver {
         }
 
         Optional<String> co2 = Optional.ofNullable(carDetails.get("CO2 (WLTP)"))
-                .map(s -> s.replaceAll("\\D", ""))
-                .or(() -> Optional.ofNullable(carDetails.get("CO2 (NEDC)"))
-                        .map(s -> s.replaceAll("\\D", "")));
+                .map(this::extractNumericValue)
+                .or(() -> Optional.ofNullable(carDetails.get("CO2 (NEDC)")).map(this::extractNumericValue));
 
         if (co2.isEmpty()) {
             Selenide.$$(By.tagName("label")).find(Condition.text("puudub")).click();
 
             Optional.ofNullable(carDetails.get("Tühimass"))
-                    .map(s -> s.split(" "))
-                    .stream()
-                    .flatMap(Arrays::stream)
-                    .map(s -> s.replaceAll("\\D", ""))
-                    .findFirst()
+                    .map(this::extractNumericValue)
                     .ifPresent(s -> Selenide.$(By.name("empty-mass")).setValue(s));
 
             Optional.ofNullable(carDetails.get("Mootori võimsus"))
-                    .map(s -> s.split(" "))
-                    .stream()
-                    .flatMap(Arrays::stream)
-                    .filter(s -> s.matches("\\d{2}") || s.matches("\\d{3}"))
-                    .findFirst()
+                    .map(this::extractNumericValue)
                     .ifPresent(s -> Selenide.$(By.name("vehicle-enginekW")).setValue(s));
 
             if (carDetails.containsKey("Kütus")) {
@@ -146,15 +135,11 @@ public class ArkService implements CaptchaSolver {
 
         log.info("Retrieving information for automaks for {} - {}", carDetails.get("Mark"), regNr);
 
-        Selenide.sleep(4000);
+        Selenide.sleep(3000);
 
         log.info("Retrieved information for automaks for {} - {}", carDetails.get("Mark"), regNr);
 
-        ElementsCollection divs = Selenide.$$(By.tagName("div"));
-
-        SelenideElement aastamaks = divs.filter(Condition.text("Aastamaks"))
-                .filter(Condition.text("Registreerimistasu"))
-                .last();
+        SelenideElement aastamaks = Selenide.$(By.className("results-container"));
         if (aastamaks.exists()) {
             Optional.of(aastamaks).map(SelenideElement::text)
                     .ifPresent(s -> parseKeyValuePairs(carDetails, s));
@@ -163,6 +148,20 @@ public class ArkService implements CaptchaSolver {
         log.info("Found information for automaks for {} - {}", carDetails.get("Mark"), regNr);
 
         return carDetails;
+    }
+
+    private String extractNumericValue(String string) {
+        if (string == null || !string.contains(" ")) {
+            return null;
+        }
+
+        Pattern pattern = Pattern.compile("\\b\\d{2,4}\\b");
+        Matcher matcher = pattern.matcher(string);
+        if (matcher.find()) {
+            return matcher.group();
+        }
+
+        return null;
     }
 
     @SneakyThrows
@@ -206,7 +205,6 @@ public class ArkService implements CaptchaSolver {
                 .map(strings -> strings[1])
                 .orElseThrow(() -> new RuntimeException("VIN not found"));
 
-
         SelenideElement logoElement = Selenide.$(By.className("asset-image"));
         String logo = null;
         if (logoElement.exists()) {
@@ -232,12 +230,10 @@ public class ArkService implements CaptchaSolver {
         }
 
         ElementsCollection carTitles = $$(By.className("title"));
-
         extractCarDetail(carTitles, "CO2 (NEDC)").ifPresent(s -> carDetails.put("CO2 (NEDC)", s));
         extractCarDetail(carTitles, "CO2 (WLTP)").ifPresent(s -> carDetails.put("CO2 (WLTP)", s));
         extractCarDetail(carTitles, "Täismass").ifPresent(s -> carDetails.put("Täismass", s));
         extractCarDetail(carTitles, "Tühimass").ifPresent(s -> carDetails.put("Tühimass", s));
-
         getAutoMaks(carDetails, regNr);
 
         log.info("Found car details for regNr: {}", regNr);

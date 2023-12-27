@@ -66,8 +66,8 @@ public class ArkService implements CaptchaSolver {
         }
     }
 
-    private Map<String, String> getAutoMaks(Map<String, String> carDetails) {
-        log.info("Getting automaks for {}", carDetails.get("Mark"));
+    private Map<String, String> getAutoMaks(Map<String, String> carDetails, String regNr) {
+        log.info("Getting automaks for {} - {}", carDetails.get("Mark"), regNr);
 
         if (!"sõiduauto".equalsIgnoreCase(carDetails.get("Kategooria"))) {
             log.warn("Skipping. Car is not sõiduauto: {}", carDetails);
@@ -75,6 +75,8 @@ public class ArkService implements CaptchaSolver {
         }
 
         Selenide.open(AUTO_MAKS_URL);
+
+        log.info("Filling in information for {} - {}", carDetails.get("Mark"), regNr);
 
         Optional<String> year = Optional.ofNullable(carDetails.get("Esmane registreerimine"))
                 .map(s -> s.split("\\."))
@@ -140,18 +142,23 @@ public class ArkService implements CaptchaSolver {
         co2.ifPresent(s -> Selenide.$(By.name("co2-value")).setValue(s));
         Selenide.$(By.className("tax-submit")).click();
 
-        Selenide.sleep(5000);
+        log.info("Retrieving information for automaks for {} - {}", carDetails.get("Mark"), regNr);
+
+        Selenide.sleep(4000);
+
+        log.info("Retrieved information for automaks for {} - {}", carDetails.get("Mark"), regNr);
 
         ElementsCollection divs = Selenide.$$(By.tagName("div"));
 
-        SelenideElement aastamaks = divs
-                .filter(Condition.text("Aastamaks"))
+        SelenideElement aastamaks = divs.filter(Condition.text("Aastamaks"))
                 .filter(Condition.text("Registreerimistasu"))
                 .last();
         if (aastamaks.exists()) {
             Optional.of(aastamaks).map(SelenideElement::text)
                     .ifPresent(s -> parseKeyValuePairs(carDetails, s));
         }
+
+        log.info("Found information for automaks for {} - {}", carDetails.get("Mark"), regNr);
 
         return carDetails;
     }
@@ -229,7 +236,7 @@ public class ArkService implements CaptchaSolver {
         extractCarDetail(carTitles, "Täismass").ifPresent(s -> carDetails.put("Täismass", s));
         extractCarDetail(carTitles, "Tühimass").ifPresent(s -> carDetails.put("Tühimass", s));
 
-        getAutoMaks(carDetails);
+        getAutoMaks(carDetails, regNr);
 
         log.info("Found car details for regNr: {}", regNr);
 

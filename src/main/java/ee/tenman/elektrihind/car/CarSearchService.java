@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -47,9 +48,6 @@ public class CarSearchService {
 
     @Resource(name = "fourThreadExecutor")
     private ExecutorService fourThreadExecutor;
-
-    @Resource(name = "singleThreadExecutor")
-    private ExecutorService singleThreadExecutor;
 
     private static void removeRedundantInformation(Map<String, String> response) {
         if (response.isEmpty()) {
@@ -88,19 +86,7 @@ public class CarSearchService {
         Map<String, String> crashes = lkfService.carDetails(regNr, lkfCaptchaToken);
         response.putAll(crashes);
 
-        try {
-            Future<?> future = singleThreadExecutor.submit(() -> {
-                log.info("Getting automaks");
-                autoMaksService.getAutoMaks(response);
-            });
-            future.get(10, TimeUnit.SECONDS);
-        } catch (TimeoutException e) {
-            log.error("The operation timed out after 10 seconds", e);
-        } catch (Exception e) {
-            log.error("Error while getting automaks", e);
-        } finally {
-            singleThreadExecutor.shutdownNow();  // Ensure the executor is properly shut down
-        }
+        addAutomaks(response);
 
         removeRedundantInformation(response);
 
@@ -166,9 +152,28 @@ public class CarSearchService {
             return Map.of("Viga", "Andmeid ei leitud '" + regNr + "' kohta");
         }
 
+        addAutomaks(response);
+
         removeRedundantInformation(response);
 
         return response;
+    }
+
+    private void addAutomaks(Map<String, String> response) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<?> future = executor.submit(() -> {
+                log.info("Getting automaks");
+                autoMaksService.getAutoMaks(response);
+            });
+            future.get(30, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            log.error("The operation timed out after 10 seconds", e);
+        } catch (Exception e) {
+            log.error("Error while getting automaks", e);
+        } finally {
+            executor.shutdownNow();  // Ensure the executor is properly shut down
+        }
     }
 
 }

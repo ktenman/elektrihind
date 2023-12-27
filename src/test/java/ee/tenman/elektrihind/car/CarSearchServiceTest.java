@@ -1,6 +1,5 @@
 package ee.tenman.elektrihind.car;
 
-import com.codeborne.selenide.Configuration;
 import ee.tenman.elektrihind.IntegrationTest;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Disabled;
@@ -29,10 +28,8 @@ class CarSearchServiceTest {
     @Test
     @Disabled
     void search2() {
-//        Configuration.browser = "chrome";
-        Configuration.headless = false;
         long start = System.nanoTime();
-        Map<String, String> search = carSearchService.search2("57DV");
+        Map<String, String> search = carSearchService.search2("876BCH");
 
         long end = System.nanoTime();
         double duration = (end - start) / 1_000_000_000.0;

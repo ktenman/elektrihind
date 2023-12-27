@@ -112,6 +112,8 @@ public class AutoMaksService {
                     .ifPresent(s -> parseKeyValuePairs(carDetails, s));
         }
 
+        Selenide.closeWindow();
+
         return carDetails;
     }
 

@@ -168,7 +168,7 @@ public class CarSearchService {
             });
             future.get(30, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
-            log.error("The operation timed out after 10 seconds", e);
+            log.error("The operation timed out after 30 seconds", e);
         } catch (Exception e) {
             log.error("Error while getting automaks", e);
         } finally {

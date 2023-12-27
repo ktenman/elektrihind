@@ -29,7 +29,7 @@ class CarSearchServiceTest {
     @Disabled
     void search2() {
         long start = System.nanoTime();
-        Map<String, String> search = carSearchService.search2("876BCH");
+        Map<String, String> search = carSearchService.search2("011BKM");
 
         long end = System.nanoTime();
         double duration = (end - start) / 1_000_000_000.0;

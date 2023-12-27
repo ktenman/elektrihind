@@ -26,6 +26,7 @@ import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_3;
 public class CarSearchService {
 
     private static final String REGISTRATION_DOCUMENT = "Registreerimistunnistus";
+    private static final String AUTO_MAKS_URL = "https://www.err.ee/1609128527/uuendatud-kalkulaator-vaata-kui-suur-tuleb-sinu-automaks";
 
     @Resource
     private ArkService arkService;

@@ -2,10 +2,12 @@ package ee.tenman.elektrihind.car;
 
 import ee.tenman.elektrihind.car.ark.ArkService;
 import ee.tenman.elektrihind.car.auto24.Auto24Service;
+import ee.tenman.elektrihind.car.automaks.AutoMaksService;
 import ee.tenman.elektrihind.car.lkf.LKFService;
 import ee.tenman.elektrihind.car.scrapeninja.ScrapeninjaService;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -15,12 +17,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_2;
 import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_3;
 
 @Service
+@Slf4j
 public class CarSearchService {
 
     private static final String REGISTRATION_DOCUMENT = "Registreerimistunnistus";
@@ -37,8 +42,14 @@ public class CarSearchService {
     @Resource
     private ScrapeninjaService scrapeninjaService;
 
+    @Resource
+    private AutoMaksService autoMaksService;
+
     @Resource(name = "fourThreadExecutor")
     private ExecutorService fourThreadExecutor;
+
+    @Resource(name = "singleThreadExecutor")
+    private ExecutorService singleThreadExecutor;
 
     private static void removeRedundantInformation(Map<String, String> response) {
         if (response.isEmpty()) {
@@ -76,6 +87,20 @@ public class CarSearchService {
         String lkfCaptchaToken = lkfCaptchaTokenFuture.get();
         Map<String, String> crashes = lkfService.carDetails(regNr, lkfCaptchaToken);
         response.putAll(crashes);
+
+        try {
+            Future<?> future = singleThreadExecutor.submit(() -> {
+                log.info("Getting automaks");
+                autoMaksService.getAutoMaks(response);
+            });
+            future.get(10, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            log.error("The operation timed out after 10 seconds", e);
+        } catch (Exception e) {
+            log.error("Error while getting automaks", e);
+        } finally {
+            singleThreadExecutor.shutdownNow();  // Ensure the executor is properly shut down
+        }
 
         removeRedundantInformation(response);
 

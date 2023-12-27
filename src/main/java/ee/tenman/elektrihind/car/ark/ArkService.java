@@ -5,7 +5,6 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
-import ee.tenman.elektrihind.car.automaks.AutoMaksService;
 import ee.tenman.elektrihind.twocaptcha.TwoCaptchaSolverService;
 import ee.tenman.elektrihind.utility.CaptchaSolver;
 import jakarta.annotation.Resource;
@@ -43,9 +42,6 @@ public class ArkService implements CaptchaSolver {
 
     @Resource(name = "fourThreadExecutor")
     private ExecutorService fourThreadExecutor;
-
-    @Resource
-    private AutoMaksService autoMaksService;
 
     @Resource
     private TwoCaptchaSolverService recaptchaSolverService;
@@ -152,12 +148,6 @@ public class ArkService implements CaptchaSolver {
         extractCarDetail(carTitles, "CO2 (WLTP)").ifPresent(s -> carDetails.put("CO2 (WLTP)", s));
         extractCarDetail(carTitles, "Täismass").ifPresent(s -> carDetails.put("Täismass", s));
         extractCarDetail(carTitles, "Tühimass").ifPresent(s -> carDetails.put("Tühimass", s));
-
-        try {
-            autoMaksService.getAutoMaks(carDetails);
-        } catch (Exception e) {
-            log.error("Error while getting autoMaks", e);
-        }
 
         log.info("Found car details for regNr: {}", regNr);
         fourThreadExecutor.submit(Selenide::closeWindow);

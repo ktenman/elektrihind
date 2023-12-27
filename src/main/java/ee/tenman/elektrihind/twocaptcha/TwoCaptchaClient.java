@@ -2,16 +2,20 @@ package ee.tenman.elektrihind.twocaptcha;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
+import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.Map;
 
 @FeignClient(name = TwoCaptchaClient.CLIENT_NAME, url = TwoCaptchaClient.CLIENT_URL, configuration = TwoCaptchaClient.Configuration.class)
@@ -43,15 +47,25 @@ public interface TwoCaptchaClient {
             @RequestParam("id") String requestId
     );
 
+    @Slf4j
     class Configuration {
         @Value("${twocaptcha.key}")
         private String apiKey;
 
+        @Resource
+        private Environment environment;
+
         @Bean
         public RequestInterceptor requestInterceptor() {
-            if (StringUtils.isBlank(apiKey)) {
+            String[] activeProfiles = environment.getActiveProfiles();
+            boolean isTestProfileActive = Arrays.asList(activeProfiles).contains("test");
+
+            if (!isTestProfileActive && StringUtils.isBlank(apiKey)) {
                 throw new RuntimeException("2Captcha API key not provided. Please provide a key in the 'twocaptcha.key' property.");
+            } else if (StringUtils.isBlank(apiKey)) {
+                log.warn("2Captcha API key not provided. Please provide a key in the 'twocaptcha.key' property.");
             }
+
             return (RequestTemplate requestTemplate) -> {
                 requestTemplate.query("key", apiKey);
                 requestTemplate.query("json", "1");

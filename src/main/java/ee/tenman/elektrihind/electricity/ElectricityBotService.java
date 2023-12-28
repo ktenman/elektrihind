@@ -89,6 +89,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final MessageDigest SHA_256_DIGEST;
     private static final String SHA256_ALGORITHM = "SHA-256";
     private static final String REBOOT_COMMAND = "reboot";
+    private volatile boolean stopUpdatingMessage = false;
 
     static {
         try {
@@ -407,18 +408,34 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     private void search(AtomicLong startTime, long chatId, String regNr, Integer originalMessageId) {
+        stopUpdatingMessage = false; // Reset the flag
         if (startTime.get() == 0) {
             startTime.set(System.nanoTime());
         }
 
         Message message = sendMessageCode(chatId, originalMessageId, "Fetching car details for registration plate " + regNr + "...");
+        new Thread(() -> {
+            try {
+                int count = 0;
+                while (!stopUpdatingMessage) {
+                    TimeUnit.SECONDS.sleep(15);
+                    if (!stopUpdatingMessage) {
+                        count++;
+                        editMessage(chatId, message.getMessageId(), "Fetching car details for registration plate " + regNr + "...".repeat(count));
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.error("Message updating thread interrupted", e);
+            }
+        }).start();
 
         CompletableFuture.runAsync(() -> {
                     CarSearchUpdateListener listener = (data, isFinalUpdate) -> handleCarSearchUpdate(chatId, data, isFinalUpdate, message.getMessageId(), startTime);
                     Map<String, String> carSearchData = carSearchService.search2(regNr, listener);
                     handleCarSearchUpdate(chatId, carSearchData, true, message.getMessageId(), startTime);
                 }, singleThreadExecutor)
-                .orTimeout(15, TimeUnit.MINUTES)
+                .orTimeout(20, TimeUnit.MINUTES)
                 .exceptionally(throwable -> {
                     if (throwable.getCause() instanceof TimeoutException) {
                         log.error("Fetching car details timed out for regNr: {}", throwable.getMessage());
@@ -457,6 +474,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
 
     private void handleCarSearchUpdate(long chatId, Map<String, String> carDetails, boolean isFinalUpdate, Integer messageId, AtomicLong startTime) {
+        stopUpdatingMessage = true;
         String updateText = formatCarSearchData(carDetails);
 
         try {

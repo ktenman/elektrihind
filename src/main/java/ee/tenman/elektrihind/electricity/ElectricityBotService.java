@@ -67,6 +67,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -409,23 +410,23 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             startTime.set(System.nanoTime());
         }
 
-        // Send an initial reply to the original message
-        SendMessage initialReply = new SendMessage();
-        initialReply.setChatId(String.valueOf(chatId));
-        initialReply.setText("Fetching car details for registration plate #: " + regNr);
-        if (originalMessageId != null) {
-            initialReply.setReplyToMessageId(originalMessageId);
-        }
-        try {
-            Message sentMessage = execute(initialReply);
-            int replyMessageId = sentMessage.getMessageId(); // ID of the reply for future updates
+        sendMessage(chatId, "Fetching car details for registration plate " + regNr);
 
-            CarSearchUpdateListener listener = (data, isFinalUpdate) -> handleCarSearchUpdate(chatId, data, isFinalUpdate, replyMessageId, startTime);
-
-            carSearchService.search2(regNr, listener);
-        } catch (TelegramApiException e) {
-            log.error("Error sending initial reply message: {}", e.getMessage());
-        }
+        CompletableFuture.runAsync(() -> {
+                    CarSearchUpdateListener listener = (data, isFinalUpdate) -> handleCarSearchUpdate(chatId, data, isFinalUpdate, originalMessageId, startTime);
+                    carSearchService.search2(regNr, listener);
+                }, singleThreadExecutor)
+                .orTimeout(15, TimeUnit.MINUTES)
+                .exceptionally(throwable -> {
+                    if (throwable.getCause() instanceof TimeoutException) {
+                        log.error("Fetching car details timed out for regNr: {}", throwable.getMessage());
+                        sendMessageWithRetryButton(chatId, "An error occurred while fetching car details.", regNr);
+                    } else {
+                        log.error("Error fetching car details: {}", throwable.getLocalizedMessage());
+                        sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
+                    }
+                    return null;
+                });
     }
 
     private void editMessage(long chatId, int messageId, String newText) {
@@ -453,8 +454,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
 
-    private void handleCarSearchUpdate(long chatId, Map<String, String> data, boolean isFinalUpdate, Integer messageId, AtomicLong startTime) {
-        String updateText = formatCarSearchData(data);
+    private void handleCarSearchUpdate(long chatId, Map<String, String> carDetails, boolean isFinalUpdate, Integer messageId, AtomicLong startTime) {
+        String updateText = formatCarSearchData(carDetails);
 
         try {
             if (isFinalUpdate) {

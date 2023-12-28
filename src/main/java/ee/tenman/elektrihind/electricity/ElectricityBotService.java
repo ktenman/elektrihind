@@ -285,7 +285,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 "Detected a potential plate number. Would you like to check it?";
 
         SendMessage messageWithButton = createMessageWithInlineKeyboard(message, messageContent, inlineKeyboardMarkup);
-        executeSendMessage(messageWithButton);
+        if (!cacheService.isAutomaticFetchingEnabled()) {
+            executeSendMessage(messageWithButton);
+        }
         performSearchIfAutoFetchingEnabled(startTime, message, plateNumber);
     }
 
@@ -297,6 +299,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     private void displayMenu(long chatId) {
+        ensureEditLimit();
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
 
@@ -410,7 +413,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages
         if (showMenu) {
-            CompletableFuture.runAsync(() -> displayMenu(chatId), singleThreadExecutor);
+            displayMenu(chatId);
         }
     }
 
@@ -433,8 +436,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 .exceptionally(throwable -> {
                     if (throwable.getCause() instanceof TimeoutException) {
                         log.error("Fetching car details timed out for regNr: {}", throwable.getMessage());
+                        messageUpdateFlags.remove(messageId);
                         sendMessageWithRetryButton(chatId, "An error occurred while fetching car details.", regNr);
                     } else {
+                        messageUpdateFlags.remove(messageId);
                         log.error("Error fetching car details: {}", throwable.getLocalizedMessage());
                         sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
                     }
@@ -450,7 +455,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     if (!messageUpdateFlags.get(messageId).get()) {
                         editMessage(chatId, messageId, "Fetching car details for registration plate " + regNr + "..." + ".".repeat(++count) + "->");
                     }
-                    TimeUnit.SECONDS.sleep(3);
+                    TimeUnit.SECONDS.sleep(4);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -550,6 +555,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
 
     private void sendMessageWithRetryButton(long chatId, String text, String regNr) {
+        ensureEditLimit();
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
         message.setText(text);
@@ -664,6 +670,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     private void executeSendMessage(SendMessage message) {
+        ensureEditLimit();
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -793,6 +800,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     Message sendMessage(long chatId, String text) {
+        ensureEditLimit();
         if (text == null) {
             log.warn("Not sending null message to chat: {}", chatId);
             return null;
@@ -811,6 +819,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     void sendImage(long chatId, String imageUrl) {
+        ensureEditLimit();
         SendPhoto sendPhotoRequest = new SendPhoto();
         sendPhotoRequest.setChatId(String.valueOf(chatId));
         sendPhotoRequest.setPhoto(new InputFile(imageUrl)); // Set the URL or file path
@@ -822,6 +831,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     Message sendMessageCode(long chatId, Integer replyToMessageId, String text) {
+        ensureEditLimit();
         if (text == null) {
             log.warn("Not sending null message to chat: {}", chatId);
             return null;
@@ -863,6 +873,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     void sendMessageCode(long chatId, String text) {
+        ensureEditLimit();
         if (text == null) {
             log.warn("Not sending null message to chat: {}", chatId);
             return;

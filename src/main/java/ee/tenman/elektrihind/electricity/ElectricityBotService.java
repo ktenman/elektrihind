@@ -453,7 +453,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 int timeout = 3;
                 int count = -1;
                 double lastPercentage = 0;
-                double averageDuration = cacheService.getDurations().stream().mapToDouble(Double::doubleValue).average().orElse(0);
+                double averageDuration = getMedianDuration();
                 while (messageUpdateFlags.get(messageId) != null && !messageUpdateFlags.get(messageId).get()) {
                     if (!messageUpdateFlags.get(messageId).get()) {
                         double timeTaken = timeout * ++count * 1.0000000000001;
@@ -472,7 +472,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     TimeUnit.SECONDS.sleep(timeout);
                 }
                 double animationDuration = TimeUtility.durationInSeconds(startTime).asDouble();
-                if (animationDuration > 10) {
+                if (animationDuration > 10 && animationDuration < 90) {
                     cacheService.addDuration(animationDuration);
                     log.info("Added animationDuration: {}", animationDuration);
                 }
@@ -481,6 +481,22 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 log.error("Message updating thread interrupted", e);
             }
         }).start();
+    }
+
+    private double getMedianDuration() {
+        List<Double> sortedValues = cacheService.getDurations().stream().sorted().toList();
+        double median;
+        int size = sortedValues.size();
+        if (size > 0) {
+            if (size % 2 == 0) {
+                median = (sortedValues.get(size / 2 - 1) + sortedValues.get(size / 2)) / 2.0;
+            } else {
+                median = sortedValues.get(size / 2);
+            }
+        } else {
+            median = 0;
+        }
+        return median;
     }
 
     private String getArrow(int count) {

@@ -533,6 +533,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         try {
             if (isFinalUpdate) {
                 editMessage(chatId, messageId, updateText + "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime) + " seconds");
+                messageUpdateFlags.remove(messageId);
             } else {
                 editMessage(chatId, messageId, updateText);
             }

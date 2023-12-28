@@ -65,6 +65,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -83,6 +84,7 @@ import static ee.tenman.elektrihind.utility.DateTimeConstants.DATE_TIME_FORMATTE
 @Slf4j
 public class ElectricityBotService extends TelegramLongPollingBot {
 
+    private static final Random RANDOM = new Random();
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
     public static final Pattern CAR_REGISTRATION_PATTERN = Pattern.compile("^ark\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
@@ -461,9 +463,11 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                         String suffix = "";
                         if (percentage > 0 && timeTaken < averageDuration) {
                             suffix = " (" + BigDecimal.valueOf(percentage).setScale(2, RoundingMode.HALF_UP) + "%)";
-                            lastPercentage = percentage;
                         } else if (percentage > 0 && timeTaken > averageDuration) {
                             suffix = " (" + BigDecimal.valueOf(lastPercentage).setScale(2, RoundingMode.HALF_UP) + "%)";
+                            if (lastPercentage < 100) {
+                                lastPercentage = lastPercentage + randomIncrement();
+                            }
                         } else if (percentage == 0 && averageDuration != 0) {
                             suffix = " (0.00%)";
                         }
@@ -481,6 +485,12 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 log.error("Message updating thread interrupted", e);
             }
         }).start();
+    }
+
+    private double randomIncrement() {
+        double[] numbers = {0.01, 0.02, 0.03};
+        int randomIndex = RANDOM.nextInt(numbers.length);
+        return numbers[randomIndex];
     }
 
     private double getMedianDuration() {

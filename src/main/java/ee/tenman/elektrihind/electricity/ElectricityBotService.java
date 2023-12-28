@@ -410,10 +410,11 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             startTime.set(System.nanoTime());
         }
 
-        sendMessage(chatId, "Fetching car details for registration plate " + regNr);
+        Message message = sendMessage(chatId, "Fetching car details for registration plate " + regNr);
 
         CompletableFuture.runAsync(() -> {
-                    CarSearchUpdateListener listener = (data, isFinalUpdate) -> handleCarSearchUpdate(chatId, data, isFinalUpdate, originalMessageId, startTime);
+                    Integer registrationPlateMessageId = originalMessageId == null ? message.getMessageId() : originalMessageId;
+                    CarSearchUpdateListener listener = (data, isFinalUpdate) -> handleCarSearchUpdate(chatId, data, isFinalUpdate, registrationPlateMessageId, startTime);
                     carSearchService.search2(regNr, listener);
                 }, singleThreadExecutor)
                 .orTimeout(15, TimeUnit.MINUTES)
@@ -718,10 +719,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 Duration.between(LocalDateTime.now(clock), bestPrice.getStartTime()).toHours() + " hours!";
     }
 
-    void sendMessage(long chatId, String text) {
+    Message sendMessage(long chatId, String text) {
         if (text == null) {
             log.warn("Not sending null message to chat: {}", chatId);
-            return;
+            return null;
         }
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
@@ -729,9 +730,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
         try {
             log.info("Sending message to chat: {} with text: {}", chatId, text);
-            execute(message);
+            return execute(message);
         } catch (TelegramApiException e) {
             log.error("Failed to send message: {}", text, e);
+            return null;
         }
     }
 

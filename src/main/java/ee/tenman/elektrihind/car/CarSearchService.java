@@ -115,8 +115,10 @@ public class CarSearchService {
                 .orTimeout(timeout, timeUnit)
                 .get();
         response.putAll(arkDetails);
-        if (arkDetails.size() <= 1) {
+        if (arkDetails.size() <= 1 && response.size() == 1) {
             response.put("Viga", "Andmeid ei leitud '" + regNr + "' kohta");
+            return response;
+        } else if (arkDetails.size() <= 1) {
             return response;
         }
 

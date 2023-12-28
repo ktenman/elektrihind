@@ -93,7 +93,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final String SHA256_ALGORITHM = "SHA-256";
     private static final String REBOOT_COMMAND = "reboot";
     private final ConcurrentHashMap<Integer, AtomicBoolean> messageUpdateFlags = new ConcurrentHashMap<>();
-    private static final int MAX_EDITS_PER_MINUTE = 15;
+    private static final int MAX_EDITS_PER_MINUTE = 20;
     private static final long ONE_MINUTE_IN_MILLISECONDS = 60000;
     private final AtomicLong lastEditTimestamp = new AtomicLong(System.currentTimeMillis());
     private final AtomicInteger editCount = new AtomicInteger(0);
@@ -449,18 +449,31 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private void beginMessageUpdateAnimation(long chatId, String regNr, Integer messageId) {
         new Thread(() -> {
             try {
-                int count = 0;
+                int count = -1;
                 while (messageUpdateFlags.get(messageId) != null && !messageUpdateFlags.get(messageId).get()) {
                     if (!messageUpdateFlags.get(messageId).get()) {
-                        editMessage(chatId, messageId, "Fetching car details for registration plate " + regNr + "..." + ".".repeat(++count) + "→");
+                        editMessage(chatId, messageId, "Fetching car details for registration plate " + regNr + "..." + ".".repeat(++count) + getArrow(count));
                     }
-                    TimeUnit.SECONDS.sleep(4);
+                    TimeUnit.SECONDS.sleep(3);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.error("Message updating thread interrupted", e);
             }
         }).start();
+    }
+
+    private String getArrow(int count) {
+        return switch (count % 8) {
+            case 1 -> "↘";
+            case 2 -> "↓";
+            case 3 -> "↙";
+            case 4 -> "←";
+            case 5 -> "↖";
+            case 6 -> "↑";
+            case 7 -> "↗";
+            default -> "→";
+        };
     }
 
     private void ensureEditLimit() {

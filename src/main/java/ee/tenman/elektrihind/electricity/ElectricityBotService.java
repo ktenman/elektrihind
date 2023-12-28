@@ -486,7 +486,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     private double randomIncrement() {
-        double[] numbers = {0.01, 0.02, 0.03};
+        double[] numbers = {0.01, 0.02, 0.03, 0.04, 0.05};
         int randomIndex = RANDOM.nextInt(numbers.length);
         return numbers[randomIndex];
     }

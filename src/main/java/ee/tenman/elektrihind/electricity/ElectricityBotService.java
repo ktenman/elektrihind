@@ -409,7 +409,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                         startTime.set(System.nanoTime());
                     }
                     sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
-                    return carSearchService.search2(regNr);
+                    return carSearchService.search3(regNr);
                 }, singleThreadExecutor)
                 .orTimeout(20, TimeUnit.MINUTES)
                 .handle((search, throwable) -> { // Handle both completion and exception

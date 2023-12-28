@@ -97,7 +97,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final long ONE_MINUTE_IN_MILLISECONDS = 60000;
     private final AtomicLong lastEditTimestamp = new AtomicLong(System.currentTimeMillis());
     private final AtomicInteger editCount = new AtomicInteger(0);
-    private List<Double> durations = new ArrayList<>();
 
     static {
         try {
@@ -454,7 +453,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 int timeout = 3;
                 int count = -1;
                 double lastPercentage = 0;
-                double averageDuration = durations.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+                double averageDuration = cacheService.getDurations().stream().mapToDouble(Double::doubleValue).average().orElse(0);
                 while (messageUpdateFlags.get(messageId) != null && !messageUpdateFlags.get(messageId).get()) {
                     if (!messageUpdateFlags.get(messageId).get()) {
                         double timeTaken = timeout * ++count * 1.0000000000001;
@@ -474,7 +473,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 }
                 double aDouble = TimeUtility.durationInSeconds(startTime).asDouble();
                 if (aDouble > 15) {
-                    durations.add(aDouble);
+                    cacheService.addDuration(aDouble);
                     log.info("Added duration: {}", aDouble);
                 }
             } catch (InterruptedException e) {

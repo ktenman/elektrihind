@@ -41,10 +41,9 @@ public class CacheService {
     @Getter
     private List<ElectricityPrice> latestPrices = new ArrayList<>();
 
-    private Boolean automaticFetchingEnabled = Boolean.FALSE;
     public static final String AUTOMAKS_KEY = "automaks";
     public static final String AUTOMATIC_FETCHING_KEY = "automaticFetching";
-    private Boolean automaksEnabled = Boolean.FALSE;
+    private static final String DURATIONS_KEY = "durations";
 
     @Resource
     private CacheManager cacheManager;
@@ -116,6 +115,24 @@ public class CacheService {
         Cache cache = cacheManager.getCache(ONE_YEAR_CACHE_1);
         if (cache != null) {
             cache.put(key, value);
+        }
+    }
+
+    public List<Double> getDurations() {
+        Cache cache = cacheManager.getCache(ONE_YEAR_CACHE_1);
+        if (cache != null) {
+            return Optional.ofNullable(cache.get(DURATIONS_KEY, List.class))
+                    .orElse(new ArrayList<Double>());
+        }
+        return new ArrayList<>();
+    }
+
+    public void addDuration(Double newDuration) {
+        List<Double> durations = getDurations();
+        durations.add(newDuration);
+        Cache cache = cacheManager.getCache(ONE_YEAR_CACHE_1);
+        if (cache != null) {
+            cache.put(DURATIONS_KEY, durations);
         }
     }
 

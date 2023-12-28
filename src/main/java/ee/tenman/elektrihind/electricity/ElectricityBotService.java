@@ -436,7 +436,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     Map<String, String> carSearchData = carSearchService.searchV2(regNr, listener);
                     handleCarSearchUpdate(chatId, carSearchData, true, messageId, startTime);
                 }, singleThreadExecutor)
-                .orTimeout(30, TimeUnit.MINUTES)
+                .orTimeout(15, TimeUnit.MINUTES)
                 .exceptionally(throwable -> {
                     if (throwable.getCause() instanceof TimeoutException) {
                         log.error("Fetching car details timed out for regNr: {}", throwable.getMessage());

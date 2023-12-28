@@ -66,9 +66,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
@@ -90,7 +92,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final MessageDigest SHA_256_DIGEST;
     private static final String SHA256_ALGORITHM = "SHA-256";
     private static final String REBOOT_COMMAND = "reboot";
-    private volatile boolean stopUpdatingMessage = false;
+    private final ConcurrentHashMap<Integer, AtomicBoolean> messageUpdateFlags = new ConcurrentHashMap<>();
     private static final int MAX_EDITS_PER_MINUTE = 15;
     private static final long ONE_MINUTE_IN_MILLISECONDS = 60000;
     private final AtomicLong lastEditTimestamp = new AtomicLong(System.currentTimeMillis());
@@ -413,31 +415,19 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     private void search(AtomicLong startTime, long chatId, String regNr, Integer originalMessageId) {
-        stopUpdatingMessage = false; // Reset the flag
         if (startTime.get() == 0) {
             startTime.set(System.nanoTime());
         }
 
         Message message = sendMessageCode(chatId, originalMessageId, "Fetching car details for registration plate " + regNr + "...");
-        new Thread(() -> {
-            try {
-                int count = 0;
-                while (!stopUpdatingMessage) {
-                    if (!stopUpdatingMessage) {
-                        editMessage(chatId, message.getMessageId(), "Fetching car details for registration plate " + regNr + "..." + ".".repeat(++count) + "->");
-                    }
-                    TimeUnit.SECONDS.sleep(3);
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.error("Message updating thread interrupted", e);
-            }
-        }).start();
+        Integer messageId = message.getMessageId();
+        messageUpdateFlags.put(messageId, new AtomicBoolean(false));
+        beginMessageUpdateAnimation(chatId, regNr, messageId);
 
         CompletableFuture.runAsync(() -> {
-                    CarSearchUpdateListener listener = (data, isFinalUpdate) -> handleCarSearchUpdate(chatId, data, isFinalUpdate, message.getMessageId(), startTime);
+                    CarSearchUpdateListener listener = (data, isFinalUpdate) -> handleCarSearchUpdate(chatId, data, isFinalUpdate, messageId, startTime);
                     Map<String, String> carSearchData = carSearchService.search2(regNr, listener);
-                    handleCarSearchUpdate(chatId, carSearchData, true, message.getMessageId(), startTime);
+                    handleCarSearchUpdate(chatId, carSearchData, true, messageId, startTime);
                 }, singleThreadExecutor)
                 .orTimeout(20, TimeUnit.MINUTES)
                 .exceptionally(throwable -> {
@@ -450,6 +440,23 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     }
                     return null;
                 });
+    }
+
+    private void beginMessageUpdateAnimation(long chatId, String regNr, Integer messageId) {
+        new Thread(() -> {
+            try {
+                int count = 0;
+                while (!messageUpdateFlags.get(messageId).get()) {
+                    if (!messageUpdateFlags.get(messageId).get()) {
+                        editMessage(chatId, messageId, "Fetching car details for registration plate " + regNr + "..." + ".".repeat(++count) + "->");
+                    }
+                    TimeUnit.SECONDS.sleep(3);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.error("Message updating thread interrupted", e);
+            }
+        }).start();
     }
 
     private void ensureEditLimit() {
@@ -512,8 +519,15 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         }
     }
 
+    private void stopMessageUpdate(int messageId) {
+        AtomicBoolean flag = messageUpdateFlags.get(messageId);
+        if (flag != null) {
+            flag.set(true);
+        }
+    }
+
     private void handleCarSearchUpdate(long chatId, Map<String, String> carDetails, boolean isFinalUpdate, Integer messageId, AtomicLong startTime) {
-        stopUpdatingMessage = true;
+        stopMessageUpdate(messageId);
         String updateText = formatCarSearchData(carDetails);
 
         try {

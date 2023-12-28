@@ -473,8 +473,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     TimeUnit.SECONDS.sleep(timeout);
                 }
                 double aDouble = TimeUtility.durationInSeconds(startTime).asDouble();
-                if (aDouble > 20) {
+                if (aDouble > 15) {
                     durations.add(aDouble);
+                    log.info("Added duration: {}", aDouble);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

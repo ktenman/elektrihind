@@ -95,6 +95,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final String SHA256_ALGORITHM = "SHA-256";
     private static final String REBOOT_COMMAND = "reboot";
     private final ConcurrentHashMap<Integer, AtomicBoolean> messageUpdateFlags = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, Double> lastPercentages = new ConcurrentHashMap<>();
     private static final int MAX_EDITS_PER_MINUTE = 20;
     private static final long ONE_MINUTE_IN_MILLISECONDS = 60000;
     private final AtomicLong lastEditTimestamp = new AtomicLong(System.currentTimeMillis());
@@ -430,6 +431,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         beginMessageUpdateAnimation(chatId, regNr, messageId);
 
         CompletableFuture.runAsync(() -> {
+                    startTime.set(System.nanoTime());
                     CarSearchUpdateListener listener = (data, isFinalUpdate) -> handleCarSearchUpdate(chatId, data, isFinalUpdate, messageId, startTime);
                     Map<String, String> carSearchData = carSearchService.searchV2(regNr, listener);
                     handleCarSearchUpdate(chatId, carSearchData, true, messageId, startTime);
@@ -444,6 +446,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                         sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
                     }
                     messageUpdateFlags.remove(messageId);
+                    lastPercentages.remove(messageId);
                     return null;
                 });
     }
@@ -451,7 +454,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private void beginMessageUpdateAnimation(long chatId, String regNr, Integer messageId) {
         new Thread(() -> {
             try {
-                AtomicLong startTime = new AtomicLong(System.nanoTime());
                 int timeout = 3;
                 int count = -1;
                 double lastPercentage = 0;
@@ -475,11 +477,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                         editMessage(chatId, messageId, "Fetching car details for registration plate " + regNr + "..." + ".".repeat(count) + getArrow(count) + suffix);
                     }
                     TimeUnit.SECONDS.sleep(timeout);
-                }
-                double animationDuration = TimeUtility.durationInSeconds(startTime).asDouble();
-                if (animationDuration > 30 && animationDuration < 90) {
-                    cacheService.addDuration(animationDuration);
-                    log.info("Added animationDuration: {}", animationDuration);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -594,11 +591,36 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         stopMessageUpdate(messageId);
         String updateText = formatCarSearchData(carDetails);
 
+        double averageDuration = getMedianDuration();
+        double timeTaken = TimeUtility.durationInSeconds(startTime).asDouble();
+        double percentage = averageDuration != 0 ? (timeTaken / averageDuration) * 100 : 0;
+        String suffix = "";
+        if (percentage > 0 && timeTaken < averageDuration) {
+            suffix = " (" + BigDecimal.valueOf(percentage).setScale(2, RoundingMode.HALF_UP) + "%)";
+            lastPercentages.put(messageId, percentage);
+        } else if (percentage > 0 && timeTaken > averageDuration) {
+            Double lastPercentage = lastPercentages.get(messageId);
+            suffix = " (" + BigDecimal.valueOf(lastPercentage).setScale(2, RoundingMode.HALF_UP) + "%)";
+            if (lastPercentage < 100) {
+                lastPercentage = lastPercentage + randomIncrement();
+                lastPercentages.put(messageId, lastPercentage);
+            }
+        } else if (percentage == 0 && averageDuration != 0) {
+            suffix = " (0.00%)";
+        }
+
         try {
             if (isFinalUpdate) {
-                editMessage(chatId, messageId, updateText + "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime).asString() + " seconds");
+                TimeUtility.Duration duration = TimeUtility.durationInSeconds(startTime);
+                editMessage(chatId, messageId, updateText + "\n\nTask duration: " + duration.asString() + " seconds");
                 messageUpdateFlags.remove(messageId);
+                double animationDuration = duration.asDouble();
+                if (animationDuration > 15 && animationDuration < 240) {
+                    cacheService.addDuration(animationDuration);
+                    log.info("Added animationDuration: {}", animationDuration);
+                }
             } else {
+                updateText = updateText + suffix;
                 editMessage(chatId, messageId, updateText);
             }
         } catch (Exception e) {

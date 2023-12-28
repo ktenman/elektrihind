@@ -91,7 +91,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final String SHA256_ALGORITHM = "SHA-256";
     private static final String REBOOT_COMMAND = "reboot";
     private volatile boolean stopUpdatingMessage = false;
-    private static final int MAX_EDITS_PER_MINUTE = 20;
+    private static final int MAX_EDITS_PER_MINUTE = 15;
     private static final long ONE_MINUTE_IN_MILLISECONDS = 60000;
     private final AtomicLong lastEditTimestamp = new AtomicLong(System.currentTimeMillis());
     private final AtomicInteger editCount = new AtomicInteger(0);

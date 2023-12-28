@@ -111,7 +111,7 @@ public class CarSearchService {
         updateListener.onUpdate(response, false);
 
         String arkCaptchaToken = arkCaptchaTokenFuture.get();
-        Map<String, String> arkDetails = CompletableFuture.supplyAsync(() -> arkService.carDetails(regNr, arkCaptchaToken), fourThreadExecutor)
+        Map<String, String> arkDetails = CompletableFuture.supplyAsync(() -> arkService.carDetails(regNr, arkCaptchaToken, response, updateListener), fourThreadExecutor)
                 .orTimeout(timeout, timeUnit)
                 .get();
         response.putAll(arkDetails);

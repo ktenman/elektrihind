@@ -471,10 +471,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     }
                     TimeUnit.SECONDS.sleep(timeout);
                 }
-                double aDouble = TimeUtility.durationInSeconds(startTime).asDouble();
-                if (aDouble > 15) {
-                    cacheService.addDuration(aDouble);
-                    log.info("Added duration: {}", aDouble);
+                double animationDuration = TimeUtility.durationInSeconds(startTime).asDouble();
+                if (animationDuration > 10) {
+                    cacheService.addDuration(animationDuration);
+                    log.info("Added animationDuration: {}", animationDuration);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

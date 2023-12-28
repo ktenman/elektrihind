@@ -69,6 +69,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -90,6 +91,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final String SHA256_ALGORITHM = "SHA-256";
     private static final String REBOOT_COMMAND = "reboot";
     private volatile boolean stopUpdatingMessage = false;
+    private static final int MAX_EDITS_PER_MINUTE = 20;
+    private static final long ONE_MINUTE_IN_MILLISECONDS = 60000;
+    private final AtomicLong lastEditTimestamp = new AtomicLong(System.currentTimeMillis());
+    private final AtomicInteger editCount = new AtomicInteger(0);
 
     static {
         try {
@@ -421,7 +426,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     if (!stopUpdatingMessage) {
                         editMessage(chatId, message.getMessageId(), "Fetching car details for registration plate " + regNr + "..." + ".".repeat(++count) + "->");
                     }
-                    TimeUnit.SECONDS.sleep(2);
+                    TimeUnit.SECONDS.sleep(3);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -447,7 +452,40 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 });
     }
 
-    private void editMessage(long chatId, int messageId, String newText) {
+    private void ensureEditLimit() {
+        while (true) {
+            if (hasOneMinutePassedSinceLastEdit()) {
+                resetEditCount();
+            } else if (editCount.get() < MAX_EDITS_PER_MINUTE) {
+                break;
+            } else {
+                pauseThreadDueToRateLimit();
+            }
+        }
+    }
+
+    private boolean hasOneMinutePassedSinceLastEdit() {
+        return System.currentTimeMillis() - lastEditTimestamp.get() > ONE_MINUTE_IN_MILLISECONDS;
+    }
+
+    private void resetEditCount() {
+        long currentTime = System.currentTimeMillis();
+        editCount.set(0);
+        lastEditTimestamp.set(currentTime);
+    }
+
+    private void pauseThreadDueToRateLimit() {
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Interrupted while waiting for rate limit", e);
+        }
+    }
+
+    private synchronized void editMessage(long chatId, int messageId, String newText) {
+        ensureEditLimit();
+
         log.info("Editing message in chat: {} with new text: {}", chatId, newText);
         if (newText == null) {
             log.warn("Not editing message in chat: {} as the new text is null", chatId);
@@ -466,11 +504,11 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
         try {
             execute(editMessage);
+            editCount.incrementAndGet(); // Increment the counter after a successful edit
         } catch (TelegramApiException e) {
             log.error("Failed to edit message in chat: {} with new text: {}", chatId, newText, e);
         }
     }
-
 
     private void handleCarSearchUpdate(long chatId, Map<String, String> carDetails, boolean isFinalUpdate, Integer messageId, AtomicLong startTime) {
         stopUpdatingMessage = true;

@@ -452,7 +452,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 int count = 0;
                 while (messageUpdateFlags.get(messageId) != null && !messageUpdateFlags.get(messageId).get()) {
                     if (!messageUpdateFlags.get(messageId).get()) {
-                        editMessage(chatId, messageId, "Fetching car details for registration plate " + regNr + "..." + ".".repeat(++count) + "->");
+                        editMessage(chatId, messageId, "Fetching car details for registration plate " + regNr + "..." + ".".repeat(++count) + "→");
                     }
                     TimeUnit.SECONDS.sleep(4);
                 }

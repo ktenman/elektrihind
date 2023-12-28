@@ -73,8 +73,6 @@ public class ArkService implements CaptchaSolver {
     }
 
     private Map<String, String> getAutoMaks(Map<String, String> carDetails, String regNr) {
-        log.info("Getting automaks for {} - {}", carDetails.get("Mark"), regNr);
-
         if (!"sõiduauto".equalsIgnoreCase(carDetails.get("Kategooria"))) {
             log.warn("Skipping. Car is not sõiduauto: {}", carDetails);
             return carDetails;
@@ -234,12 +232,15 @@ public class ArkService implements CaptchaSolver {
         }
 
         if (cacheService.isAutomaksEnabled()) {
+            log.info("Getting automaks for {} - {}", carDetails.get("Mark"), regNr);
             ElementsCollection carTitles = $$(By.className("title"));
             extractCarDetail(carTitles, "CO2 (NEDC)").ifPresent(s -> carDetails.put("CO2 (NEDC)", s));
             extractCarDetail(carTitles, "CO2 (WLTP)").ifPresent(s -> carDetails.put("CO2 (WLTP)", s));
             extractCarDetail(carTitles, "Täismass").ifPresent(s -> carDetails.put("Täismass", s));
             extractCarDetail(carTitles, "Tühimass").ifPresent(s -> carDetails.put("Tühimass", s));
             getAutoMaks(carDetails, regNr);
+        } else {
+            log.info("Skipping automaks for {} - {}", carDetails.get("Mark"), regNr);
         }
 
         log.info("Found car details for regNr: {}", regNr);

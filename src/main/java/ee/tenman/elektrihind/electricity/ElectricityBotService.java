@@ -453,11 +453,13 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     private void ensureEditLimit() {
-        while (true) {
+        boolean shouldContinue = true;
+        while (shouldContinue) {
             if (hasOneMinutePassedSinceLastEdit()) {
                 resetEditCount();
+                shouldContinue = false;
             } else if (editCount.get() < MAX_EDITS_PER_MINUTE) {
-                break;
+                shouldContinue = false;
             } else {
                 pauseThreadDueToRateLimit();
             }

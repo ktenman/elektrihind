@@ -418,11 +418,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             try {
                 int count = 0;
                 while (!stopUpdatingMessage) {
-                    TimeUnit.SECONDS.sleep(15);
                     if (!stopUpdatingMessage) {
-                        count++;
-                        editMessage(chatId, message.getMessageId(), "Fetching car details for registration plate " + regNr + "...".repeat(count));
+                        editMessage(chatId, message.getMessageId(), "Fetching car details for registration plate " + regNr + "..." + ".".repeat(++count) + "->");
                     }
+                    TimeUnit.SECONDS.sleep(1);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

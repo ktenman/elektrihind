@@ -463,6 +463,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                         String suffix = "";
                         if (percentage > 0 && timeTaken < averageDuration) {
                             suffix = " (" + BigDecimal.valueOf(percentage).setScale(2, RoundingMode.HALF_UP) + "%)";
+                            lastPercentage = percentage;
                         } else if (percentage > 0 && timeTaken > averageDuration) {
                             suffix = " (" + BigDecimal.valueOf(lastPercentage).setScale(2, RoundingMode.HALF_UP) + "%)";
                             if (lastPercentage < 100) {

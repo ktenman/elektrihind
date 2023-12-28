@@ -436,13 +436,12 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 .exceptionally(throwable -> {
                     if (throwable.getCause() instanceof TimeoutException) {
                         log.error("Fetching car details timed out for regNr: {}", throwable.getMessage());
-                        messageUpdateFlags.remove(messageId);
                         sendMessageWithRetryButton(chatId, "An error occurred while fetching car details.", regNr);
                     } else {
-                        messageUpdateFlags.remove(messageId);
                         log.error("Error fetching car details: {}", throwable.getLocalizedMessage());
                         sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
                     }
+                    messageUpdateFlags.remove(messageId);
                     return null;
                 });
     }

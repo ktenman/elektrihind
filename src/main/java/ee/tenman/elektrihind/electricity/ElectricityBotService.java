@@ -429,7 +429,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
         CompletableFuture.runAsync(() -> {
                     CarSearchUpdateListener listener = (data, isFinalUpdate) -> handleCarSearchUpdate(chatId, data, isFinalUpdate, messageId, startTime);
-                    Map<String, String> carSearchData = carSearchService.search2(regNr, listener);
+                    Map<String, String> carSearchData = carSearchService.searchV2(regNr, listener);
                     handleCarSearchUpdate(chatId, carSearchData, true, messageId, startTime);
                 }, singleThreadExecutor)
                 .orTimeout(30, TimeUnit.MINUTES)

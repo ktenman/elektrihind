@@ -221,8 +221,8 @@ public class ArkService implements CaptchaSolver {
         ElementsCollection rows = Selenide.$(By.className("asset-details")).findAll(By.tagName("tr"));
         Map<String, String> carDetails = new LinkedHashMap<>();
 
-        carDetails.put("Mark", carName);
-        carDetails.put("Vin", vin);
+        carDetails.put("Mark", carName + "\n");
+        carDetails.put("Vin", vin + "\n");
         if (logo != null) {
             carDetails.put("Logo", logo);
         }

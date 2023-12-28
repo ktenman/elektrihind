@@ -26,6 +26,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Document;
+import org.telegram.telegrambots.meta.api.objects.File;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
@@ -410,12 +411,12 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             startTime.set(System.nanoTime());
         }
 
-        Message message = sendMessage(chatId, "Fetching car details for registration plate " + regNr);
+        Message message = sendMessageCode(chatId, originalMessageId, "Fetching car details for registration plate " + regNr);
 
         CompletableFuture.runAsync(() -> {
-                    Integer registrationPlateMessageId = originalMessageId == null ? message.getMessageId() : originalMessageId;
-                    CarSearchUpdateListener listener = (data, isFinalUpdate) -> handleCarSearchUpdate(chatId, data, isFinalUpdate, registrationPlateMessageId, startTime);
-                    carSearchService.search2(regNr, listener);
+                    CarSearchUpdateListener listener = (data, isFinalUpdate) -> handleCarSearchUpdate(chatId, data, isFinalUpdate, message.getMessageId(), startTime);
+                    Map<String, String> carSearchData = carSearchService.search2(regNr, listener);
+                    handleCarSearchUpdate(chatId, carSearchData, true, message.getMessageId(), startTime);
                 }, singleThreadExecutor)
                 .orTimeout(15, TimeUnit.MINUTES)
                 .exceptionally(throwable -> {
@@ -568,7 +569,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         // Use getFile to get the file path
         GetFile getFileMethod = new GetFile();
         getFileMethod.setFileId(fileId);
-        org.telegram.telegrambots.meta.api.objects.File file = execute(getFileMethod);
+        File file = execute(getFileMethod);
 
         // Use the file path to download the file
         String filePath = file.getFilePath();
@@ -748,10 +749,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         }
     }
 
-    void sendMessageCode(long chatId, Integer replyToMessageId, String text) {
+    Message sendMessageCode(long chatId, Integer replyToMessageId, String text) {
         if (text == null) {
             log.warn("Not sending null message to chat: {}", chatId);
-            return;
+            return null;
         }
         text = TextUtility.escapeMarkdown(text);
 
@@ -760,6 +761,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
         int start = 0;
         boolean isFirstMessage = true;
+        Message lastMessage = null;
         while (start < text.length()) {
             int end = Math.min(start + maxTextLength, text.length());
             String chunk = text.substring(start, end);
@@ -777,7 +779,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             message.setText(messageText);
 
             try {
-                execute(message);
+                lastMessage = execute(message);
             } catch (TelegramApiException e) {
                 log.error("Failed to send message to chat: {} with text: {}", chatId, chunk, e);
             }
@@ -785,6 +787,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             isFirstMessage = false;
             start = end;
         }
+        return lastMessage;
     }
 
     void sendMessageCode(long chatId, String text) {
@@ -928,7 +931,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     java.io.File downloadTelegramFile(String fileId) throws TelegramApiException {
         GetFile getFileMethod = new GetFile();
         getFileMethod.setFileId(fileId);
-        org.telegram.telegrambots.meta.api.objects.File file = execute(getFileMethod);
+        File file = execute(getFileMethod);
         // Using the file path, download the file and return the java.io.File object
         return downloadFile(file);
     }

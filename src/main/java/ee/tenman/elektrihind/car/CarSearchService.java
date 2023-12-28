@@ -148,7 +148,9 @@ public class CarSearchService {
         }
 
         if (response.size() <= 1) {
-            return Map.of("Viga", "Andmeid ei leitud '" + regNr + "' kohta");
+            Map<String, String> carDetailsFailure = Map.of("Viga", "Andmeid ei leitud '" + regNr + "' kohta");
+            updateListener.onUpdate(carDetailsFailure, true);
+            return carDetailsFailure;
         }
 
         removeRedundantInformation(response);

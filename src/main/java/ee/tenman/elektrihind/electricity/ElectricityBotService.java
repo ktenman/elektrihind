@@ -478,6 +478,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     }
                     TimeUnit.SECONDS.sleep(timeout);
                 }
+                lastPercentages.put(messageId, lastPercentage);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.error("Message updating thread interrupted", e);

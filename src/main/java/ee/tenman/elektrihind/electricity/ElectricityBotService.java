@@ -411,7 +411,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             startTime.set(System.nanoTime());
         }
 
-        Message message = sendMessageCode(chatId, originalMessageId, "Fetching car details for registration plate " + regNr);
+        Message message = sendMessageCode(chatId, originalMessageId, "Fetching car details for registration plate " + regNr + "...");
 
         CompletableFuture.runAsync(() -> {
                     CarSearchUpdateListener listener = (data, isFinalUpdate) -> handleCarSearchUpdate(chatId, data, isFinalUpdate, message.getMessageId(), startTime);

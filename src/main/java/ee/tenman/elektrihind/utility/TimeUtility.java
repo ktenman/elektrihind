@@ -16,15 +16,33 @@ public class TimeUtility {
         return electricityPrices.get(startHourIndex).getDate().plusMinutes(minuteOffset);
     }
 
-    public static String durationInSeconds(AtomicLong startTime) {
+    public static Duration durationInSeconds(AtomicLong startTime) {
         long endTime = System.nanoTime();
-        double duration = (endTime - startTime.get()) / 1_000_000_000.0;
+        return new Duration((endTime - startTime.get()) / 1_000_000_000.0);
+    }
+
+    public static Duration durationInSeconds(long startTime) {
+        long endTime = System.nanoTime();
+        return new Duration((endTime - startTime) / 1_000_000_000.0);
+    }
+
+    private static String formatDuration(double duration) {
         return String.format("%.3f", duration);
     }
 
-    public static String durationInSeconds(long startTime) {
-        long endTime = System.nanoTime();
-        double duration = (endTime - startTime) / 1_000_000_000.0;
-        return String.format("%.3f", duration);
+    public static class Duration {
+        private final double durationInSeconds;
+
+        public Duration(double durationInSeconds) {
+            this.durationInSeconds = durationInSeconds;
+        }
+
+        public String asString() {
+            return TimeUtility.formatDuration(durationInSeconds);
+        }
+
+        public double asDouble() {
+            return durationInSeconds;
+        }
     }
 }

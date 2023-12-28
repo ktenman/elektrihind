@@ -90,11 +90,11 @@ public class QueueTextDetectionService {
             Matcher matcher = CAR_PLATE_NUMBER_PATTERN.matcher(extractedText);
             if (matcher.find()) {
                 String plateNr = matcher.group().replace(" ", "").toUpperCase();
-                log.debug("Plate number found from queue: {} in {} seconds", plateNr, durationInSeconds(startTime));
+                log.debug("Plate number found from queue: {} in {} seconds", plateNr, durationInSeconds(startTime).asString());
                 return Optional.of(plateNr);
             }
 
-            log.debug("No plate number found from queue in {} seconds", durationInSeconds(startTime));
+            log.debug("No plate number found from queue in {} seconds", durationInSeconds(startTime).asString());
             return Optional.empty();
         } catch (Exception e) {
             log.error("Error while awaiting plate detection response", e);

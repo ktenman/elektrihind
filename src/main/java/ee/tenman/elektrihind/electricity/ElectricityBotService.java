@@ -97,6 +97,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final long ONE_MINUTE_IN_MILLISECONDS = 60000;
     private final AtomicLong lastEditTimestamp = new AtomicLong(System.currentTimeMillis());
     private final AtomicInteger editCount = new AtomicInteger(0);
+    private List<Double> durations = new ArrayList<>();
 
     static {
         try {
@@ -404,7 +405,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             search(startTime, chatId, regNr, messageId);
         } else if (chatMatcher.find()) {
             String text = chatMatcher.group(1);
-            String response = chatService.sendMessage(text).map(t -> t + "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime) + " seconds").orElse("Response timeout or Macbook is sleeping.");
+            String response = chatService.sendMessage(text).map(t -> t + "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime).asString() + " seconds").orElse("Response timeout or Macbook is sleeping.");
             sendMessageCode(chatId, messageId, response);
         } else if (messageText.equalsIgnoreCase(REBOOT_COMMAND)) {
             digitalOceanService.rebootDroplet();
@@ -449,12 +450,31 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private void beginMessageUpdateAnimation(long chatId, String regNr, Integer messageId) {
         new Thread(() -> {
             try {
+                AtomicLong startTime = new AtomicLong(System.nanoTime());
+                int timeout = 3;
                 int count = -1;
+                double lastPercentage = 0;
+                double averageDuration = durations.stream().mapToDouble(Double::doubleValue).average().orElse(0);
                 while (messageUpdateFlags.get(messageId) != null && !messageUpdateFlags.get(messageId).get()) {
                     if (!messageUpdateFlags.get(messageId).get()) {
-                        editMessage(chatId, messageId, "Fetching car details for registration plate " + regNr + "..." + ".".repeat(++count) + getArrow(count));
+                        double timeTaken = timeout * ++count * 1.0000000000001;
+                        double percentage = averageDuration != 0 ? (timeTaken / averageDuration) * 100 : 0;
+                        String suffix = "";
+                        if (percentage > 0 && timeTaken < averageDuration) {
+                            suffix = " (" + BigDecimal.valueOf(percentage).setScale(2, RoundingMode.HALF_UP) + "%)";
+                            lastPercentage = percentage;
+                        } else if (percentage > 0 && timeTaken > averageDuration) {
+                            suffix = " (" + BigDecimal.valueOf(lastPercentage).setScale(2, RoundingMode.HALF_UP) + "%)";
+                        } else if (percentage == 0 && averageDuration != 0) {
+                            suffix = " (0.00%)";
+                        }
+                        editMessage(chatId, messageId, "Fetching car details for registration plate " + regNr + "..." + ".".repeat(count) + getArrow(count) + suffix);
                     }
-                    TimeUnit.SECONDS.sleep(3);
+                    TimeUnit.SECONDS.sleep(timeout);
+                }
+                double aDouble = TimeUtility.durationInSeconds(startTime).asDouble();
+                if (aDouble > 20) {
+                    durations.add(aDouble);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -549,7 +569,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
         try {
             if (isFinalUpdate) {
-                editMessage(chatId, messageId, updateText + "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime) + " seconds");
+                editMessage(chatId, messageId, updateText + "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime).asString() + " seconds");
                 messageUpdateFlags.remove(messageId);
             } else {
                 editMessage(chatId, messageId, updateText);

@@ -628,6 +628,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     cacheService.addDuration(animationDuration);
                     log.info("Added animationDuration: {}", animationDuration);
                 }
+                if (carDetails.size() == 2) {
+                    String regNr = carDetails.get("Reg nr");
+                    sendMessageWithRetryButton(chatId, "Not enough car details found for registration plate. Click below to retry.", regNr);
+                }
             } else {
                 updateText = updateText + suffix;
                 editMessage(chatId, messageId, updateText);
@@ -645,6 +649,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
 
     private void sendMessageWithRetryButton(long chatId, String text, String regNr) {
+        cacheService.evictCacheEntry(regNr);
         ensureEditLimit();
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));

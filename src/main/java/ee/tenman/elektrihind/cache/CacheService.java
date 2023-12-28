@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,11 @@ import java.util.List;
 import java.util.Optional;
 
 import static ee.tenman.elektrihind.config.RedisConfig.MESSAGE_COUNTS_CACHE;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_1;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_2;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_3;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_4;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_5;
 import static ee.tenman.elektrihind.config.RedisConfig.ONE_YEAR_CACHE_1;
 
 @Service
@@ -134,6 +140,17 @@ public class CacheService {
         if (cache != null) {
             cache.put(DURATIONS_KEY, durations);
         }
+    }
+
+    @Caching(evict = {
+            @CacheEvict(value = ONE_MONTH_CACHE_1, key = "#regNr"),
+            @CacheEvict(value = ONE_MONTH_CACHE_2, key = "#regNr"),
+            @CacheEvict(value = ONE_MONTH_CACHE_3, key = "#regNr"),
+            @CacheEvict(value = ONE_MONTH_CACHE_4, key = "#regNr"),
+            @CacheEvict(value = ONE_MONTH_CACHE_5, key = "#regNr")
+    })
+    public void evictCacheEntry(String regNr) {
+        log.info("Evicting cache entries for regNr: {}", regNr);
     }
 
 }

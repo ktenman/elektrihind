@@ -149,13 +149,10 @@ public class CarSearchService {
 
         if (response.size() <= 1) {
             Map<String, String> carDetailsFailure = Map.of("Viga", "Andmeid ei leitud '" + regNr + "' kohta");
-            updateListener.onUpdate(carDetailsFailure, true);
             return carDetailsFailure;
         }
 
         removeRedundantInformation(response);
-
-        updateListener.onUpdate(new LinkedHashMap<>(response), true);
 
         return response;
     }

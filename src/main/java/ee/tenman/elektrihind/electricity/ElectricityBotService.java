@@ -96,7 +96,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final String REBOOT_COMMAND = "reboot";
     private final ConcurrentHashMap<Integer, AtomicBoolean> messageUpdateFlags = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Double> lastPercentages = new ConcurrentHashMap<>();
-    private static final int MAX_EDITS_PER_MINUTE = 20;
+    private static final int MAX_EDITS_PER_MINUTE = 15;
     private static final long ONE_MINUTE_IN_MILLISECONDS = 60000;
     private final AtomicLong lastEditTimestamp = new AtomicLong(System.currentTimeMillis());
     private final AtomicInteger editCount = new AtomicInteger(0);
@@ -454,13 +454,14 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private void beginMessageUpdateAnimation(long chatId, String regNr, Integer messageId) {
         new Thread(() -> {
             try {
-                int timeout = 3;
+                int timeout = randomTimeout();
                 int count = -1;
                 double lastPercentage = 0;
                 double averageDuration = getMedianDuration();
+                double timeTaken = timeout + 0.0000000000001;
                 while (messageUpdateFlags.get(messageId) != null && !messageUpdateFlags.get(messageId).get()) {
-                    if (!messageUpdateFlags.get(messageId).get()) {
-                        double timeTaken = timeout * ++count * 1.0000000000001;
+                    TimeUnit.SECONDS.sleep(timeout);
+                    if (messageUpdateFlags.get(messageId) != null && !messageUpdateFlags.get(messageId).get()) {
                         double percentage = averageDuration != 0 ? (timeTaken / averageDuration) * 100 : 0;
                         String suffix = "";
                         if (percentage > 0 && timeTaken < averageDuration) {
@@ -474,9 +475,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                         } else if (percentage == 0 && averageDuration != 0) {
                             suffix = " (0.00%)";
                         }
-                        editMessage(chatId, messageId, "Fetching car details for registration plate " + regNr + "..." + ".".repeat(count) + getArrow(count) + suffix);
+                        editMessage(chatId, messageId, "Fetching car details for registration plate " + regNr + "..." + ".".repeat(++count) + getArrow(count) + suffix);
                     }
-                    TimeUnit.SECONDS.sleep(timeout);
+                    timeout = randomTimeout();
+                    timeTaken = timeTaken + timeout;
                 }
                 lastPercentages.put(messageId, lastPercentage);
             } catch (InterruptedException e) {
@@ -488,6 +490,12 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
     private double randomIncrement() {
         double[] numbers = {0.01, 0.02, 0.03, 0.04, 0.05};
+        int randomIndex = RANDOM.nextInt(numbers.length);
+        return numbers[randomIndex];
+    }
+
+    private int randomTimeout() {
+        int[] numbers = {2, 3, 4};
         int randomIndex = RANDOM.nextInt(numbers.length);
         return numbers[randomIndex];
     }
@@ -616,7 +624,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 editMessage(chatId, messageId, updateText + "\n\nTask duration: " + duration.asString() + " seconds");
                 messageUpdateFlags.remove(messageId);
                 double animationDuration = duration.asDouble();
-                if (animationDuration > 15 && animationDuration < 240) {
+                if (animationDuration > 15 && animationDuration < 240 && carDetails.size() > 2) {
                     cacheService.addDuration(animationDuration);
                     log.info("Added animationDuration: {}", animationDuration);
                 }

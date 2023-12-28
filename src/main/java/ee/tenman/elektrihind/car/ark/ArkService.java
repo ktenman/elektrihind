@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -189,8 +190,8 @@ public class ArkService implements CaptchaSolver {
                 .setValue(regNr);
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
         $$(By.tagName("button")).find(Condition.text("OTSIN")).click();
+        TimeUnit.SECONDS.sleep(3);
         SelenideElement contentTitle = Selenide.$(By.className("content-title"));
-        contentTitle.shouldBe(Condition.exist, Duration.ofSeconds(3));
         if (!contentTitle.exists()) {
             log.info("No car found for regNr: {}", regNr);
             return new LinkedHashMap<>();

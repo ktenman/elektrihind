@@ -115,7 +115,10 @@ public class CarSearchService {
                 .orTimeout(timeout, timeUnit)
                 .get();
         response.putAll(arkDetails);
-        updateListener.onUpdate(response, false);
+        if (arkDetails.size() <= 1) {
+            response.put("Viga", "Andmeid ei leitud '" + regNr + "' kohta");
+            return response;
+        }
 
         String auto24CaptchaToken = auto24CaptchaTokenFuture.get();
         Map<String, String> scrapeNinjaDetails = CompletableFuture.supplyAsync(() -> scrapeninjaService.scrape(arkDetails.get("Vin"), regNr, auto24CaptchaToken), fourThreadExecutor)
@@ -129,7 +132,9 @@ public class CarSearchService {
                 .orTimeout(timeout, timeUnit)
                 .get();
         response.putAll(crashes);
-        updateListener.onUpdate(response, false);
+        if (!crashes.isEmpty()) {
+            updateListener.onUpdate(response, false);
+        }
 
         if (!response.containsKey("Läbisõit") && response.containsKey("Vin")) {
             String captchaToken = auto24Service.getCaptchaToken();
@@ -145,11 +150,6 @@ public class CarSearchService {
             if (string.toLowerCase().contains("maanteeamet")) {
                 response.remove("Läbisõit");
             }
-        }
-
-        if (response.size() <= 1) {
-            Map<String, String> carDetailsFailure = Map.of("Viga", "Andmeid ei leitud '" + regNr + "' kohta");
-            return carDetailsFailure;
         }
 
         removeRedundantInformation(response);

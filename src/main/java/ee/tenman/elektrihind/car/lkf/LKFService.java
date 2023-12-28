@@ -1,6 +1,7 @@
 package ee.tenman.elektrihind.car.lkf;
 
 import com.codeborne.selenide.Condition;
+import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import ee.tenman.elektrihind.twocaptcha.TwoCaptchaSolverService;
 import ee.tenman.elektrihind.utility.CaptchaSolver;
@@ -46,9 +47,11 @@ public class LKFService implements CaptchaSolver {
         Selenide.$(By.name("vehicle")).setValue(regNr);
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
         Selenide.$(By.id("edit-submit")).click();
-        TimeUnit.SECONDS.sleep(2);
+        TimeUnit.SECONDS.sleep(3);
 
-        boolean hadCrashes = Selenide.$$(By.tagName("p")).find(Condition.text("on osalenud kindlustusjuhtumites")).exists();
+        ElementsCollection elements = $$(By.tagName("p"));
+        boolean hadCrashes = elements.find(Condition.text("on osalenud kindlustusjuhtumites")).exists() ||
+                elements.find(Condition.text("on osalenud kindlustusjuhtumis")).exists();
 
         if (!hadCrashes) {
             log.info("No crashes found for regNr: {}", regNr);

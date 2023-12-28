@@ -207,23 +207,23 @@ public class ArkService implements CaptchaSolver {
                 .map(strings -> strings[1])
                 .orElseThrow(() -> new RuntimeException("VIN not found"));
 
-        SelenideElement logoElement = Selenide.$(By.className("asset-image"));
-        String logo = null;
-        if (logoElement.exists()) {
-            SelenideElement imageElement = logoElement.find(By.tagName("img"));
-            if (imageElement.exists()) {
-                logo = imageElement.attr("src");
-            }
-        }
+//        SelenideElement logoElement = Selenide.$(By.className("asset-image"));
+//        String logo = null;
+//        if (logoElement.exists()) {
+//            SelenideElement imageElement = logoElement.find(By.tagName("img"));
+//            if (imageElement.exists()) {
+//                logo = imageElement.attr("src");
+//            }
+//        }
 
         ElementsCollection rows = Selenide.$(By.className("asset-details")).findAll(By.tagName("tr"));
         Map<String, String> carDetails = new LinkedHashMap<>();
 
         carDetails.put("Mark", carName + "\n");
         carDetails.put("Vin", vin + "\n");
-        if (logo != null) {
-            carDetails.put("Logo", logo);
-        }
+//        if (logo != null) {
+//            carDetails.put("Logo", logo);
+//        }
         for (int i = 0; i < rows.size(); i++) {
             ElementsCollection td = rows.get(i).$$("td");
             String key = td.get(0).getText().replace(":", "");

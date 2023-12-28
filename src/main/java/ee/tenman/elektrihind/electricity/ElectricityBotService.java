@@ -472,7 +472,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     TimeUnit.SECONDS.sleep(timeout);
                 }
                 double animationDuration = TimeUtility.durationInSeconds(startTime).asDouble();
-                if (animationDuration > 10 && animationDuration < 90) {
+                if (animationDuration > 10 && animationDuration < 120) {
                     cacheService.addDuration(animationDuration);
                     log.info("Added animationDuration: {}", animationDuration);
                 }

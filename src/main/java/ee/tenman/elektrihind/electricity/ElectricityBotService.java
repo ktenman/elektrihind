@@ -23,6 +23,7 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Document;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
@@ -61,11 +62,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -403,38 +404,75 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         }
     }
 
-    private void search(AtomicLong startTime, long chatId, String regNr, Integer messageId) {
-        CompletableFuture.supplyAsync(() -> {
-                    if (startTime.get() == 0) {
-                        startTime.set(System.nanoTime());
-                    }
-                    sendMessage(chatId, "Fetching car details for registration plate #: " + regNr);
-                    return carSearchService.search2(regNr);
-                }, singleThreadExecutor)
-                .orTimeout(20, TimeUnit.MINUTES)
-                .handle((search, throwable) -> { // Handle both completion and exception
-                    if (throwable != null) { // Check if there was an exception
-                        if (throwable.getCause() instanceof TimeoutException) {
-                            log.error("Fetching car details timed out for regNr: {}", throwable.getMessage());
-                            sendMessageWithRetryButton(chatId, "An error occurred while fetching car details.", regNr);
-                        } else {
-                            log.error("Error fetching car details: {}", throwable.getLocalizedMessage());
-                            sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
-                        }
-                    } else {
-                        // No exception occurred, process the search result
-                        long endTime = System.nanoTime();
-                        double durationSeconds = (endTime - startTime.get()) / 1_000_000_000.0;
-                        String text = search.entrySet().stream()
-                                .filter(entry -> !entry.getKey().equalsIgnoreCase("logo"))
-                                .map(entry -> entry.getKey() + ": " + entry.getValue())
-                                .collect(Collectors.joining("\n"));
-                        text = text + "\n\nTask duration: " + String.format("%.2f seconds", durationSeconds);
-                        sendMessageCode(chatId, messageId, text);
-                    }
-                    return null; // Return value is not used in this context
-                });
+    private void search(AtomicLong startTime, long chatId, String regNr, Integer originalMessageId) {
+        if (startTime.get() == 0) {
+            startTime.set(System.nanoTime());
+        }
+
+        // Send an initial reply to the original message
+        SendMessage initialReply = new SendMessage();
+        initialReply.setChatId(String.valueOf(chatId));
+        initialReply.setText("Fetching car details for registration plate #: " + regNr);
+        if (originalMessageId != null) {
+            initialReply.setReplyToMessageId(originalMessageId);
+        }
+        try {
+            Message sentMessage = execute(initialReply);
+            int replyMessageId = sentMessage.getMessageId(); // ID of the reply for future updates
+
+            CarSearchUpdateListener listener = (data, isFinalUpdate) -> handleCarSearchUpdate(chatId, data, isFinalUpdate, replyMessageId, startTime);
+
+            carSearchService.search2(regNr, listener);
+        } catch (TelegramApiException e) {
+            log.error("Error sending initial reply message: {}", e.getMessage());
+        }
     }
+
+    private void editMessage(long chatId, int messageId, String newText) {
+        log.info("Editing message in chat: {} with new text: {}", chatId, newText);
+        if (newText == null) {
+            log.warn("Not editing message in chat: {} as the new text is null", chatId);
+            return;
+        }
+
+        // MarkdownV2 format adds extra characters for backticks and new lines
+        String messageText = "```\n" + newText + "\n```";
+
+        EditMessageText editMessage = new EditMessageText();
+        editMessage.setChatId(String.valueOf(chatId));
+        editMessage.setMessageId(messageId);
+        editMessage.setText(messageText);
+        editMessage.setParseMode("MarkdownV2");
+        editMessage.enableMarkdown(true);
+
+        try {
+            execute(editMessage);
+        } catch (TelegramApiException e) {
+            log.error("Failed to edit message in chat: {} with new text: {}", chatId, newText, e);
+        }
+    }
+
+
+    private void handleCarSearchUpdate(long chatId, Map<String, String> data, boolean isFinalUpdate, Integer messageId, AtomicLong startTime) {
+        String updateText = formatCarSearchData(data);
+
+        try {
+            if (isFinalUpdate) {
+                editMessage(chatId, messageId, updateText + "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime) + " seconds");
+            } else {
+                editMessage(chatId, messageId, updateText);
+            }
+        } catch (Exception e) {
+            log.error("Error handling car search update: {}", e.getMessage());
+        }
+    }
+
+    private String formatCarSearchData(Map<String, String> data) {
+        return data.entrySet().stream()
+                .map(entry -> entry.getKey() + ": " + entry.getValue())
+                .collect(Collectors.joining("\n"));
+    }
+
 
     private void sendMessageWithRetryButton(long chatId, String text, String regNr) {
         SendMessage message = new SendMessage();

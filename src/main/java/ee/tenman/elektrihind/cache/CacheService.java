@@ -113,12 +113,15 @@ public class CacheService {
     private boolean getBooleanFromCache(String key) {
         Cache cache = cacheManager.getCache(ONE_YEAR_CACHE_1);
         if (cache != null && cache.get(key) != null) {
-            return Optional.ofNullable(cache.get(key))
+            Boolean result = Optional.ofNullable(cache.get(key))
                     .map(Cache.ValueWrapper::get)
                     .map(Boolean.class::cast)
-                    .orElse(Boolean.FALSE);
+                    .orElse(Boolean.TRUE);
+            setBooleanInCache(key, result);
+            return result;
         }
-        return false;
+        setBooleanInCache(key, Boolean.TRUE);
+        return true;
     }
 
     private void setBooleanInCache(String key, Boolean value) {

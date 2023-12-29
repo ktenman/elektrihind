@@ -1,6 +1,7 @@
 package ee.tenman.elektrihind;
 
 import ee.tenman.elektrihind.cache.CacheService;
+import ee.tenman.elektrihind.electricity.ElectricityBotService;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
 import ee.tenman.elektrihind.euribor.EuriborRateFetcher;
@@ -19,6 +20,8 @@ import java.util.List;
 @Slf4j
 public class SchedulingService {
 
+    private static final long CHAT_ID = -1001645546677L;
+
     @Resource
     private ElectricityPricesService electricityPricesService;
 
@@ -30,6 +33,9 @@ public class SchedulingService {
 
     @Resource
     private EuriborRateFetcher euriborRateFetcher;
+
+    @Resource
+    private ElectricityBotService electricityBotService;
 
     @Resource
     private Clock clock;
@@ -84,7 +90,7 @@ public class SchedulingService {
                 .toList();
     }
 
-    @Scheduled(cron = "0 30 * * * ?")
+    @Scheduled(cron = "0 44 * * * ?")
     public void checkAndSendEuriborRate() {
         if (!cacheService.canSendEuriborMessageToday()) {
             log.info("Euribor message sending limit reached for today.");
@@ -99,6 +105,7 @@ public class SchedulingService {
             log.info("New Euribor rate detected. Sending message...");
 
             telegramService.sendToTelegram(euriborRateFetcher.getEuriborRateResponse());
+            electricityBotService.sendMessageCode(CHAT_ID, euriborRateFetcher.getEuriborRateResponse());
             cacheService.updateLastMessageSentDate();
             cacheService.setLastEuriborRate(currentRate);
         } else {

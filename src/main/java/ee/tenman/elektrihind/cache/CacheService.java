@@ -55,7 +55,6 @@ public class CacheService {
     private static final String LAST_EURIBOR_MESSAGE_SENT_KEY = "lastEuriborMessageSentDate";
     private static final String LAST_EURIBOR_RATE_KEY = "lastEuriborRate";
 
-
     @Resource
     private CacheManager cacheManager;
 

@@ -967,7 +967,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         return lastMessage;
     }
 
-    void sendMessageCode(long chatId, String text) {
+    public void sendMessageCode(long chatId, String text) {
         ensureEditLimit();
         if (text == null) {
             log.warn("Not sending null message to chat: {}", chatId);

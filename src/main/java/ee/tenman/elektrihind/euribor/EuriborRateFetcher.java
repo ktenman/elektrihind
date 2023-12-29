@@ -122,15 +122,6 @@ public class EuriborRateFetcher {
         return new BigDecimal(rateText.replace("%", "").trim());
     }
 
-    public BigDecimal fetchLatestEuriborRateAndUpdateCache() {
-        fetchEuriborRates();
-        BigDecimal latestRate = getLatestEuriborRate();
-        if (latestRate != null) {
-            cacheService.setLastEuriborRate(latestRate);
-        }
-        return latestRate;
-    }
-
     public BigDecimal getLatestEuriborRate() {
         return rates.isEmpty() ? null : rates.firstEntry().getValue();
     }

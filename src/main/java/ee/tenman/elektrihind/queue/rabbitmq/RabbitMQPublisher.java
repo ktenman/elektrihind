@@ -32,4 +32,10 @@ public class RabbitMQPublisher implements MessagePublisher {
         rabbitTemplate.convertAndSend(RabbitMQConstants.TEXT_REQUEST_QUEUE, uuid.toString() + ":" + textRequest);
         log.info("Published text request [UUID: {}]", uuid);
     }
+
+    public void publishOnlineCheckRequest(UUID uuid) {
+        log.debug("Publishing online check request [UUID: {}]", uuid);
+        rabbitTemplate.convertAndSend(RabbitMQConstants.ONLINE_CHECK_REQUEST_QUEUE, uuid.toString());
+        log.info("Published online check request [UUID: {}]", uuid);
+    }
 }

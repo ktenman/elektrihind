@@ -28,5 +28,16 @@ public class RabbitMQConfig {
     public Queue textResponseQueue() {
         return new Queue(RabbitMQConstants.TEXT_RESPONSE_QUEUE, true);
     }
+
+    @Bean
+    public Queue onlineCheckRequestQueue() {
+        return new Queue(RabbitMQConstants.ONLINE_CHECK_REQUEST_QUEUE, true);
+    }
+
+    @Bean
+    public Queue onlineCheckResponseQueue() {
+        return new Queue(RabbitMQConstants.ONLINE_CHECK_RESPONSE_QUEUE, true);
+    }
+
 }
 

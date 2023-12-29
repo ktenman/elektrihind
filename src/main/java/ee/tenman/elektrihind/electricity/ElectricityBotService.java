@@ -8,6 +8,7 @@ import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.digitalocean.DigitalOceanService;
 import ee.tenman.elektrihind.euribor.EuriborRateFetcher;
 import ee.tenman.elektrihind.queue.ChatService;
+import ee.tenman.elektrihind.queue.OnlineCheckService;
 import ee.tenman.elektrihind.telegram.TelegramService;
 import ee.tenman.elektrihind.utility.FileToBase64;
 import ee.tenman.elektrihind.utility.TextUtility;
@@ -144,6 +145,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
     @Resource
     private ChatService chatService;
+
+    @Resource
+    private OnlineCheckService onlineCheckService;
 
     @Value("${telegram.elektriteemu.token}")
     private String token;
@@ -407,7 +411,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             search(startTime, chatId, regNr, messageId);
         } else if (chatMatcher.find()) {
             String text = chatMatcher.group(1);
-            String response = chatService.sendMessage(text).map(t -> t + "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime).asString() + " seconds").orElse("Response timeout or Macbook is sleeping.");
+            String response = onlineCheckService.isMacbookOnline() ? chatService.sendMessage(text)
+                    .map(t -> t + "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime).asString() + " seconds")
+                    .orElse("Response timeout or Macbook is sleeping.") : "Macbook is offline.";
             sendMessageCode(chatId, messageId, response);
         } else if (messageText.equalsIgnoreCase(REBOOT_COMMAND)) {
             digitalOceanService.rebootDroplet();

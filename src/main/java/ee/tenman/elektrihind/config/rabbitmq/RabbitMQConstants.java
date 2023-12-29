@@ -8,4 +8,6 @@ public class RabbitMQConstants {
     public static final String IMAGE_RESPONSE_QUEUE = "picture-response-queue";
     public static final String TEXT_REQUEST_QUEUE = "text-request-queue";
     public static final String TEXT_RESPONSE_QUEUE = "text-response-queue";
+    public static final String ONLINE_CHECK_REQUEST_QUEUE = "online_check_request_queue";
+    public static final String ONLINE_CHECK_RESPONSE_QUEUE = "online_check_response_queue";
 }

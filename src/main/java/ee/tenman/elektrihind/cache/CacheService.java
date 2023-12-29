@@ -185,7 +185,8 @@ public class CacheService {
         if (cache != null && cache.get(LAST_EURIBOR_MESSAGE_SENT_KEY) != null) {
             return Optional.ofNullable(cache.get(LAST_EURIBOR_MESSAGE_SENT_KEY))
                     .map(Cache.ValueWrapper::get)
-                    .map(LocalDate.class::cast)
+                    .map(String.class::cast)
+                    .map(LocalDate::parse)
                     .orElse(null);
         }
         return null;
@@ -194,7 +195,7 @@ public class CacheService {
     private void setLastMessageSentDate(LocalDate date) {
         Cache cache = cacheManager.getCache(ONE_DAY_CACHE_1);
         if (cache != null) {
-            cache.put(LAST_EURIBOR_MESSAGE_SENT_KEY, date);
+            cache.put(LAST_EURIBOR_MESSAGE_SENT_KEY, date.toString());
         }
     }
 

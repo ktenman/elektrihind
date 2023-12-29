@@ -6,8 +6,6 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 @Slf4j
 @Component
 @ConditionalOnProperty(name = "app.messaging.type", havingValue = "rabbitmq")
@@ -19,34 +17,13 @@ public class RabbitMQConsumer {
     private QueueTextDetectionService queueTextDetectionService;
 
     @RabbitListener(queues = RESPONSE_QUEUE)
-    public void listen(String messageBody) {
-        log.debug("Received message from RabbitMQ queue: {}", messageBody);
+    public void listen(MessageDTO message) {
+        log.debug("Received message: {}", message);
         try {
-            UUID uuid = extractUuidFromMessage(messageBody);
-            String extractedTextFromImage = getExtractedTextFromImage(messageBody);
-            log.info("Processing message [UUID: {}, Extracted text: {}]", uuid, extractedTextFromImage);
-
-            queueTextDetectionService.processDetectionResponse(uuid, extractedTextFromImage);
+            queueTextDetectionService.processDetectionResponse(message.getUuid(), message.getText());
         } catch (Exception e) {
             log.error("Error processing message from RabbitMQ queue", e);
         }
     }
 
-    private UUID extractUuidFromMessage(String message) {
-        try {
-            return UUID.fromString(message.split(":")[0]);
-        } catch (Exception e) {
-            log.error("Error extracting UUID from message: {}", message, e);
-            throw e;
-        }
-    }
-
-    private String getExtractedTextFromImage(String message) {
-        try {
-            return message.split(":")[1];
-        } catch (Exception e) {
-            log.error("Error extracting text from message: {}", message, e);
-            throw e;
-        }
-    }
 }

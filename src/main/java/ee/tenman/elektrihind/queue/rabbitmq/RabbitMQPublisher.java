@@ -1,6 +1,8 @@
-package ee.tenman.elektrihind.queue;
+package ee.tenman.elektrihind.queue.rabbitmq;
 
 import ee.tenman.elektrihind.config.rabbitmq.RabbitMQConstants;
+import ee.tenman.elektrihind.queue.MessagePublisher;
+import ee.tenman.elektrihind.queue.redis.RedisMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

@@ -1,20 +1,22 @@
 package ee.tenman.elektrihind.queue;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.util.UUID;
 
 @Getter
 @ToString
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class MessageDTO {
-    private final UUID uuid;
-    private final String text;
 
-    private MessageDTO(UUID uuid, String text) {
-        this.uuid = uuid;
-        this.text = text;
-    }
+    private UUID uuid;
+    private String text;
 
     /**
      * Static factory method to create an instance of MessageDTO from a string.

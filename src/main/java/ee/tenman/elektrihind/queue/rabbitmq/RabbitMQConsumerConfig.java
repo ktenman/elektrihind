@@ -1,5 +1,6 @@
-package ee.tenman.elektrihind.queue;
+package ee.tenman.elektrihind.queue.rabbitmq;
 
+import ee.tenman.elektrihind.queue.MessageDTO;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -11,15 +12,21 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConsumerConfig {
 
+    private final ConnectionFactory connectionFactory;
+
+    public RabbitMQConsumerConfig(ConnectionFactory connectionFactory) {
+        this.connectionFactory = connectionFactory;
+    }
+
     @Bean
-    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory() {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setMessageConverter(new CustomMessageConverter());
         return factory;
     }
 
-    static class CustomMessageConverter extends AbstractMessageConverter {
+    private static class CustomMessageConverter extends AbstractMessageConverter {
 
         @Override
         protected Message createMessage(Object object, MessageProperties messageProperties) {

@@ -1,4 +1,4 @@
-package ee.tenman.elektrihind.queue;
+package ee.tenman.elektrihind.queue.redis;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

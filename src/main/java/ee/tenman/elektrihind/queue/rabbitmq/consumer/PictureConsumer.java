@@ -1,5 +1,7 @@
-package ee.tenman.elektrihind.queue;
+package ee.tenman.elektrihind.queue.rabbitmq.consumer;
 
+import ee.tenman.elektrihind.queue.MessageDTO;
+import ee.tenman.elektrihind.queue.QueueTextDetectionService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -9,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @ConditionalOnProperty(name = "app.messaging.type", havingValue = "rabbitmq")
-public class RabbitMQConsumer {
+public class PictureConsumer {
 
     public static final String RESPONSE_QUEUE = "picture-response-queue";
 
@@ -20,7 +22,7 @@ public class RabbitMQConsumer {
     public void listen(MessageDTO message) {
         log.debug("Received message: {}", message);
         try {
-            queueTextDetectionService.processDetectionResponse(message.getUuid(), message.getText());
+            queueTextDetectionService.processDetectionResponse(message);
         } catch (Exception e) {
             log.error("Error processing message from RabbitMQ queue", e);
         }

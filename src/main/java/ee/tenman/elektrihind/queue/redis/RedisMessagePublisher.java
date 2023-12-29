@@ -1,6 +1,7 @@
-package ee.tenman.elektrihind.queue;
+package ee.tenman.elektrihind.queue.redis;
 
 import ee.tenman.elektrihind.config.RedisConfig;
+import ee.tenman.elektrihind.queue.MessagePublisher;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

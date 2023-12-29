@@ -1,5 +1,7 @@
-package ee.tenman.elektrihind.queue;
+package ee.tenman.elektrihind.queue.redis;
 
+import ee.tenman.elektrihind.queue.MessageDTO;
+import ee.tenman.elektrihind.queue.QueueTextDetectionService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -27,7 +29,12 @@ public class RedisMessageSubscriber implements MessageListener {
             String extractedTextFromImage = getExtractedTextFromImage(messageBody);
             log.info("Processing message [UUID: {}, Extracted text: {}]", uuid, extractedTextFromImage);
 
-            queueTextDetectionService.processDetectionResponse(uuid, extractedTextFromImage);
+            MessageDTO messageDTO = MessageDTO.builder()
+                    .uuid(uuid)
+                    .text(extractedTextFromImage)
+                    .build();
+
+            queueTextDetectionService.processDetectionResponse(messageDTO);
         } catch (Exception e) {
             log.error("Error processing message from Redis queue", e);
         }

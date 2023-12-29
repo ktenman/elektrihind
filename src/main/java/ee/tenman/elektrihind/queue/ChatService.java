@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.queue;
 
+import ee.tenman.elektrihind.queue.rabbitmq.RabbitMQPublisher;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,12 +49,12 @@ public class ChatService {
         }
     }
 
-    public void processChatResponse(UUID uuid, String responseText) {
-        CompletableFuture<String> chatFuture = chatFutures.get(uuid);
+    public void processChatResponse(MessageDTO message) {
+        CompletableFuture<String> chatFuture = chatFutures.get(message.getUuid());
         if (chatFuture == null) {
-            log.warn("Received a response for an unknown or timed out request [UUID: {}]", uuid);
+            log.warn("Received a response for an unknown or timed out request [UUID: {}]", message.getUuid());
             return;
         }
-        chatFuture.complete(responseText);
+        chatFuture.complete(message.getText());
     }
 }

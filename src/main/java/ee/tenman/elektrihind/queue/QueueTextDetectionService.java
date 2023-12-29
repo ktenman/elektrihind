@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.queue;
 
+import ee.tenman.elektrihind.queue.redis.RedisMessage;
 import ee.tenman.elektrihind.utility.FileToBase64;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -106,16 +107,16 @@ public class QueueTextDetectionService {
         }
     }
 
-    public void processDetectionResponse(UUID uuid, String plateNumber) {
-        MDC.put("uuid", uuid.toString());
+    public void processDetectionResponse(MessageDTO message) {
+        MDC.put("uuid", message.getUuid().toString());
         try {
-            CompletableFuture<String> detectionFuture = plateDetectionFutures.get(uuid);
+            CompletableFuture<String> detectionFuture = plateDetectionFutures.get(message.getUuid());
             if (detectionFuture == null) {
                 log.warn("Received a response for an unknown or timed out request");
                 return;
             }
-            detectionFuture.complete(plateNumber);
-            log.debug("Completed future with plate number: {}", plateNumber);
+            detectionFuture.complete(message.getText());
+            log.debug("Completed future with plate number: {}", message.getText());
         } catch (Exception e) {
             log.error("Error while processing detection response", e);
         } finally {

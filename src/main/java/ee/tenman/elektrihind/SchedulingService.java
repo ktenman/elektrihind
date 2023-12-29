@@ -84,7 +84,7 @@ public class SchedulingService {
                 .toList();
     }
 
-    @Scheduled(cron = "0 50 * * * ?")
+    @Scheduled(cron = "0 0 * * * ?") // Runs every 60 minutes
     public void checkAndSendEuriborRate() {
         log.info("Checking for new Euribor rate...");
 

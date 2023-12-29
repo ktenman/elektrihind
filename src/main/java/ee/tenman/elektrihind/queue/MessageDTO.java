@@ -1,18 +1,14 @@
 package ee.tenman.elektrihind.queue;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.util.UUID;
 
 @Getter
 @ToString
-@Builder
 @AllArgsConstructor
-@NoArgsConstructor
 public class MessageDTO {
 
     private UUID uuid;

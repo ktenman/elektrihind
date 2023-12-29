@@ -18,10 +18,11 @@ public class TextConsumer {
     private ChatService chatService;
 
     @RabbitListener(queues = RabbitMQConstants.TEXT_RESPONSE_QUEUE)
-    public void listen(MessageDTO message) {
-        log.debug("Received text response from RabbitMQ queue: {}", message);
+    public void listen(String message) {
+        MessageDTO messageDTO = MessageDTO.fromString(message);
+        log.debug("Received text response from RabbitMQ queue: {}", messageDTO);
         try {
-            chatService.processChatResponse(message);
+            chatService.processChatResponse(messageDTO);
         } catch (Exception e) {
             log.error("Error processing text response from RabbitMQ queue", e);
         }

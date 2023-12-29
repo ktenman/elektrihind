@@ -15,6 +15,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -47,9 +48,12 @@ public class CacheService {
     @Getter
     private List<ElectricityPrice> latestPrices = new ArrayList<>();
 
-    public static final String AUTOMAKS_KEY = "automaks";
+    private static final String AUTOMAKS_KEY = "automaks";
     public static final String AUTOMATIC_FETCHING_KEY = "automaticFetching";
     private static final String DURATIONS_KEY = "durations";
+    private static final String LAST_MESSAGE_SENT_KEY = "lastMessageSentDate";
+    private static final String LAST_EURIBOR_RATE_KEY = "lastEuriborRate";
+
 
     @Resource
     private CacheManager cacheManager;
@@ -151,6 +155,54 @@ public class CacheService {
     })
     public void evictCacheEntry(String regNr) {
         log.info("Evicting cache entries for regNr: {}", regNr);
+    }
+
+    public boolean canSendEuriborMessageToday() {
+        LocalDate lastMessageSentDate = getLastMessageSentDate();
+        return lastMessageSentDate == null || !lastMessageSentDate.equals(LocalDate.now(clock));
+    }
+
+    public void updateLastMessageSentDate() {
+        setLastMessageSentDate(LocalDate.now(clock));
+    }
+
+    private LocalDate getLastMessageSentDate() {
+        Cache cache = cacheManager.getCache(ONE_YEAR_CACHE_1);
+        if (cache != null && cache.get(LAST_MESSAGE_SENT_KEY) != null) {
+            return Optional.ofNullable(cache.get(LAST_MESSAGE_SENT_KEY))
+                    .map(Cache.ValueWrapper::get)
+                    .map(LocalDate.class::cast)
+                    .orElse(null);
+        }
+        return null;
+    }
+
+    private void setLastMessageSentDate(LocalDate date) {
+        Cache cache = cacheManager.getCache(ONE_YEAR_CACHE_1);
+        if (cache != null) {
+            cache.put(LAST_MESSAGE_SENT_KEY, date);
+        }
+    }
+
+    public BigDecimal getLastEuriborRate() {
+        Cache cache = cacheManager.getCache(ONE_YEAR_CACHE_1);
+        if (cache != null && cache.get(LAST_EURIBOR_RATE_KEY) != null) {
+            return Optional.ofNullable(cache.get(LAST_EURIBOR_RATE_KEY))
+                    .map(Cache.ValueWrapper::get)
+                    .map(BigDecimal.class::cast)
+                    .orElse(null);
+        }
+        return null;
+    }
+
+    public void setLastEuriborRate(BigDecimal rate) {
+        Cache cache = cacheManager.getCache(ONE_YEAR_CACHE_1);
+        if (cache != null) {
+            cache.put(LAST_EURIBOR_RATE_KEY, rate);
+            log.info("Updated last Euribor rate in cache to {}", rate);
+        } else {
+            log.error("Cache is null, unable to update last Euribor rate");
+        }
     }
 
 }

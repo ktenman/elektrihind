@@ -1,5 +1,7 @@
 package ee.tenman.elektrihind.euribor;
 
+import ee.tenman.elektrihind.cache.CacheService;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -18,7 +20,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE_3;
+import static ee.tenman.elektrihind.config.RedisConfig.TEN_MINUTES;
 
 
 @Service
@@ -29,6 +31,9 @@ public class EuriborRateFetcher {
     private static final String EURIBOR_RATES_URL = "https://www.euribor-rates.eu/en/current-euribor-rates/3/euribor-rate-6-months/";
     private final TreeMap<LocalDate, BigDecimal> rates = new TreeMap<>(Collections.reverseOrder());
 
+    @Resource
+    private CacheService cacheService;
+
     public SortedMap<LocalDate, BigDecimal> getRates() {
         if (rates.isEmpty()) {
             fetchEuriborRates();
@@ -36,7 +41,7 @@ public class EuriborRateFetcher {
         return rates;
     }
 
-    @Cacheable(ONE_DAY_CACHE_3)
+    @Cacheable(TEN_MINUTES)
     public String getEuriborRateResponse() {
         if (getRates().size() < 2) {
             return "Not enough data to calculate Euribor rate change.";
@@ -115,5 +120,18 @@ public class EuriborRateFetcher {
 
     private BigDecimal parseRate(String rateText) {
         return new BigDecimal(rateText.replace("%", "").trim());
+    }
+
+    public BigDecimal fetchLatestEuriborRateAndUpdateCache() {
+        fetchEuriborRates();
+        BigDecimal latestRate = getLatestEuriborRate();
+        if (latestRate != null) {
+            cacheService.setLastEuriborRate(latestRate);
+        }
+        return latestRate;
+    }
+
+    public BigDecimal getLatestEuriborRate() {
+        return rates.isEmpty() ? null : rates.firstEntry().getValue();
     }
 }

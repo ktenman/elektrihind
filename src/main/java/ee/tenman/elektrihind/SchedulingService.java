@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -81,5 +82,28 @@ public class SchedulingService {
         return electricityPrices.stream()
                 .filter(price -> !price.getDate().isBefore(now) && price.getDate().isBefore(twentyFourHoursLater))
                 .toList();
+    }
+
+    @Scheduled(cron = "0 45 * * * ?") // Runs every 60 minutes
+    public void checkAndSendEuriborRate() {
+        log.info("Checking for new Euribor rate...");
+
+        BigDecimal currentRate = euriborRateFetcher.fetchLatestEuriborRateAndUpdateCache();
+
+        if (cacheService.canSendEuriborMessageToday() && hasEuriborRateChanged(currentRate)) {
+            log.info("New Euribor rate detected and message not sent today. Sending message...");
+
+            telegramService.sendToTelegram(euriborRateFetcher.getEuriborRateResponse());
+            cacheService.updateLastMessageSentDate();
+            cacheService.setLastEuriborRate(currentRate);
+        }
+    }
+
+    private boolean hasEuriborRateChanged(BigDecimal currentRate) {
+        BigDecimal lastRate = cacheService.getLastEuriborRate();
+        if (lastRate == null) {
+            return true;
+        }
+        return !lastRate.equals(currentRate);
     }
 }

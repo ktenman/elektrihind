@@ -19,10 +19,11 @@ public class PictureConsumer {
     private QueueTextDetectionService queueTextDetectionService;
 
     @RabbitListener(queues = RESPONSE_QUEUE)
-    public void listen(MessageDTO message) {
-        log.debug("Received message: {}", message);
+    public void listen(String message) {
+        MessageDTO messageDTO = MessageDTO.fromString(message);
+        log.debug("Received message: {}", messageDTO);
         try {
-            queueTextDetectionService.processDetectionResponse(message);
+            queueTextDetectionService.processDetectionResponse(messageDTO);
         } catch (Exception e) {
             log.error("Error processing message from RabbitMQ queue", e);
         }

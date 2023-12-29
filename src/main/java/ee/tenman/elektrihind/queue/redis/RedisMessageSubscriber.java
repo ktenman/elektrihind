@@ -9,8 +9,6 @@ import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 @Component
 @Slf4j
 @ConditionalOnProperty(name = "app.messaging.type", havingValue = "redis")
@@ -21,40 +19,14 @@ public class RedisMessageSubscriber implements MessageListener {
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
-        String messageBody = new String(message.getBody());
-        log.debug("Received message from Redis queue: {}", messageBody);
+        MessageDTO messageDTO = MessageDTO.fromString(new String(message.getBody()));
+        log.debug("Received message from Redis queue: {}", messageDTO);
 
         try {
-            UUID uuid = extractUuidFromMessage(messageBody);
-            String extractedTextFromImage = getExtractedTextFromImage(messageBody);
-            log.info("Processing message [UUID: {}, Extracted text: {}]", uuid, extractedTextFromImage);
-
-            MessageDTO messageDTO = MessageDTO.builder()
-                    .uuid(uuid)
-                    .text(extractedTextFromImage)
-                    .build();
-
+            log.info("Processing message [UUID: {}, Extracted text: {}]", messageDTO.getUuid(), messageDTO.getText());
             queueTextDetectionService.processDetectionResponse(messageDTO);
         } catch (Exception e) {
             log.error("Error processing message from Redis queue", e);
-        }
-    }
-
-    private UUID extractUuidFromMessage(String message) {
-        try {
-            return UUID.fromString(message.split(":")[0]);
-        } catch (Exception e) {
-            log.error("Error extracting UUID from message: {}", message, e);
-            throw e;
-        }
-    }
-
-    private String getExtractedTextFromImage(String message) {
-        try {
-            return message.split(":")[1];
-        } catch (Exception e) {
-            log.error("Error extracting text from message: {}", message, e);
-            throw e;
         }
     }
 }

@@ -17,6 +17,7 @@ import java.util.Map;
 @Configuration
 public class RedisConfig {
 
+    public static final String TEN_MINUTES = "ten-minutes";
     public static final String ONE_DAY_CACHE_1 = "one-day-cache-1g";
     public static final String ONE_DAY_CACHE_2 = "one-day-cache-2g";
     public static final String ONE_DAY_CACHE_3 = "one-day-cache-3g";
@@ -50,6 +51,7 @@ public class RedisConfig {
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
+        cacheConfigurations.put(TEN_MINUTES, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(10)));
         cacheConfigurations.put(ONE_DAY_CACHE_1, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(1)));
         cacheConfigurations.put(ONE_DAY_CACHE_2, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(1)));
         cacheConfigurations.put(ONE_DAY_CACHE_3, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(1)));

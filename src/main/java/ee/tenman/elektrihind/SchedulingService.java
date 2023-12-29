@@ -84,7 +84,7 @@ public class SchedulingService {
                 .toList();
     }
 
-    @Scheduled(cron = "0 20 * * * ?") // Runs every 60 minutes
+    @Scheduled(cron = "0 19 * * * ?") // Runs every 60 minutes
     public void checkAndSendEuriborRate() {
         if (cacheService.canSendEuriborMessageToday()) {
             log.info("Euribor message sending limit reached for today.");
@@ -109,9 +109,12 @@ public class SchedulingService {
     private boolean hasEuriborRateChanged(BigDecimal currentRate) {
         BigDecimal lastRate = cacheService.getLastEuriborRate();
         if (lastRate == null) {
+            log.info("No last Euribor rate found in cache. Sending message...");
             return true;
         }
-        return !lastRate.equals(currentRate);
+        boolean result = !lastRate.equals(currentRate);
+        log.info("Last Euribor rate: {}, current Euribor rate: {}, has changed: {}", lastRate, currentRate, result);
+        return result;
     }
 
 }

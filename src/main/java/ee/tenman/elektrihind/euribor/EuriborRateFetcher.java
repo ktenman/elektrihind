@@ -1,7 +1,5 @@
 package ee.tenman.elektrihind.euribor;
 
-import ee.tenman.elektrihind.cache.CacheService;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -30,9 +28,6 @@ public class EuriborRateFetcher {
     private static final String DATE_PATTERN = "M/d/yyyy";
     private static final String EURIBOR_RATES_URL = "https://www.euribor-rates.eu/en/current-euribor-rates/3/euribor-rate-6-months/";
     private final TreeMap<LocalDate, BigDecimal> rates = new TreeMap<>(Collections.reverseOrder());
-
-    @Resource
-    private CacheService cacheService;
 
     public SortedMap<LocalDate, BigDecimal> getRates() {
         if (rates.isEmpty()) {
@@ -127,4 +122,5 @@ public class EuriborRateFetcher {
         log.info("Latest Euribor rate is {}", value);
         return value;
     }
+
 }

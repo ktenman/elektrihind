@@ -123,6 +123,8 @@ public class EuriborRateFetcher {
     }
 
     public BigDecimal getLatestEuriborRate() {
-        return rates.isEmpty() ? null : rates.firstEntry().getValue();
+        BigDecimal value = getRates().entrySet().iterator().next().getValue();
+        log.info("Latest Euribor rate is {}", value);
+        return value;
     }
 }

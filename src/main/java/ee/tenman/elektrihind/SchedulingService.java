@@ -84,14 +84,14 @@ public class SchedulingService {
                 .toList();
     }
 
-    @Scheduled(cron = "0 45 * * * ?") // Runs every 60 minutes
+    @Scheduled(cron = "0 50 * * * ?")
     public void checkAndSendEuriborRate() {
         log.info("Checking for new Euribor rate...");
 
         BigDecimal currentRate = euriborRateFetcher.fetchLatestEuriborRateAndUpdateCache();
 
-        if (cacheService.canSendEuriborMessageToday() && hasEuriborRateChanged(currentRate)) {
-            log.info("New Euribor rate detected and message not sent today. Sending message...");
+        if (hasEuriborRateChanged(currentRate)) {
+            log.info("New Euribor rate detected. Sending message...");
 
             telegramService.sendToTelegram(euriborRateFetcher.getEuriborRateResponse());
             cacheService.updateLastMessageSentDate();
@@ -106,4 +106,5 @@ public class SchedulingService {
         }
         return !lastRate.equals(currentRate);
     }
+
 }

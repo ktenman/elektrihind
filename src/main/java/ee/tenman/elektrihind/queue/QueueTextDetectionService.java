@@ -67,7 +67,7 @@ public class QueueTextDetectionService {
                 .uuid(uuid)
                 .build();
 
-        messagePublisher.publish(redisMessage);
+        messagePublisher.publishImage(redisMessage);
 
         try {
             String extractedText = CompletableFuture.supplyAsync(() -> {

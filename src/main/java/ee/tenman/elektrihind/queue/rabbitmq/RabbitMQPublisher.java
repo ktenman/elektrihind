@@ -21,21 +21,22 @@ public class RabbitMQPublisher implements MessagePublisher {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    public void publish(RedisMessage redisMessage) {
-        log.debug("Publishing image request [UUID: {}]", redisMessage.getUuid());
-        rabbitTemplate.convertAndSend(RabbitMQConstants.IMAGE_REQUEST_QUEUE, redisMessage.toString());
-        log.info("Published image request [UUID: {}]", redisMessage.getUuid());
+    public void publishImage(RedisMessage redisMessage) {
+        publish(RabbitMQConstants.IMAGE_REQUEST_QUEUE, redisMessage.toString());
     }
 
     public void publishTextRequest(String textRequest, UUID uuid) {
-        log.debug("Publishing text request [UUID: {}]", uuid);
-        rabbitTemplate.convertAndSend(RabbitMQConstants.TEXT_REQUEST_QUEUE, uuid.toString() + ":" + textRequest);
-        log.info("Published text request [UUID: {}]", uuid);
+        publish(RabbitMQConstants.TEXT_REQUEST_QUEUE, uuid.toString() + ":" + textRequest);
     }
 
     public void publishOnlineCheckRequest(UUID uuid) {
-        log.debug("Publishing online check request [UUID: {}]", uuid);
-        rabbitTemplate.convertAndSend(RabbitMQConstants.ONLINE_CHECK_REQUEST_QUEUE, uuid.toString());
-        log.info("Published online check request [UUID: {}]", uuid);
+        publish(RabbitMQConstants.ONLINE_CHECK_REQUEST_QUEUE, uuid.toString());
     }
+
+    private void publish(String queue, String message) {
+        log.debug("Publishing message to queue [queue: {}]", queue);
+        rabbitTemplate.convertAndSend(queue, message);
+        log.info("Published message to queue [queue: {}]", queue);
+    }
+
 }

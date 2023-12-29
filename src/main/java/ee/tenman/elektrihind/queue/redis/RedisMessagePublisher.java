@@ -17,7 +17,7 @@ public class RedisMessagePublisher implements MessagePublisher {
     private StringRedisTemplate stringRedisTemplate;
 
     @Override
-    public void publish(RedisMessage redisMessage) {
+    public void publishImage(RedisMessage redisMessage) {
         String imageRequestQueue = RedisConfig.IMAGE_REQUEST_QUEUE;
         log.debug("Publishing message [UUID: {}] to queue [QueueName: {}]", redisMessage.getUuid(), imageRequestQueue);
         stringRedisTemplate.convertAndSend(imageRequestQueue, redisMessage.toString());

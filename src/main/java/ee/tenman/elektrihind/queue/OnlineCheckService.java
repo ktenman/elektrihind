@@ -6,7 +6,6 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -28,7 +27,6 @@ public class OnlineCheckService {
     @Resource(name = "tenThreadExecutor")
     private ExecutorService executorService;
 
-    @Cacheable("isMacbookOnline")
     public boolean isMacbookOnline() {
         UUID uuid = UUID.randomUUID();
         CompletableFuture<Boolean> onlineCheckFuture = new CompletableFuture<>();

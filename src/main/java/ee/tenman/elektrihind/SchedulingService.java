@@ -20,8 +20,6 @@ import java.util.List;
 @Slf4j
 public class SchedulingService {
 
-    private static final long CHAT_ID = -1001645546677L;
-
     @Resource
     private ElectricityPricesService electricityPricesService;
 
@@ -90,7 +88,7 @@ public class SchedulingService {
                 .toList();
     }
 
-    @Scheduled(cron = "0 44 * * * ?")
+    @Scheduled(cron = "0 59 * * * ?")
     public void checkAndSendEuriborRate() {
         if (!cacheService.canSendEuriborMessageToday()) {
             log.info("Euribor message sending limit reached for today.");
@@ -105,7 +103,6 @@ public class SchedulingService {
             log.info("New Euribor rate detected. Sending message...");
 
             telegramService.sendToTelegram(euriborRateFetcher.getEuriborRateResponse());
-            electricityBotService.sendMessageCode(CHAT_ID, euriborRateFetcher.getEuriborRateResponse());
             cacheService.updateLastMessageSentDate();
             cacheService.setLastEuriborRate(currentRate);
         } else {

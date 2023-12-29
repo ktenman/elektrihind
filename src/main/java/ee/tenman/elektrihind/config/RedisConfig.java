@@ -18,18 +18,18 @@ import java.util.Map;
 public class RedisConfig {
 
     public static final String TEN_MINUTES = "ten-minutes";
-    public static final String ONE_DAY_CACHE_1 = "one-day-cache-1g";
-    public static final String ONE_DAY_CACHE_2 = "one-day-cache-2g";
-    public static final String ONE_DAY_CACHE_3 = "one-day-cache-3g";
-    public static final String ONE_DAY_CACHE_4 = "one-day-cache-44g";
-    public static final String ONE_MONTH_CACHE_1 = "one-day-month_1g";
-    public static final String ONE_MONTH_CACHE_2 = "one-day-month_2g";
-    public static final String ONE_MONTH_CACHE_3 = "one-day-month_3g";
-    public static final String ONE_MONTH_CACHE_4 = "one-day-month_4g";
-    public static final String ONE_MONTH_CACHE_5 = "thirty-days-cache-3g";
-    public static final String ONE_YEAR_CACHE_1 = "one-year-cache-1g";
-    public static final String ONE_YEAR_CACHE_2 = "one-year-cache-2g";
-    public static final String MESSAGE_COUNTS_CACHE = "message-counts-cache-1g";
+    public static final String ONE_DAY_CACHE_1 = "one-day-cache-1";
+    public static final String ONE_DAY_CACHE_2 = "one-day-cache-2";
+    public static final String ONE_DAY_CACHE_3 = "one-day-cache-3";
+    public static final String ONE_DAY_CACHE_4 = "one-day-cache-4";
+    public static final String ONE_MONTH_CACHE_1 = "one-day-month_1";
+    public static final String ONE_MONTH_CACHE_2 = "one-day-month_2";
+    public static final String ONE_MONTH_CACHE_3 = "one-day-month_3";
+    public static final String ONE_MONTH_CACHE_4 = "one-day-month_4";
+    public static final String ONE_MONTH_CACHE_5 = "one-day-month_5";
+    public static final String ONE_YEAR_CACHE_1 = "one-year-cache-1";
+    public static final String ONE_YEAR_CACHE_2 = "one-year-cache-2";
+    public static final String MESSAGE_COUNTS_CACHE = "message-counts-cache-1";
 
     public static final String IMAGE_REQUEST_QUEUE = "image-request-queue";
     public static final String IMAGE_RESPONSE_QUEUE = "image-response-queue";

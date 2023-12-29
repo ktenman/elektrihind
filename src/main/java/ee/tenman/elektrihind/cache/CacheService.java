@@ -165,13 +165,7 @@ public class CacheService {
             log.info("No last Euribor message sent date found in cache. Sending message...");
             return true;
         }
-        if (lastMessageSentDate.equals(LocalDate.now(clock))) {
-            log.info("Euribor message sending limit reached for today.");
-            return false;
-        } else {
-            log.info("Last Euribor message sent date is not today. Sending message...");
-            return true;
-        }
+        return !lastMessageSentDate.equals(LocalDate.now(clock));
     }
 
     public void updateLastMessageSentDate() {

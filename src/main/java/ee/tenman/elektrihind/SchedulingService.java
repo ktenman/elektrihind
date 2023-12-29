@@ -84,7 +84,7 @@ public class SchedulingService {
                 .toList();
     }
 
-    @Scheduled(cron = "0 30 * * * ?") // Runs every 60 minutes
+    @Scheduled(cron = "0 35 * * * ?") // Runs every 60 minutes
     public void checkAndSendEuriborRate() {
         if (cacheService.canSendEuriborMessageToday()) {
             log.info("Euribor message sending limit reached for today.");

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static ee.tenman.elektrihind.config.RedisConfig.MESSAGE_COUNTS_CACHE;
+import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE_1;
 import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_1;
 import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_2;
 import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_3;
@@ -51,7 +52,7 @@ public class CacheService {
     private static final String AUTOMAKS_KEY = "automaks";
     public static final String AUTOMATIC_FETCHING_KEY = "automaticFetching";
     private static final String DURATIONS_KEY = "durations";
-    private static final String LAST_MESSAGE_SENT_KEY = "lastMessageSentDate";
+    private static final String LAST_EURIBOR_MESSAGE_SENT_KEY = "lastEuriborMessageSentDate";
     private static final String LAST_EURIBOR_RATE_KEY = "lastEuriborRate";
 
 
@@ -161,17 +162,28 @@ public class CacheService {
 
     public boolean canSendEuriborMessageToday() {
         LocalDate lastMessageSentDate = getLastMessageSentDate();
-        return lastMessageSentDate == null || !lastMessageSentDate.equals(LocalDate.now(clock));
+        if (lastMessageSentDate == null) {
+            log.info("No last Euribor message sent date found in cache. Sending message...");
+            return true;
+        }
+        if (lastMessageSentDate.equals(LocalDate.now(clock))) {
+            log.info("Euribor message sending limit reached for today.");
+            return false;
+        } else {
+            log.info("Last Euribor message sent date is not today. Sending message...");
+            return true;
+        }
     }
 
     public void updateLastMessageSentDate() {
+        log.info("Updating last Euribor message sent date in cache to today");
         setLastMessageSentDate(LocalDate.now(clock));
     }
 
     private LocalDate getLastMessageSentDate() {
-        Cache cache = cacheManager.getCache(ONE_YEAR_CACHE_1);
-        if (cache != null && cache.get(LAST_MESSAGE_SENT_KEY) != null) {
-            return Optional.ofNullable(cache.get(LAST_MESSAGE_SENT_KEY))
+        Cache cache = cacheManager.getCache(ONE_DAY_CACHE_1);
+        if (cache != null && cache.get(LAST_EURIBOR_MESSAGE_SENT_KEY) != null) {
+            return Optional.ofNullable(cache.get(LAST_EURIBOR_MESSAGE_SENT_KEY))
                     .map(Cache.ValueWrapper::get)
                     .map(LocalDate.class::cast)
                     .orElse(null);
@@ -180,9 +192,9 @@ public class CacheService {
     }
 
     private void setLastMessageSentDate(LocalDate date) {
-        Cache cache = cacheManager.getCache(ONE_YEAR_CACHE_1);
+        Cache cache = cacheManager.getCache(ONE_DAY_CACHE_1);
         if (cache != null) {
-            cache.put(LAST_MESSAGE_SENT_KEY, date);
+            cache.put(LAST_EURIBOR_MESSAGE_SENT_KEY, date);
         }
     }
 

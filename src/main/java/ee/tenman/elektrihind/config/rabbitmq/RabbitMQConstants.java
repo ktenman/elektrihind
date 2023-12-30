@@ -10,4 +10,6 @@ public class RabbitMQConstants {
     public static final String TEXT_RESPONSE_QUEUE = "text-response-queue";
     public static final String ONLINE_CHECK_REQUEST_QUEUE = "online_check_request_queue";
     public static final String ONLINE_CHECK_RESPONSE_QUEUE = "online_check_response_queue";
+    public static final String CAPTCHA_REQUEST_QUEUE = "captcha-request-queue";
+    public static final String CAPTCHA_RESPONSE_QUEUE = "captcha-response-queue";
 }

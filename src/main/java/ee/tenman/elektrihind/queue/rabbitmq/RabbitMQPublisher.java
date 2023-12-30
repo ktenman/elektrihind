@@ -25,6 +25,10 @@ public class RabbitMQPublisher implements MessagePublisher {
         publish(RabbitMQConstants.IMAGE_REQUEST_QUEUE, redisMessage.toString());
     }
 
+    public void publishCaptcha(RedisMessage redisMessage) {
+        publish(RabbitMQConstants.CAPTCHA_REQUEST_QUEUE, redisMessage.toString());
+    }
+
     public void publishTextRequest(String textRequest, UUID uuid) {
         publish(RabbitMQConstants.TEXT_REQUEST_QUEUE, uuid.toString() + ":" + textRequest);
     }

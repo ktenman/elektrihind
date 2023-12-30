@@ -4,8 +4,13 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import ee.tenman.elektrihind.car.predict.PredictRequest;
+import ee.tenman.elektrihind.car.predict.PredictService;
+import ee.tenman.elektrihind.queue.CaptchaService;
+import ee.tenman.elektrihind.queue.OnlineCheckService;
 import ee.tenman.elektrihind.twocaptcha.TwoCaptchaSolverService;
 import ee.tenman.elektrihind.utility.CaptchaSolver;
+import ee.tenman.elektrihind.utility.FileToBase64;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +54,15 @@ public class Auto24Service implements CaptchaSolver {
     @Resource
     private TwoCaptchaSolverService twoCaptchaSolverService;
 
+    @Resource
+    private PredictService predictService;
+
+    @Resource
+    private CaptchaService captchaService;
+
+    @Resource
+    private OnlineCheckService onlineCheckService;
+
     @SneakyThrows({IOException.class, InterruptedException.class})
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     @Cacheable(value = ONE_MONTH_CACHE_4, key = "#regNr")
@@ -65,7 +79,8 @@ public class Auto24Service implements CaptchaSolver {
         File screenshot = $("#vpc_captcha").screenshot();
         assert screenshot != null;
         log.info("Solving price captcha for regNr: {}", regNr);
-        String solveCaptcha = twoCaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
+        byte[] screenshotBytes = Files.readAllBytes(screenshot.toPath());
+        String solveCaptcha = captchaService.solve(Files.readAllBytes(screenshot.toPath())).orElse(twoCaptchaSolverService.solveCaptcha(screenshotBytes));
         $(By.name("checksec1")).setValue(solveCaptcha);
         $("button[type='submit']").click();
         int count = 0;
@@ -75,7 +90,8 @@ public class Auto24Service implements CaptchaSolver {
             screenshot = $("#vpc_captcha").screenshot();
             assert screenshot != null;
             log.info("Trying to solve price captcha for regNr: {}. Tries: {}", regNr, count);
-            solveCaptcha = twoCaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
+            screenshotBytes = Files.readAllBytes(screenshot.toPath());
+            solveCaptcha = captchaService.solve(screenshotBytes).orElse(twoCaptchaSolverService.solveCaptcha(screenshotBytes));
             $(By.name("checksec1")).setValue(solveCaptcha);
             $("button[type='submit']").click();
         }
@@ -119,7 +135,8 @@ public class Auto24Service implements CaptchaSolver {
         File screenshot = $("#vpc_captcha").screenshot();
         assert screenshot != null;
         log.info("Solving price captcha for regNr: {}", regNr);
-        String solveCaptcha = twoCaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
+        String encodedScreenshot = FileToBase64.encodeToBase64(Files.readAllBytes(screenshot.toPath()));
+        String solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot)).getPredictedText();
         $(By.name("checksec1")).setValue(solveCaptcha);
         $("button[type='submit']").click();
         int count = 0;
@@ -129,7 +146,8 @@ public class Auto24Service implements CaptchaSolver {
             screenshot = $("#vpc_captcha").screenshot();
             assert screenshot != null;
             log.info("Trying to solve price captcha for regNr: {}. Tries: {}", regNr, count);
-            solveCaptcha = twoCaptchaSolverService.solveCaptcha(Files.readAllBytes(screenshot.toPath()));
+            encodedScreenshot = FileToBase64.encodeToBase64(Files.readAllBytes(screenshot.toPath()));
+            solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot)).getPredictedText();
             $(By.name("checksec1")).setValue(solveCaptcha);
             $("button[type='submit']").click();
         }
@@ -142,7 +160,7 @@ public class Auto24Service implements CaptchaSolver {
         boolean success = $$(By.tagName("div")).filter(Condition.text("Sõiduki keskmine hind"))
                 .last().exists();
         if (success) {
-            FileUtils.copyFile(screenshot, new File("images3/" + solveCaptcha.toUpperCase() + ".png"));
+            FileUtils.copyFile(screenshot, new File("images1000/" + solveCaptcha.toUpperCase() + ".png"));
         }
         fourThreadExecutor.submit(Selenide::closeWindow);
     }

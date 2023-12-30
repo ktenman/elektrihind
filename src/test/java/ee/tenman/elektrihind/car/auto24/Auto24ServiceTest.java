@@ -16,8 +16,8 @@ class Auto24ServiceTest {
     @Resource
     Auto24Service auto24Service;
 
-    @Resource(name = "tenThreadExecutor")
-    ExecutorService tenThreadExecutor;
+    @Resource(name = "xThreadExecutor")
+    ExecutorService xThreadExecutor;
 
     @Test
     @Disabled
@@ -25,8 +25,8 @@ class Auto24ServiceTest {
 
         ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
 
-        for (int i = 0; i < 10; i++) {
-            futures.add(CompletableFuture.runAsync(() -> auto24Service.solve("876BCH"), tenThreadExecutor));
+        for (int i = 0; i < 100; i++) {
+            futures.add(CompletableFuture.runAsync(() -> auto24Service.solve("876BCH"), xThreadExecutor));
         }
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();

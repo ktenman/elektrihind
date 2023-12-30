@@ -28,4 +28,9 @@ public class ThreadPoolConfig {
     public ExecutorService tenThreadExecutor() {
         return Executors.newFixedThreadPool(10);
     }
+
+    @Bean
+    public ExecutorService xThreadExecutor() {
+        return Executors.newFixedThreadPool(10);
+    }
 }

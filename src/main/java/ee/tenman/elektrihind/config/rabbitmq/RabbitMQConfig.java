@@ -39,5 +39,15 @@ public class RabbitMQConfig {
         return new Queue(RabbitMQConstants.ONLINE_CHECK_RESPONSE_QUEUE, true);
     }
 
+    @Bean
+    public Queue captchaRequestQueue() {
+        return new Queue(RabbitMQConstants.CAPTCHA_REQUEST_QUEUE, true);
+    }
+
+    @Bean
+    public Queue captchaResponseQueue() {
+        return new Queue(RabbitMQConstants.CAPTCHA_RESPONSE_QUEUE, true);
+    }
+
 }
 

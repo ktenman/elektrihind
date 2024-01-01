@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.car.auto24;
 
+import com.codeborne.selenide.Configuration;
 import ee.tenman.elektrihind.IntegrationTest;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Disabled;
@@ -47,6 +48,7 @@ class Auto24ServiceTest {
     @Test
     @Disabled
     void carPrice() {
+        Configuration.headless = false;
         LinkedHashMap<String, String> result = auto24Service.carPrice("876BCH");
 
         System.out.println(result);

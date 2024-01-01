@@ -25,6 +25,18 @@ class Auto24ServiceTest {
 
         ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
 
+        for (int i = 0; i < 5; i++) {
+            futures.add(CompletableFuture.runAsync(() -> auto24Service.solve("876BCH"), xThreadExecutor));
+        }
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    }
+
+    @Test
+    @Disabled
+    void solve2() {
+        ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
+
         for (int i = 0; i < 100; i++) {
             futures.add(CompletableFuture.runAsync(() -> auto24Service.solve("876BCH"), xThreadExecutor));
         }

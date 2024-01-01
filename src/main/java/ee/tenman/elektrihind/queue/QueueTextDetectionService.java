@@ -1,7 +1,6 @@
 package ee.tenman.elektrihind.queue;
 
 import ee.tenman.elektrihind.queue.redis.RedisMessage;
-import ee.tenman.elektrihind.utility.FileToBase64;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -23,18 +22,17 @@ import static ee.tenman.elektrihind.utility.TimeUtility.durationInSeconds;
 @Slf4j
 public class QueueTextDetectionService {
 
-    private static final int TIMEOUT = 1500;
+    private static final int TIMEOUT = 5000;
     private final Map<UUID, CompletableFuture<String>> plateDetectionFutures = new ConcurrentHashMap<>();
     @Resource
     private MessagePublisher messagePublisher;
-    @Resource(name = "tenThreadExecutor")
-    private ExecutorService executorService;
+    @Resource(name = "hundredThreadExecutor")
+    private ExecutorService hundredThreadExecutor;
 
-    public Optional<String> extractText(byte[] image) {
+    public Optional<String> extractText(String base64EncodedImage) {
         long startTime = System.nanoTime();
         UUID uuid = UUID.randomUUID();
         MDC.put("uuid", uuid.toString());
-        String base64EncodedImage = FileToBase64.encodeToBase64(image);
         log.debug("Starting text extraction. Image size: {} bytes", base64EncodedImage.getBytes().length);
 
         try {
@@ -76,7 +74,7 @@ public class QueueTextDetectionService {
                 } catch (Exception e) {
                     throw new IllegalStateException("Timeout or interruption while waiting for plate number [UUID: " + uuid + "]", e);
                 }
-            }, executorService).get();
+            }, hundredThreadExecutor).get();
 
             if (extractedText == null) {
                 log.debug("No extracted text received from queue within timeout");

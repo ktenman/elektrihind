@@ -176,6 +176,7 @@ public class ArkService implements CaptchaSolver {
             throw new RuntimeException("Captcha token is blank");
         }
         log.info("Searching car details for regNr: {}", regNr);
+        Selenide.closeWebDriver();
         Selenide.open(PAGE_URL);
         getWebDriver().manage().window().maximize();
 
@@ -249,8 +250,7 @@ public class ArkService implements CaptchaSolver {
         }
 
         log.info("Found car details for regNr: {}", regNr);
-
-        fourThreadExecutor.submit(Selenide::closeWindow);
+        Selenide.closeWindow();
         return carDetails;
     }
 

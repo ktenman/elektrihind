@@ -30,6 +30,11 @@ public class ThreadPoolConfig {
     }
 
     @Bean
+    public ExecutorService hundredThreadExecutor() {
+        return Executors.newFixedThreadPool(100);
+    }
+
+    @Bean
     public ExecutorService xThreadExecutor() {
         return Executors.newFixedThreadPool(10);
     }

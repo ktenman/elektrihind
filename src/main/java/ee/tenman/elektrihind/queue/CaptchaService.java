@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class CaptchaService {
 
-    private static final int TIMEOUT = 4000;
+    private static final int TIMEOUT = 10000;
     private final Map<UUID, CompletableFuture<String>> chatFutures = new ConcurrentHashMap<>();
     @Resource
     private RabbitMQPublisher rabbitMQPublisher;

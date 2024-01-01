@@ -22,7 +22,7 @@ import static ee.tenman.elektrihind.utility.TimeUtility.durationInSeconds;
 @Slf4j
 public class QueueTextDetectionService {
 
-    private static final int TIMEOUT = 5000;
+    private static final int TIMEOUT = 10000;
     private final Map<UUID, CompletableFuture<String>> plateDetectionFutures = new ConcurrentHashMap<>();
     @Resource
     private MessagePublisher messagePublisher;

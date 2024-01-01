@@ -61,8 +61,8 @@ public class Auto24Service implements CaptchaSolver {
     public LinkedHashMap<String, String> carPrice(String regNr) {
         log.info("Searching car price for regNr: {}", regNr);
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");
-        TimeUnit.SECONDS.sleep(1);
-        SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
+        SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"))
+                .shouldBe(Condition.visible);
         if (acceptCookies.exists()) {
             acceptCookies.click();
         }
@@ -74,7 +74,8 @@ public class Auto24Service implements CaptchaSolver {
         byte[] screenshotBytes = Files.readAllBytes(screenshot.toPath());
         String encodedScreenshot = FileToBase64.encodeToBase64(screenshotBytes);
         String solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot))
-                .orElseThrow(() -> new RuntimeException("Captcha not solved"));
+                .orElse("zzzz");
+        ;
         $(By.name("checksec1")).setValue(solveCaptcha);
         $("button[type='submit']").click();
         int count = 0;
@@ -86,8 +87,7 @@ public class Auto24Service implements CaptchaSolver {
             log.info("Trying to solve price captcha for regNr: {}. Tries: {}", regNr, count);
             screenshotBytes = Files.readAllBytes(screenshot.toPath());
             encodedScreenshot = FileToBase64.encodeToBase64(screenshotBytes);
-            solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot))
-                    .orElseThrow(() -> new RuntimeException("Captcha not solved"));
+            solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot)).orElse("zzzz");
 
             $(By.name("checksec1")).setValue(solveCaptcha);
             $("button[type='submit']").click();

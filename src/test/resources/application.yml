@@ -17,7 +17,7 @@ captcha-solver:
   url: http://tenman.ee:52525
 
 twocaptcha:
-  key:
+  key: 97dc669cc0e30cd46c2d2e9a0975bb2e
 
 scrapeninja:
   key:

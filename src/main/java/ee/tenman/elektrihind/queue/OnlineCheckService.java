@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 @ConditionalOnProperty(name = "app.messaging.type", havingValue = "rabbitmq")
 public class OnlineCheckService {
 
-    private static final int TIMEOUT = 200;
+    private static final int TIMEOUT = 1000;
     private final Map<UUID, CompletableFuture<Boolean>> onlineCheckFutures = new ConcurrentHashMap<>();
     @Resource
     private RabbitMQPublisher rabbitMQPublisher;

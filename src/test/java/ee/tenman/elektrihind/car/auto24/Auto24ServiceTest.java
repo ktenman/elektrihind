@@ -1,8 +1,8 @@
 package ee.tenman.elektrihind.car.auto24;
 
-import com.codeborne.selenide.Configuration;
 import ee.tenman.elektrihind.IntegrationTest;
 import jakarta.annotation.Resource;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -48,9 +48,11 @@ class Auto24ServiceTest {
     @Test
     @Disabled
     void carPrice() {
-        Configuration.headless = false;
         LinkedHashMap<String, String> result = auto24Service.carPrice("876BCH");
 
         System.out.println(result);
+        Assertions.assertThat(result).isNotEmpty()
+                .containsKey("Turuhind")
+                .containsValue("3100 € kuni 7200 €\n");
     }
 }

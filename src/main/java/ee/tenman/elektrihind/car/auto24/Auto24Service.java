@@ -1,7 +1,6 @@
 package ee.tenman.elektrihind.car.auto24;
 
 import com.codeborne.selenide.Condition;
-import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
@@ -61,10 +60,8 @@ public class Auto24Service implements CaptchaSolver {
     @Cacheable(value = ONE_MONTH_CACHE_4, key = "#regNr")
     public LinkedHashMap<String, String> carPrice(String regNr) {
         log.info("Searching car price for regNr: {}", regNr);
-        Configuration.headless = false;
-        Configuration.browser = "firefox";
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");
-        TimeUnit.SECONDS.sleep(2);
+        TimeUnit.SECONDS.sleep(1);
         SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
         if (acceptCookies.exists()) {
             acceptCookies.click();

@@ -13,6 +13,9 @@ omdb-api:
   url: http://localhost:${wiremock.server.port}
   key:
 
+captcha-solver:
+  url: http://tenman.ee:52525
+
 twocaptcha:
   key:
 

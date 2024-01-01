@@ -4,10 +4,8 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
-import ee.tenman.elektrihind.car.easyocr.EasyOcrService;
 import ee.tenman.elektrihind.car.predict.PredictRequest;
 import ee.tenman.elektrihind.car.predict.PredictService;
-import ee.tenman.elektrihind.queue.CaptchaService;
 import ee.tenman.elektrihind.twocaptcha.TwoCaptchaSolverService;
 import ee.tenman.elektrihind.utility.CaptchaSolver;
 import ee.tenman.elektrihind.utility.FileToBase64;
@@ -57,12 +55,6 @@ public class Auto24Service implements CaptchaSolver {
     @Resource
     private PredictService predictService;
 
-    @Resource
-    private CaptchaService captchaService;
-
-    @Resource
-    private EasyOcrService easyOcrService;
-
     @SneakyThrows({IOException.class, InterruptedException.class})
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     @Cacheable(value = ONE_MONTH_CACHE_4, key = "#regNr")
@@ -75,23 +67,27 @@ public class Auto24Service implements CaptchaSolver {
             acceptCookies.click();
         }
         $(By.name("vpc_reg_nr")).setValue(regNr);
-
+        $("button[type='submit']").click();
         File screenshot = $("#vpc_captcha").screenshot();
         assert screenshot != null;
         log.info("Solving price captcha for regNr: {}", regNr);
         byte[] screenshotBytes = Files.readAllBytes(screenshot.toPath());
-        String solveCaptcha = captchaService.solve(Files.readAllBytes(screenshot.toPath())).orElse(twoCaptchaSolverService.solveCaptcha(screenshotBytes));
+        String encodedScreenshot = FileToBase64.encodeToBase64(screenshotBytes);
+        String solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot))
+                .orElseThrow(() -> new RuntimeException("Captcha not solved"));
         $(By.name("checksec1")).setValue(solveCaptcha);
-        $("button[type='submit']").click();
         int count = 0;
         while ($(".errorMessage").exists() &&
-                "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 10) {
+                "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 3) {
             log.warn("Invalid captcha for regNr: {}", regNr);
             screenshot = $("#vpc_captcha").screenshot();
             assert screenshot != null;
             log.info("Trying to solve price captcha for regNr: {}. Tries: {}", regNr, count);
             screenshotBytes = Files.readAllBytes(screenshot.toPath());
-            solveCaptcha = captchaService.solve(screenshotBytes).orElse(twoCaptchaSolverService.solveCaptcha(screenshotBytes));
+            encodedScreenshot = FileToBase64.encodeToBase64(screenshotBytes);
+            solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot))
+                    .orElseThrow(() -> new RuntimeException("Captcha not solved"));
+
             $(By.name("checksec1")).setValue(solveCaptcha);
             $("button[type='submit']").click();
         }
@@ -137,8 +133,8 @@ public class Auto24Service implements CaptchaSolver {
         log.info("Solving price captcha for regNr: {}", regNr);
         String encodedScreenshot = FileToBase64.encodeToBase64(Files.readAllBytes(screenshot.toPath()));
 
-        String solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot)).getPredictedText();
-//        String solveCaptcha = easyOcrService.predict(encodedScreenshot).orElse("zzzz");
+        String solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot))
+                .orElseThrow(() -> new RuntimeException("Captcha not solved"));
 
         $(By.name("checksec1")).setValue(solveCaptcha);
         $("button[type='submit']").click();
@@ -151,9 +147,8 @@ public class Auto24Service implements CaptchaSolver {
             log.info("Trying to solve price captcha for regNr: {}. Tries: {}", regNr, count);
             encodedScreenshot = FileToBase64.encodeToBase64(Files.readAllBytes(screenshot.toPath()));
 
-            solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot)).getPredictedText();
-
-//            solveCaptcha = easyOcrService.predict(encodedScreenshot).orElse("zzzz");
+            solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot))
+                    .orElseThrow(() -> new RuntimeException("Captcha not solved"));
 
             $(By.name("checksec1")).setValue(solveCaptcha);
             $("button[type='submit']").click();

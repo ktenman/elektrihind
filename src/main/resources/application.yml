@@ -13,6 +13,9 @@ omdb-api:
   url: http://www.omdbapi.com
   key: ${OMDB_API_KEY}
 
+captcha-solver:
+  url: http://tenman.ee:52525
+
 twocaptcha:
   key: ${TWO_CAPTCHA_API_KEY}
 

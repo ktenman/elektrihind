@@ -3,6 +3,7 @@ package ee.tenman.elektrihind.electricity;
 import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.car.CarSearchService;
 import ee.tenman.elektrihind.car.PlateDetectionService;
+import ee.tenman.elektrihind.car.auto24.Auto24Service;
 import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.digitalocean.DigitalOceanService;
@@ -63,6 +64,7 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -89,6 +91,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
     public static final Pattern CAR_REGISTRATION_PATTERN = Pattern.compile("^ark\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
+    public static final Pattern CAR_PRICE_REGISTRATION_PATTERN = Pattern.compile("^price\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
     public static final Pattern CHAT_PATTERN = Pattern.compile("(?s)^chat\\s+(.+)$", Pattern.CASE_INSENSITIVE);
     private static final String EURIBOR = "euribor";
     private static final String METRIC = "metric";
@@ -154,6 +157,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
     @Value("${telegram.elektriteemu.username}")
     private String username;
+
+    @Resource
+    private Auto24Service auto24Service;
 
     public static String buildSHA256(String input) {
         byte[] hashInBytes = SHA_256_DIGEST.digest(input.getBytes(StandardCharsets.UTF_8));
@@ -390,6 +396,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         Matcher matcher = DURATION_PATTERN.matcher(messageText);
         Matcher arkMatcher = CAR_REGISTRATION_PATTERN.matcher(messageText);
         Matcher chatMatcher = CHAT_PATTERN.matcher(messageText);
+        Matcher carPriceMatcher = CAR_PRICE_REGISTRATION_PATTERN.matcher(messageText);
 
         boolean showMenu = false;
         if ("/start".equalsIgnoreCase(messageText)) {
@@ -400,7 +407,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         } else if (messageText.toLowerCase().contains("elektrihind")) {
             String response = getElectricityPriceResponse();
             sendMessageCode(chatId, messageId, response);
-        } else if (messageText.toLowerCase().contains(METRIC)) {
+        } else if (messageText.toLowerCase().contains(METRIC) || messageText.toLowerCase().contains("/" + METRIC)) {
             String response = getSystemMetrics();
             sendMessageCode(chatId, messageId, response);
         } else if (messageText.toLowerCase().contains(EURIBOR)) {
@@ -409,6 +416,12 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         } else if (arkMatcher.find()) {
             String regNr = arkMatcher.group(1).toUpperCase();
             search(startTime, chatId, regNr, messageId);
+        } else if (carPriceMatcher.find()) {
+            String regNr = carPriceMatcher.group(1).toUpperCase();
+            LinkedHashMap<String, String> hashMap = auto24Service.carPrice(regNr);
+            String response = formatCarSearchData(hashMap);
+            response += "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime).asString() + " seconds";
+            sendMessageCode(chatId, messageId, response);
         } else if (chatMatcher.find()) {
             String text = chatMatcher.group(1);
             String response = onlineCheckService.isMacbookOnline() ? chatService.sendMessage(text)

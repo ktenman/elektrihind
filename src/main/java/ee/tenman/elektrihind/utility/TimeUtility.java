@@ -13,30 +13,34 @@ public class TimeUtility {
     private static final int MINUTES_IN_HOUR = 60;
 
     public static LocalDateTime getStartTime(List<ElectricityPrice> electricityPrices, int startMinute) {
+        if (electricityPrices == null || electricityPrices.isEmpty()) {
+            throw new IllegalArgumentException("Electricity prices list cannot be null or empty.");
+        }
         int startHourIndex = startMinute / MINUTES_IN_HOUR;
         int minuteOffset = startMinute % MINUTES_IN_HOUR;
+        if (startHourIndex >= electricityPrices.size()) {
+            throw new IllegalArgumentException("Start hour index out of bounds.");
+        }
         return electricityPrices.get(startHourIndex).getDate().plusMinutes(minuteOffset);
     }
 
-    public static Duration durationInSeconds(AtomicLong startTime) {
-        long endTime = System.nanoTime();
-        return new Duration((endTime - startTime.get()) / 1_000_000_000.0);
+    public static CustomDuration durationInSeconds(AtomicLong startTime) {
+        return new CustomDuration(startTime.get());
     }
 
-    public static Duration durationInSeconds(long startTime) {
-        long endTime = System.nanoTime();
-        return new Duration((endTime - startTime) / 1_000_000_000.0);
+    public static CustomDuration durationInSeconds(long startTime) {
+        return new CustomDuration(startTime);
     }
 
     private static String formatDuration(double duration) {
         return String.format("%.3f", duration);
     }
 
-    public static class Duration {
+    public static class CustomDuration {
         private final double durationInSeconds;
 
-        public Duration(double durationInSeconds) {
-            this.durationInSeconds = durationInSeconds;
+        public CustomDuration(long startTime) {
+            this.durationInSeconds = (System.nanoTime() - startTime) / 1_000_000_000.0;
         }
 
         public String asString() {

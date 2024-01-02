@@ -670,7 +670,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
         try {
             if (isFinalUpdate) {
-                TimeUtility.Duration duration = TimeUtility.durationInSeconds(startTime);
+                TimeUtility.CustomDuration duration = TimeUtility.durationInSeconds(startTime);
                 editMessage(chatId, messageId, updateText + "\n\nTask duration: " + duration.asString() + " seconds");
                 messageUpdateFlags.remove(messageId);
                 double animationDuration = duration.asDouble();

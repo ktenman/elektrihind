@@ -36,6 +36,7 @@ class Auto24ServiceTest {
     @Test
     @Disabled
     void solve2() {
+
         ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
 
         for (int i = 0; i < 100; i++) {
@@ -44,6 +45,7 @@ class Auto24ServiceTest {
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
+
 
     @Test
     @Disabled

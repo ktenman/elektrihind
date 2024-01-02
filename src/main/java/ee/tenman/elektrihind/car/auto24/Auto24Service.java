@@ -4,6 +4,7 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import ee.tenman.elektrihind.car.easyocr.EasyOcrService;
 import ee.tenman.elektrihind.car.predict.PredictRequest;
 import ee.tenman.elektrihind.car.predict.PredictService;
 import ee.tenman.elektrihind.twocaptcha.TwoCaptchaSolverService;
@@ -22,10 +23,15 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
@@ -39,6 +45,9 @@ public class Auto24Service implements CaptchaSolver {
     private static final String SITE_KEY = "6Lf3qrkZAAAAAJLmqi1osY8lac0rLbAJItqEvZ0K";
     private static final String PAGE_URL = "https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring";
 
+    private static final String DIRECTORY_PATH = "images169k"; // Replace with your directory path
+    private final Set<String> fileNames = getFileNames(DIRECTORY_PATH, "imagesPPP");
+
     private static final List<String> ACCEPTED_KEYS = List.of(
             "Kütusekulu keskmine (l/ 100 km)",
             "Kütusekulu linnas (l/100 km)",
@@ -48,20 +57,42 @@ public class Auto24Service implements CaptchaSolver {
     @Resource(name = "fourThreadExecutor")
     private ExecutorService fourThreadExecutor;
 
+    @Resource(name = "xThreadExecutor")
+    private ExecutorService xThreadExecutor;
+
     @Resource
     private TwoCaptchaSolverService twoCaptchaSolverService;
 
     @Resource
     private PredictService predictService;
 
-    @SneakyThrows({IOException.class})
+    @Resource
+    private EasyOcrService easyOcrService;
+
+    private static Set<String> getFileNames(String... directoryPaths) {
+        return Stream.of(directoryPaths)
+                .flatMap(path -> {
+                    try {
+                        return Files.walk(Path.of(path));
+                    } catch (IOException e) {
+                        return Stream.empty();
+                    }
+                })
+                .filter(Files::isRegularFile)
+                .map(Path::getFileName)
+                .map(Path::toString)
+                .map(s -> s.replace(".png", ""))
+                .collect(Collectors.toSet());
+    }
+
+    @SneakyThrows({IOException.class, InterruptedException.class})
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     @Cacheable(value = ONE_MONTH_CACHE_4, key = "#regNr")
     public LinkedHashMap<String, String> carPrice(String regNr) {
         log.info("Searching car price for regNr: {}", regNr);
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");
-        SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"))
-                .shouldBe(Condition.visible);
+        SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
+        TimeUnit.SECONDS.sleep(3);
         if (acceptCookies.exists()) {
             acceptCookies.click();
         }
@@ -74,7 +105,6 @@ public class Auto24Service implements CaptchaSolver {
         String encodedScreenshot = FileToBase64.encodeToBase64(screenshotBytes);
         String solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot))
                 .orElse("zzzz");
-        ;
         $(By.name("checksec1")).setValue(solveCaptcha);
         $("button[type='submit']").click();
         int count = 0;
@@ -117,12 +147,12 @@ public class Auto24Service implements CaptchaSolver {
         return result;
     }
 
-    @SneakyThrows({IOException.class})
+    @SneakyThrows({IOException.class, InterruptedException.class})
     public void solve(String regNr) {
         log.info("Searching car price for regNr: {}", regNr);
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");
-        SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"))
-                .shouldBe(Condition.visible);
+        TimeUnit.MILLISECONDS.sleep(2000);
+        SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
         if (acceptCookies.exists()) {
             acceptCookies.click();
         }
@@ -135,6 +165,17 @@ public class Auto24Service implements CaptchaSolver {
 
         String solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot))
                 .orElseThrow(() -> new RuntimeException("Captcha not solved"));
+        while (!fileNames.contains(solveCaptcha.toUpperCase())) {
+            log.warn("Captcha already solved for regNr: {}", regNr);
+            $("button[type='submit']").click();
+            screenshot = $("#vpc_captcha").screenshot();
+            assert screenshot != null;
+            log.info("Trying to solve price captcha for regNr: {}", regNr);
+            encodedScreenshot = FileToBase64.encodeToBase64(Files.readAllBytes(screenshot.toPath()));
+
+            solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot))
+                    .orElseThrow(() -> new RuntimeException("Captcha not solved"));
+        }
 
         $(By.name("checksec1")).setValue(solveCaptcha);
         $("button[type='submit']").click();
@@ -149,6 +190,17 @@ public class Auto24Service implements CaptchaSolver {
 
             solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot))
                     .orElseThrow(() -> new RuntimeException("Captcha not solved"));
+            while (!fileNames.contains(solveCaptcha.toUpperCase())) {
+                log.warn("Captcha already solved for regNr: {}", regNr);
+                $("button[type='submit']").click();
+                screenshot = $("#vpc_captcha").screenshot();
+                assert screenshot != null;
+                log.info("Trying to solve price captcha for regNr: {}", regNr);
+                encodedScreenshot = FileToBase64.encodeToBase64(Files.readAllBytes(screenshot.toPath()));
+
+                solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot))
+                        .orElseThrow(() -> new RuntimeException("Captcha not solved"));
+            }
 
             $(By.name("checksec1")).setValue(solveCaptcha);
             $("button[type='submit']").click();
@@ -162,11 +214,11 @@ public class Auto24Service implements CaptchaSolver {
         boolean success = $$(By.tagName("div")).filter(Condition.text("Sõiduki keskmine hind"))
                 .last().exists();
         if (success) {
-            FileUtils.copyFile(screenshot, new File("imagesYYY/" + solveCaptcha.toUpperCase() + ".png"));
+            FileUtils.copyFile(screenshot, new File("imagesPPP/" + solveCaptcha.toUpperCase() + ".png"));
+            fileNames.add(solveCaptcha.toUpperCase());
         }
-        fourThreadExecutor.submit(Selenide::closeWindow);
+        xThreadExecutor.submit(Selenide::closeWindow);
     }
-
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     public Map<String, String> carDetails(Map<String, String> carDetails, String captchaToken) {
         log.info("Searching car details for regNr: {}", carDetails.get("Reg nr"));

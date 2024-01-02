@@ -135,15 +135,13 @@ public class ArkService implements CaptchaSolver {
         Selenide.$(By.name("register-year")).setValue(year.get());
         Selenide.$(By.name("vehicle-mass")).setValue(taismass.get());
         co2.ifPresent(s -> Selenide.$(By.name("co2-value")).setValue(s));
-        Selenide.$(By.className("tax-submit")).click();
-
-        log.info("Retrieving information for automaks for {} - {}", carDetails.get("Mark"), regNr);
-
-        Selenide.sleep(3000);
+        Selenide.$(By.className("tax-submit"))
+                .shouldBe(Condition.visible)
+                .click();
 
         log.info("Retrieved information for automaks for {} - {}", carDetails.get("Mark"), regNr);
 
-        SelenideElement aastamaks = Selenide.$(By.className("results-container"));
+        SelenideElement aastamaks = Selenide.$(By.className("results-container")).shouldBe(Condition.visible);
         if (aastamaks.exists()) {
             Optional.of(aastamaks).map(SelenideElement::text)
                     .ifPresent(s -> parseKeyValuePairs(carDetails, s));

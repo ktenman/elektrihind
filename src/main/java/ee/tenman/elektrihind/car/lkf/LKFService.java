@@ -6,7 +6,6 @@ import com.codeborne.selenide.Selenide;
 import ee.tenman.elektrihind.twocaptcha.TwoCaptchaSolverService;
 import ee.tenman.elektrihind.utility.CaptchaSolver;
 import jakarta.annotation.Resource;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
 import org.springframework.cache.annotation.Cacheable;
@@ -18,7 +17,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
@@ -37,7 +35,6 @@ public class LKFService implements CaptchaSolver {
     @Resource
     private TwoCaptchaSolverService recaptchaSolverService;
 
-    @SneakyThrows({InterruptedException.class})
     @Cacheable(value = ONE_MONTH_CACHE_1, key = "#regNr")
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 2000))
     public Map<String, String> carDetails(String regNr, String captchaToken) {
@@ -46,9 +43,7 @@ public class LKFService implements CaptchaSolver {
         getWebDriver().manage().window().maximize();
         Selenide.$(By.name("vehicle")).setValue(regNr);
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
-        Selenide.$(By.id("edit-submit")).click();
-        TimeUnit.SECONDS.sleep(3);
-
+        Selenide.$(By.id("edit-submit")).shouldBe(Condition.visible).click();
         ElementsCollection elements = $$(By.tagName("p"));
         boolean hadCrashes = elements.find(Condition.text("on osalenud kindlustusjuhtumites")).exists() ||
                 elements.find(Condition.text("on osalenud kindlustusjuhtumis")).exists();

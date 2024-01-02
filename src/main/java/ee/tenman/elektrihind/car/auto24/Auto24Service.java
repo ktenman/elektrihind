@@ -26,7 +26,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
@@ -118,12 +117,12 @@ public class Auto24Service implements CaptchaSolver {
         return result;
     }
 
-    @SneakyThrows({IOException.class, InterruptedException.class})
+    @SneakyThrows({IOException.class})
     public void solve(String regNr) {
         log.info("Searching car price for regNr: {}", regNr);
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");
-        TimeUnit.SECONDS.sleep(3);
-        SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
+        SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"))
+                .shouldBe(Condition.visible);
         if (acceptCookies.exists()) {
             acceptCookies.click();
         }
@@ -168,15 +167,14 @@ public class Auto24Service implements CaptchaSolver {
         fourThreadExecutor.submit(Selenide::closeWindow);
     }
 
-    @SneakyThrows({InterruptedException.class})
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     public Map<String, String> carDetails(Map<String, String> carDetails, String captchaToken) {
         log.info("Searching car details for regNr: {}", carDetails.get("Reg nr"));
         String regNr = carDetails.get("Reg nr");
         String vin = carDetails.get("Vin");
         Selenide.open(PAGE_URL);
-        TimeUnit.SECONDS.sleep(2);
-        SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"));
+        SelenideElement acceptCookies = $$(By.tagName("button")).findBy(Condition.text("Nõustun"))
+                .shouldBe(Condition.visible);
         if (acceptCookies.exists()) {
             acceptCookies.click();
         }

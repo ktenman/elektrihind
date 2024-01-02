@@ -50,5 +50,10 @@ public class TimeUtility {
         public double asDouble() {
             return durationInSeconds;
         }
+
+        @Override
+        public String toString() {
+            return asString();
+        }
     }
 }

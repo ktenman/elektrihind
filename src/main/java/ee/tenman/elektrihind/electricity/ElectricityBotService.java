@@ -64,7 +64,6 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -418,10 +417,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             search(startTime, chatId, regNr, messageId);
         } else if (carPriceMatcher.find()) {
             String regNr = carPriceMatcher.group(1).toUpperCase();
-            LinkedHashMap<String, String> hashMap = auto24Service.carPrice(regNr);
-            String response = formatCarSearchData(hashMap);
-            response += "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime).asString() + " seconds";
-            sendMessageCode(chatId, messageId, response);
+            price(startTime, chatId, regNr, messageId);
         } else if (chatMatcher.find()) {
             String text = chatMatcher.group(1);
             String response = onlineCheckService.isMacbookOnline() ? chatService.sendMessage(text)
@@ -437,6 +433,38 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         if (showMenu) {
             displayMenu(chatId);
         }
+    }
+
+    private void price(AtomicLong startTime, long chatId, String regNr, Integer originalMessageId) {
+        if (startTime.get() == 0) {
+            startTime.set(System.nanoTime());
+        }
+
+        Message message = sendMessageCode(chatId, originalMessageId, "Fetching car price for registration plate " + regNr + "...");
+        Integer messageId = message.getMessageId();
+        messageUpdateFlags.put(messageId, new AtomicBoolean(false));
+        beginMessageUpdateAnimation(chatId, regNr, messageId);
+
+        CompletableFuture.runAsync(() -> {
+                    startTime.set(System.nanoTime());
+                    Map<String, String> carSearchData = auto24Service.carPrice(regNr);
+                    String response = formatCarSearchData(carSearchData);
+                    response += "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime).asString() + " seconds";
+                    editMessage(chatId, messageId, response);
+                }, singleThreadExecutor)
+                .orTimeout(15, TimeUnit.MINUTES)
+                .exceptionally(throwable -> {
+                    if (throwable.getCause() instanceof TimeoutException) {
+                        log.error("Fetching car price timed out for regNr: {}", throwable.getMessage());
+                        editMessage(chatId, messageId, "An error occurred while fetching car details for: " + regNr);
+                    } else {
+                        log.error("Error fetching car details: {}", throwable.getLocalizedMessage());
+                        editMessage(chatId, messageId, "Fetching car price timed out for: " + regNr);
+                    }
+                    messageUpdateFlags.remove(messageId);
+                    lastPercentages.remove(messageId);
+                    return null;
+                });
     }
 
     private void search(AtomicLong startTime, long chatId, String regNr, Integer originalMessageId) {

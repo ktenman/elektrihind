@@ -106,7 +106,7 @@ public class CarSearchService {
         CompletableFuture<String> lkfCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> lkfService.getCaptchaToken(), fourThreadExecutor)
                 .orTimeout(timeout, timeUnit);
 
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(arkCaptchaTokenFuture, auto24CaptchaTokenFuture, lkfCaptchaTokenFuture)
+        CompletableFuture<Void> allFutures = CompletableFuture.allOf(arkCaptchaTokenFuture, auto24CaptchaTokenFuture)
                 .orTimeout(timeout, timeUnit);
         allFutures.join();
 
@@ -129,7 +129,7 @@ public class CarSearchService {
         response.putAll(scrapeNinjaDetails);
         updateListener.onUpdate(response, false);
 
-        String lkfCaptchaToken = lkfCaptchaTokenFuture.get();
+        String lkfCaptchaToken = lkfCaptchaTokenFuture.join();
         Map<String, String> crashes = CompletableFuture.supplyAsync(() -> lkfService.carDetails(regNr, lkfCaptchaToken), fourThreadExecutor)
                 .orTimeout(timeout, timeUnit)
                 .get();

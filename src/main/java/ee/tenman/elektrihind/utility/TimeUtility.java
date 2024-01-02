@@ -1,11 +1,13 @@
 package ee.tenman.elektrihind.utility;
 
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class TimeUtility {
 
     private static final int MINUTES_IN_HOUR = 60;

@@ -55,7 +55,7 @@ public class Auto24Service implements CaptchaSolver {
     @Resource
     private PredictService predictService;
 
-    @SneakyThrows({IOException.class, InterruptedException.class})
+    @SneakyThrows({IOException.class})
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     @Cacheable(value = ONE_MONTH_CACHE_4, key = "#regNr")
     public LinkedHashMap<String, String> carPrice(String regNr) {

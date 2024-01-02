@@ -45,7 +45,8 @@ public class Auto24Service implements CaptchaSolver {
     private static final String SITE_KEY = "6Lf3qrkZAAAAAJLmqi1osY8lac0rLbAJItqEvZ0K";
     private static final String PAGE_URL = "https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring";
 
-    private static final String DIRECTORY_PATH = "images169k"; // Replace with your directory path
+    private static final String DIRECTORY_PATH = "images169k";
+    private static final String DIRECTORY_PATH_2 = "imagesPPP";
     private final Set<String> fileNames = getFileNames(DIRECTORY_PATH, "imagesPPP");
 
     private static final List<String> ACCEPTED_KEYS = List.of(
@@ -214,7 +215,7 @@ public class Auto24Service implements CaptchaSolver {
         boolean success = $$(By.tagName("div")).filter(Condition.text("Sõiduki keskmine hind"))
                 .last().exists();
         if (success) {
-            FileUtils.copyFile(screenshot, new File("imagesPPP/" + solveCaptcha.toUpperCase() + ".png"));
+            FileUtils.copyFile(screenshot, new File(DIRECTORY_PATH_2 + solveCaptcha.toUpperCase() + ".png"));
             fileNames.add(solveCaptcha.toUpperCase());
         }
         xThreadExecutor.submit(Selenide::closeWindow);

@@ -22,6 +22,6 @@ public class PredictRequest {
     public String toString() {
         int length = this.getBase64Image().length();
         return "PredictRequest(uuid=" + this.getUuid() + ", base64Image=" + this.getBase64Image().substring(0, 5) + "..." +
-                this.getBase64Image().substring(length - 6, length - 1) + ")";
+                this.getBase64Image().substring(length - 5, length) + ")";
     }
 }

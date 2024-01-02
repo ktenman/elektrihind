@@ -443,14 +443,12 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         Message message = sendMessageCode(chatId, originalMessageId, "Fetching car price for registration plate " + regNr + "...");
         Integer messageId = message.getMessageId();
         messageUpdateFlags.put(messageId, new AtomicBoolean(false));
-        beginMessageUpdateAnimation(chatId, regNr, messageId);
+        beginMessageUpdateAnimation(chatId, regNr, messageId, "price");
 
         CompletableFuture.runAsync(() -> {
                     startTime.set(System.nanoTime());
                     Map<String, String> carSearchData = auto24Service.carPrice(regNr);
-                    String response = formatCarSearchData(carSearchData);
-                    response += "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime).asString() + " seconds";
-                    editMessage(chatId, messageId, response);
+                    handleCarSearchUpdate(chatId, carSearchData, true, messageId, startTime, "price");
                 }, singleThreadExecutor)
                 .orTimeout(15, TimeUnit.MINUTES)
                 .exceptionally(throwable -> {
@@ -498,7 +496,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 });
     }
 
-    private void beginMessageUpdateAnimation(long chatId, String regNr, Integer messageId) {
+    private void beginMessageUpdateAnimation(long chatId, String regNr, Integer messageId, String text) {
         new Thread(() -> {
             try {
                 int timeout = randomTimeout();
@@ -522,7 +520,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                         } else if (percentage == 0 && averageDuration != 0) {
                             suffix = " (0.00%)";
                         }
-                        editMessage(chatId, messageId, "Fetching car details for registration plate " + regNr + "..." + ".".repeat(++count) + getArrow(count) + suffix);
+                        editMessage(chatId, messageId, "Fetching car " + text + " for registration plate " + regNr + "..." + ".".repeat(++count) + getArrow(count) + suffix);
                     }
                     timeout = randomTimeout();
                     timeTaken = timeTaken + timeout;
@@ -533,6 +531,11 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 log.error("Message updating thread interrupted", e);
             }
         }).start();
+    }
+
+
+    private void beginMessageUpdateAnimation(long chatId, String regNr, Integer messageId) {
+        beginMessageUpdateAnimation(chatId, regNr, messageId, "details");
     }
 
     private double randomIncrement() {
@@ -643,7 +646,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         }
     }
 
-    private void handleCarSearchUpdate(long chatId, Map<String, String> carDetails, boolean isFinalUpdate, Integer messageId, AtomicLong startTime) {
+    private void handleCarSearchUpdate(long chatId, Map<String, String> carDetails, boolean isFinalUpdate, Integer messageId, AtomicLong startTime, String text) {
         stopMessageUpdate(messageId);
         String updateText = formatCarSearchData(carDetails);
 
@@ -675,9 +678,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     cacheService.addDuration(animationDuration);
                     log.info("Added animationDuration: {}", animationDuration);
                 }
-                if (carDetails.size() == 2) {
+                if (carDetails.size() == 2 && !carDetails.containsKey("Turuhind")) {
                     String regNr = carDetails.get("Reg nr");
-                    sendMessageWithRetryButton(chatId, "Not enough car details found for registration plate. Click below to retry.", regNr);
+                    sendMessageWithRetryButton(chatId, "Not enough car " + text + " found for registration plate. Click below to retry.", regNr);
                 }
             } else {
                 updateText = updateText + suffix;
@@ -686,6 +689,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         } catch (Exception e) {
             log.error("Error handling car search update: {}", e.getMessage());
         }
+    }
+
+    private void handleCarSearchUpdate(long chatId, Map<String, String> carDetails, boolean isFinalUpdate, Integer messageId, AtomicLong startTime) {
+        handleCarSearchUpdate(chatId, carDetails, isFinalUpdate, messageId, startTime, "details");
     }
 
     private String formatCarSearchData(Map<String, String> data) {

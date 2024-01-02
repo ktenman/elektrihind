@@ -45,9 +45,9 @@ public class Auto24Service implements CaptchaSolver {
     private static final String SITE_KEY = "6Lf3qrkZAAAAAJLmqi1osY8lac0rLbAJItqEvZ0K";
     private static final String PAGE_URL = "https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring";
 
-    private static final String DIRECTORY_PATH = "images169k";
-    private static final String DIRECTORY_PATH_2 = "imagesPPP";
-    private final Set<String> fileNames = getFileNames(DIRECTORY_PATH, "imagesPPP");
+    private static final String DIRECTORY_PATH = "images194k";
+    private static final String DIRECTORY_PATH_2 = "imagesPPP3";
+    private final Set<String> fileNames = getFileNames(DIRECTORY_PATH, DIRECTORY_PATH_2);
 
     private static final List<String> ACCEPTED_KEYS = List.of(
             "Kütusekulu keskmine (l/ 100 km)",
@@ -166,7 +166,7 @@ public class Auto24Service implements CaptchaSolver {
 
         String solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot))
                 .orElseThrow(() -> new RuntimeException("Captcha not solved"));
-        while (!fileNames.contains(solveCaptcha.toUpperCase())) {
+        while (fileNames.contains(solveCaptcha.toUpperCase())) {
             log.warn("Captcha already solved for regNr: {}", regNr);
             $("button[type='submit']").click();
             screenshot = $("#vpc_captcha").screenshot();
@@ -191,7 +191,7 @@ public class Auto24Service implements CaptchaSolver {
 
             solveCaptcha = predictService.predict(new PredictRequest(encodedScreenshot))
                     .orElseThrow(() -> new RuntimeException("Captcha not solved"));
-            while (!fileNames.contains(solveCaptcha.toUpperCase())) {
+            while (fileNames.contains(solveCaptcha.toUpperCase())) {
                 log.warn("Captcha already solved for regNr: {}", regNr);
                 $("button[type='submit']").click();
                 screenshot = $("#vpc_captcha").screenshot();
@@ -215,7 +215,7 @@ public class Auto24Service implements CaptchaSolver {
         boolean success = $$(By.tagName("div")).filter(Condition.text("Sõiduki keskmine hind"))
                 .last().exists();
         if (success) {
-            FileUtils.copyFile(screenshot, new File(DIRECTORY_PATH_2 + solveCaptcha.toUpperCase() + ".png"));
+            FileUtils.copyFile(screenshot, new File(DIRECTORY_PATH_2 + "/" + solveCaptcha.toUpperCase() + ".png"));
             fileNames.add(solveCaptcha.toUpperCase());
         }
         xThreadExecutor.submit(Selenide::closeWindow);

@@ -96,6 +96,9 @@ public class CarSearchService {
         CompletableFuture<LinkedHashMap<String, String>> carPriceFuture = CompletableFuture.supplyAsync(() -> auto24Service.carPrice(regNr), fourThreadExecutor)
                 .orTimeout(timeout, timeUnit);
 
+        Map<String, String> response = carPriceFuture.get();
+        updateListener.onUpdate(response, false);
+
         CompletableFuture<String> arkCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> arkService.getCaptchaToken(), fourThreadExecutor)
                 .orTimeout(timeout, timeUnit);
         CompletableFuture<String> auto24CaptchaTokenFuture = CompletableFuture.supplyAsync(() -> auto24Service.getCaptchaToken(), fourThreadExecutor)
@@ -103,12 +106,9 @@ public class CarSearchService {
         CompletableFuture<String> lkfCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> lkfService.getCaptchaToken(), fourThreadExecutor)
                 .orTimeout(timeout, timeUnit);
 
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(carPriceFuture, arkCaptchaTokenFuture, auto24CaptchaTokenFuture, lkfCaptchaTokenFuture)
+        CompletableFuture<Void> allFutures = CompletableFuture.allOf(arkCaptchaTokenFuture, auto24CaptchaTokenFuture, lkfCaptchaTokenFuture)
                 .orTimeout(timeout, timeUnit);
         allFutures.join();
-
-        Map<String, String> response = carPriceFuture.get();
-        updateListener.onUpdate(response, false);
 
         String arkCaptchaToken = arkCaptchaTokenFuture.get();
         Map<String, String> arkDetails = CompletableFuture.supplyAsync(() -> arkService.carDetails(regNr, arkCaptchaToken, response, updateListener), fourThreadExecutor)

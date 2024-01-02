@@ -17,4 +17,11 @@ public class PredictRequest {
     public PredictRequest(String base64Image) {
         this.base64Image = base64Image;
     }
+
+    @Override
+    public String toString() {
+        int length = this.getBase64Image().length();
+        return "PredictRequest(uuid=" + this.getUuid() + ", base64Image=" + this.getBase64Image().substring(0, 5) + "..." +
+                this.getBase64Image().substring(length - 6, length - 1) + ")";
+    }
 }

@@ -89,7 +89,11 @@ jobs:
         run: |
           ssh githubuser@tenman.ee "\
             docker pull '$DOCKER_IMAGE_NAME:latest' || true && \
-            docker pull ktenman/captcha-solver:latest || true && \
+            LOCAL_HASH=\$(docker images --quiet ktenman/captcha-solver:latest) && \
+            REMOTE_HASH=\$(docker manifest inspect ktenman/captcha-solver:latest --verbose | grep 'Digest' | head -n 1 | awk '{print \$2}') && \
+            if [ \"\$LOCAL_HASH\" != \"\$REMOTE_HASH\" ]; then \
+            docker pull ktenman/captcha-solver:latest || true; \
+            fi && \
             docker rm elektrihind-elektrihind-app-1 -f || true && \
             docker-compose down || true && \
             docker-compose up -d && \

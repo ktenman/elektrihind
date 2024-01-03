@@ -26,6 +26,7 @@ services:
       - captcha-solver
 
   captcha-solver:
+    container_name: captcha_solver_main
     image: ktenman/captcha-solver:latest
     ports:
       - "52525:52525"

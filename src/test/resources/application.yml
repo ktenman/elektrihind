@@ -14,7 +14,7 @@ omdb-api:
   key:
 
 captcha-solver:
-  url:
+  url: http://localhost:${wiremock.server.port}
 
 twocaptcha:
   key:

@@ -88,10 +88,10 @@ jobs:
       - name: Deploy with Docker Compose
         run: |
           ssh githubuser@tenman.ee "\
+            docker-compose down || true && \
             docker pull '$DOCKER_IMAGE_NAME:latest' || true && \
             docker pull ktenman/captcha-solver:latest || true && \
             docker rm elektrihind-elektrihind-app-1 -f || true && \
-            docker-compose down || true && \
             docker-compose up -d && \
             echo 'Pruning unused Docker images...' && \
             docker image prune -af"

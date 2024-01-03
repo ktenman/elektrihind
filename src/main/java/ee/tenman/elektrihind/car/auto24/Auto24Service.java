@@ -45,8 +45,8 @@ public class Auto24Service implements CaptchaSolver {
     private static final String SITE_KEY = "6Lf3qrkZAAAAAJLmqi1osY8lac0rLbAJItqEvZ0K";
     private static final String PAGE_URL = "https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring";
 
-    private static final String DIRECTORY_PATH = "images194k";
-    private static final String DIRECTORY_PATH_2 = "imagesPPP3";
+    private static final String DIRECTORY_PATH = "images211k";
+    private static final String DIRECTORY_PATH_2 = "imagesPPP4";
     private final Set<String> fileNames = getFileNames(DIRECTORY_PATH, DIRECTORY_PATH_2);
 
     private static final List<String> ACCEPTED_KEYS = List.of(

@@ -66,8 +66,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -866,30 +868,31 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     String getElectricityPriceResponse() {
         List<ElectricityPrice> electricityPrices = cacheService.getLatestPrices();
         Optional<ElectricityPrice> currentPrice = priceFinderService.currentPrice(electricityPrices);
+
         if (currentPrice.isEmpty()) {
             log.warn("Could not find current electricity price.");
             return null;
         }
-        String response = "Current electricity price is " + currentPrice.map(ElectricityPrice::getPrice).orElseThrow() + " cents/kWh.\n";
+
+        StringBuilder response = new StringBuilder("""
+                Current electricity price is %s cents/kWh.%n
+                """.formatted(currentPrice.map(ElectricityPrice::getPrice).orElseThrow()));
 
         LocalDateTime now = LocalDateTime.now(clock);
-        List<ElectricityPrice> upcomingPrices = electricityPrices.stream()
+        TreeSet<ElectricityPrice> upcomingPrices = electricityPrices.stream()
+                .filter(Objects::nonNull)
                 .filter(price -> price.getDate().isAfter(now))
-                .sorted(Comparator.comparing(ElectricityPrice::getDate))
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(ElectricityPrice::getDate))));
 
         if (upcomingPrices.isEmpty()) {
-            response += "No upcoming price data available.";
+            response.append("No upcoming price data available.");
         } else {
-            response += "Upcoming prices:\n";
-            for (ElectricityPrice price : upcomingPrices) {
-                response += price.getDate().format(DATE_TIME_FORMATTER) + " - " +
-                        price.getPrice() + "\n";
-            }
-            upcomingPrices.add(0, currentPrice.get());
-            response += telegramService.formatPricesForTelegram(upcomingPrices);
+            response.append("Upcoming prices:\n");
+            upcomingPrices.forEach(price -> response.append("%s - %.2f%n"
+                    .formatted(price.getDate().format(DATE_TIME_FORMATTER), price.getPrice())));
+            response.append(telegramService.formatPricesForTelegram(upcomingPrices));
         }
-        return response;
+        return response.toString();
     }
 
     private void handleDurationMessage(Matcher matcher, long chatId, int messageId) {

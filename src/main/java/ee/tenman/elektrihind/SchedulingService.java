@@ -1,7 +1,6 @@
 package ee.tenman.elektrihind;
 
 import ee.tenman.elektrihind.cache.CacheService;
-import ee.tenman.elektrihind.electricity.ElectricityBotService;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
 import ee.tenman.elektrihind.euribor.EuriborRateFetcher;
@@ -31,9 +30,6 @@ public class SchedulingService {
 
     @Resource
     private EuriborRateFetcher euriborRateFetcher;
-
-    @Resource
-    private ElectricityBotService electricityBotService;
 
     @Resource
     private Clock clock;

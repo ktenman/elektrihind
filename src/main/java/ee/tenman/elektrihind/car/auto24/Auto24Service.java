@@ -45,8 +45,8 @@ public class Auto24Service implements CaptchaSolver {
     private static final String SITE_KEY = "6Lf3qrkZAAAAAJLmqi1osY8lac0rLbAJItqEvZ0K";
     private static final String PAGE_URL = "https://www.auto24.ee/ostuabi/?t=soiduki-andmete-paring";
 
-    private static final String DIRECTORY_PATH = "images211k";
-    private static final String DIRECTORY_PATH_2 = "imagesPPP4";
+    private static final String DIRECTORY_PATH = "images267k";
+    private static final String DIRECTORY_PATH_2 = "imagesPPP8";
     private final Set<String> fileNames = getFileNames(DIRECTORY_PATH, DIRECTORY_PATH_2);
 
     private static final List<String> ACCEPTED_KEYS = List.of(
@@ -110,7 +110,7 @@ public class Auto24Service implements CaptchaSolver {
         $("button[type='submit']").click();
         int count = 0;
         while ($(".errorMessage").exists() &&
-                "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 3) {
+                "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 50) {
             log.warn("Invalid captcha for regNr: {}", regNr);
             screenshot = $("#vpc_captcha").screenshot();
             assert screenshot != null;
@@ -150,6 +150,7 @@ public class Auto24Service implements CaptchaSolver {
 
     @SneakyThrows({IOException.class, InterruptedException.class})
     public void solve(String regNr) {
+        fileNames.add("zzzz");
         log.info("Searching car price for regNr: {}", regNr);
         Selenide.open("https://www.auto24.ee/ostuabi/?t=soiduki-turuhinna-paring");
         TimeUnit.MILLISECONDS.sleep(2000);
@@ -182,7 +183,7 @@ public class Auto24Service implements CaptchaSolver {
         $("button[type='submit']").click();
         int count = 0;
         while ($(".errorMessage").exists() &&
-                "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 10) {
+                "Vale kontrollkood.".equalsIgnoreCase(Selenide.$(".errorMessage").text()) && count++ < 0) {
             log.warn("Invalid captcha for regNr: {}", regNr);
             screenshot = $("#vpc_captcha").screenshot();
             assert screenshot != null;

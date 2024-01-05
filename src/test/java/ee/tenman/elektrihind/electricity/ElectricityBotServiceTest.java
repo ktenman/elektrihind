@@ -1,5 +1,8 @@
 package ee.tenman.elektrihind.electricity;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import ee.tenman.elektrihind.FileUtils;
 import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.telegram.TelegramService;
@@ -53,6 +56,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ElectricityBotServiceTest {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Mock
     private Update update;
@@ -300,6 +305,26 @@ class ElectricityBotServiceTest {
             "ark", "arK 123 456", "ARK-123", "xyz 123", "ark on katki"})
     void testInvalidPatterns(String input) {
         assertThat(CAR_REGISTRATION_PATTERN.matcher(input).matches()).isFalse();
+    }
+
+    @Test
+    @SneakyThrows
+    void getElectricityPriceResponse() {
+        lenient().when(clock.instant()).thenReturn(Instant.parse("2023-10-26T10:45:14.00Z"));
+        List<ElectricityPrice> electricityPrices = OBJECT_MAPPER.readValue(FileUtils.readFileAsString("__files/daily_prices_response.json"), new TypeReference<>() {
+        });
+
+        when(cacheService.getLatestPrices()).thenReturn(electricityPrices);
+        when(priceFinderService.currentPrice(any())).thenReturn(Optional.of(electricityPrices.get(10)));
+        when(telegramService.formatPricesForTelegram(any())).thenReturn("Sample Formatted Prices");
+
+        String response = botService.getElectricityPriceResponse();
+
+        assertThat(response).contains("Current electricity price is 19.44 cents/kWh.")
+                .contains("Upcoming prices:")
+                .contains("2023-10-26 11:00 - 19.80")
+                .contains("2023-10-29 00:00 - 6.31")
+                .contains("Sample Formatted Prices");
     }
 
 }

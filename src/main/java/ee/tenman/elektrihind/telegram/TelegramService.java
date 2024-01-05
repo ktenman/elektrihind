@@ -18,8 +18,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -113,7 +113,7 @@ public class TelegramService {
         log.info("CSV sent to Monitoring chat");
     }
 
-    public String formatPricesForTelegram(List<ElectricityPrice> filteredPrices) {
+    public String formatPricesForTelegram(Collection<ElectricityPrice> filteredPrices) {
         StringBuilder builder = new StringBuilder();
         filteredPrices.forEach(builder::append);
 

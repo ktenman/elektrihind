@@ -765,8 +765,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             diskUsage = (double) usableSpace / totalSpace * 100;
         }
 
-        return String.format("" +
-                "CPU: %.2f %% %n" +
+        return String.format("CPU: %.2f %% %n" +
                 "Disk Usage: %.2f %% %n" +
                 "Memory Usage: %.2f %%", cpuLoad, diskUsage, memoryUsage);
     }
@@ -888,8 +887,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             response.append("No upcoming price data available.");
         } else {
             response.append("Upcoming prices:\n");
-            upcomingPrices.forEach(price -> response.append("%s - %.2f%n"
-                    .formatted(price.getDate().format(DATE_TIME_FORMATTER), price.getPrice())));
             response.append(telegramService.formatPricesForTelegram(upcomingPrices));
         }
         return response.toString();

@@ -32,6 +32,7 @@ services:
       - "52525:52525"
     environment:
       - FLASK_ENV=development
+    restart: always
 
   redis:
     image: redis:7.2.3-alpine

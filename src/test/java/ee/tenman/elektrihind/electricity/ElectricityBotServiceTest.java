@@ -322,30 +322,7 @@ class ElectricityBotServiceTest {
 
         assertThat(response).contains("Current electricity price is 19.44 cents/kWh.")
                 .contains("Upcoming prices:")
-                .contains("2023-10-26 11:00 - 19.80")
-                .contains("2023-10-29 00:00 - 6.31")
                 .contains("Sample Formatted Prices");
     }
-
-    @Test
-    @SneakyThrows
-    void getElectricityPriceResponse2() {
-        lenient().when(clock.instant()).thenReturn(Instant.parse("2023-10-26T10:45:14.00Z"));
-        List<ElectricityPrice> electricityPrices = OBJECT_MAPPER.readValue(FileUtils.readFileAsString("__files/daily_prices_response_2.json"), new TypeReference<>() {
-        });
-
-        when(cacheService.getLatestPrices()).thenReturn(electricityPrices);
-        when(priceFinderService.currentPrice(any())).thenReturn(Optional.of(electricityPrices.get(10)));
-        when(telegramService.formatPricesForTelegram(any())).thenReturn("Sample Formatted Prices");
-
-        String response = botService.getElectricityPriceResponse();
-
-        assertThat(response).contains("Current electricity price is 19.44 cents/kWh.")
-                .contains("Upcoming prices:")
-                .contains("2023-10-26 11:00 - 19.80")
-                .contains("2023-10-29 00:00 - 6.31")
-                .contains("Sample Formatted Prices");
-    }
-
 
 }

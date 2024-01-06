@@ -97,8 +97,8 @@ jobs:
             echo 'Pruning unused Docker images...' && \
             docker image prune -af"
 
-      - name: Cleanup on server
-        run: ssh githubuser@tenman.ee "rm ~/docker-compose.yml ~/.env"
+ #     - name: Cleanup on server
+  #      run: ssh githubuser@tenman.ee "rm ~/docker-compose.yml ~/.env"
 
  #     - name: Cleanup on runner
 #        run: rm .env

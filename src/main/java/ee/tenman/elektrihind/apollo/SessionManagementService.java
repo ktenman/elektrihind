@@ -1,43 +1,58 @@
 package ee.tenman.elektrihind.apollo;
 
+import org.apache.commons.lang.math.RandomUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.Comparator;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class SessionManagementService {
-    private static final long CLEANUP_RATE_MS = 3600000;
-    private static final long SESSION_EXPIRY_DURATION_MIN = 10;
+    private static final long CLEANUP_RATE_MS = 600_000;
+    private static final long SESSION_EXPIRY_DURATION_NANOS = 600;
 
-    private final ConcurrentHashMap<UUID, ApolloKinoSession> sessions = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, ApolloKinoSession> sessions = new ConcurrentHashMap<>();
 
     public ApolloKinoSession createNewSession() {
-        ApolloKinoSession session = new ApolloKinoSession();
+        ApolloKinoSession session = new ApolloKinoSession(generateSessionId());
         sessions.put(session.getSessionId(), session);
         return session;
     }
 
-    public ApolloKinoSession getSession(UUID sessionId) {
-        if (isSessionExpired(sessionId)) {
-            return null;
+    private Integer generateSessionId() {
+        return sessions.values().stream()
+                .max(Comparator.comparing(ApolloKinoSession::getSessionId))
+                .map(ApolloKinoSession::getSessionId)
+                .orElse(1) +
+                RandomUtils.nextInt(99);
+    }
+
+    public ApolloKinoSession getSession(Integer sessionId) {
+        boolean sessionExpired = isSessionExpired(sessionId);
+        if (sessionExpired) {
+            throw new RuntimeException("Session expired");
         }
         return sessions.get(sessionId);
     }
 
     @Scheduled(fixedRate = CLEANUP_RATE_MS)
     public void clearExpiredSessions() {
-        sessions.entrySet().removeIf(entry -> isSessionExpired(entry.getKey()));
+        sessions.entrySet().removeIf(entry -> isSessionExpired(entry.getValue().getSessionId()));
     }
 
-    private boolean isSessionExpired(UUID sessionId) {
+    private boolean isSessionExpired(Integer sessionId) {
         ApolloKinoSession session = sessions.get(sessionId);
         if (session == null) {
             return true;
         }
-        return Duration.between(session.getLastUpdated(), LocalDateTime.now()).toMinutes() >= SESSION_EXPIRY_DURATION_MIN;
+        long nanos = Duration.between(session.getLastUpdated(), LocalDateTime.now()).toSeconds();
+        return nanos >= SESSION_EXPIRY_DURATION_NANOS;
+    }
+
+    public void removeSession(Integer sessionId) {
+        sessions.remove(sessionId);
     }
 }

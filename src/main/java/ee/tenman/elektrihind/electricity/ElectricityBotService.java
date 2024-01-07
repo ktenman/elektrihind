@@ -3,6 +3,7 @@ package ee.tenman.elektrihind.electricity;
 import ee.tenman.elektrihind.apollo.ApolloKinoService;
 import ee.tenman.elektrihind.apollo.ApolloKinoSession;
 import ee.tenman.elektrihind.apollo.Option;
+import ee.tenman.elektrihind.apollo.ReBookingService;
 import ee.tenman.elektrihind.apollo.SessionManagementService;
 import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.car.CarSearchService;
@@ -30,6 +31,7 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Document;
@@ -83,9 +85,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static ee.tenman.elektrihind.utility.DateTimeConstants.DATE_TIME_FORMATTER;
 
@@ -101,14 +105,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     public static final Pattern CHAT_PATTERN = Pattern.compile("(?s)^chat\\s+(.+)$", Pattern.CASE_INSENSITIVE);
     private static final String EURIBOR = "euribor";
     private static final String METRIC = "metric";
-    private static final String APOLLO_KINO = "apollo_kino";
-    private static final Pattern APOLLO_KINO_PATTERN = Pattern.compile(APOLLO_KINO + "=(Täna|Homme|\\d{2}\\.\\d{2}\\.\\d{4})");
-    private static final Pattern APOLLO_KINO_UUID_PATTERN = Pattern.compile(APOLLO_KINO + "=([a-f0-9\\-]+)=(.+)");
-    private static final Pattern APOLLO_KINO_MOVIE_PATTERN = Pattern.compile(APOLLO_KINO + "=(Täna|Homme|\\d{2}\\.\\d{2}\\.\\d{4})=(.+)");
-    private static final Pattern APOLLO_KINO_MOVIE_TIME_PATTERN = Pattern.compile(APOLLO_KINO + "=(Täna|Homme|\\d{2}\\.\\d{2}\\.\\d{4})=(.+)=(.+)");
-    private static final Pattern APOLLO_KINO_MOVIE_TIME_ROW_PATTERN = Pattern.compile(APOLLO_KINO + "=(Täna|Homme|\\d{2}\\.\\d{2}\\.\\d{4})=(.+)=(.+)=(.+)");
-    private static final Pattern APOLLO_KINO_MOVIE_TIME_ROW_SEAT_PATTERN = Pattern.compile(APOLLO_KINO + "=(Täna|Homme|\\d{2}\\.\\d{2}\\.\\d{4})=(.+)=(.+)=(.+)=(.+)");
-    private static final Pattern APOLLO_KINO_MOVIE_TIME_ROW_SEAT_CONFIRM_PATTERN = Pattern.compile(APOLLO_KINO + "=(Täna|Homme|\\d{2}\\.\\d{2}\\.\\d{4})=(.+)=(.+)=(.+)=(.+)=confirm");
+    private static final String APOLLO_KINO = "apollo";
+    private static final Pattern APOLLO_KINO_SESSION_ID_PATTERN = Pattern.compile(APOLLO_KINO + "=([0-9]+)=(.+)");
     private static final MessageDigest SHA_256_DIGEST;
     private static final String SHA256_ALGORITHM = "SHA-256";
     private static final String REBOOT_COMMAND = "reboot";
@@ -184,6 +182,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     @Resource
     private SessionManagementService sessionManagementService;
 
+    @Resource
+    private ReBookingService reBookingService;
+
     public static String buildSHA256(String input) {
         byte[] hashInBytes = SHA_256_DIGEST.digest(input.getBytes(StandardCharsets.UTF_8));
         StringBuilder stringBuilder = new StringBuilder();
@@ -242,91 +243,14 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             search(startTime, chatId, regNr, null);
             return;
         }
-        Matcher apolloKinoUuidMatcher = APOLLO_KINO_UUID_PATTERN.matcher(callData);
-        if (apolloKinoUuidMatcher.find()) {
-            log.info("Received callback query for APOLLO_KINO_UUID_PATTERN: {}", apolloKinoUuidMatcher.group(1));
-            String uuid = apolloKinoUuidMatcher.group(1);
-            String action = apolloKinoUuidMatcher.group(2);
-            return;
-        }
-
-        Matcher apolloKinoMovieTimeRowSeatConfirmMatcher = APOLLO_KINO_MOVIE_TIME_ROW_SEAT_CONFIRM_PATTERN.matcher(callData);
-        if (apolloKinoMovieTimeRowSeatConfirmMatcher.find()) {
-            log.info("Received callback query for APOLLO_KINO_MOVIE_TIME_ROW_SEAT_CONFIRM_PATTERN: {}", apolloKinoMovieTimeRowSeatConfirmMatcher.group(1));
-            String day = apolloKinoMovieTimeRowSeatConfirmMatcher.group(1);
-            String movie = apolloKinoMovieTimeRowSeatConfirmMatcher.group(2);
-            String time = apolloKinoMovieTimeRowSeatConfirmMatcher.group(3);
-            String row = apolloKinoMovieTimeRowSeatConfirmMatcher.group(4);
-            String seat = apolloKinoMovieTimeRowSeatConfirmMatcher.group(5);
-            String koht = row + "K" + seat;
-            Option.ScreenTime screenTime = apolloKinoService.getOptions().get(day).stream()
-                    .filter(screen -> screen.getMovie().equals(movie))
-                    .map(Option::getScreenTimes)
-                    .flatMap(List::stream)
-                    .filter(t -> t.getTime().equals(time))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Screen time not found for " + day + " " + movie + " " + time));
-
-            sendMessageCode(chatId, callbackQuery.getMessage().getMessageId(), "Working on it...");
-
-            Optional<java.io.File> bookedFile = apolloKinoService.book(screenTime, koht);
-
-            if (bookedFile.isPresent()) {
-                String confirmationMessage = "Booked " + koht + " for " + movie + ", " + day.toLowerCase() + " kell: " + time;
-                confirmationMessage += "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime).asString() + " seconds";
-                sendImage(chatId, bookedFile.get());
-                sendMessage(chatId, confirmationMessage);
-            } else {
-                sendMessage(chatId, "Failed to book " + koht + " for " + movie + ", " + day.toLowerCase() + " kell: " + time);
-            }
-            return;
-        }
-
-        Matcher apolloKinoMovieTimeRowSeatMatcher = APOLLO_KINO_MOVIE_TIME_ROW_SEAT_PATTERN.matcher(callData);
-        if (apolloKinoMovieTimeRowSeatMatcher.find()) {
-            log.info("Received callback query for APOLLO_KINO_MOVIE_TIME_ROW_SEAT_PATTERN: {}", apolloKinoMovieTimeRowSeatMatcher.group(1));
-            String day = apolloKinoMovieTimeRowSeatMatcher.group(1);
-            String movie = apolloKinoMovieTimeRowSeatMatcher.group(2);
-            String time = apolloKinoMovieTimeRowSeatMatcher.group(3);
-            String row = apolloKinoMovieTimeRowSeatMatcher.group(4);
-            String seat = apolloKinoMovieTimeRowSeatMatcher.group(5);
-            displayApolloKinoMenu(chatId, day, movie, time, row, seat);
-            return;
-        }
-
-        Matcher apolloKinoMovieTimeRowMatcher = APOLLO_KINO_MOVIE_TIME_ROW_PATTERN.matcher(callData);
-        if (apolloKinoMovieTimeRowMatcher.find()) {
-            log.info("Received callback query for APOLLO_KINO_MOVIE_TIME_ROW_PATTERN: {}", apolloKinoMovieTimeRowMatcher.group(1));
-            String day = apolloKinoMovieTimeRowMatcher.group(1);
-            String movie = apolloKinoMovieTimeRowMatcher.group(2);
-            String time = apolloKinoMovieTimeRowMatcher.group(3);
-            String row = apolloKinoMovieTimeRowMatcher.group(4);
-            displayApolloKinoMenu(chatId, day, movie, time, row);
-            return;
-        }
-
-        Matcher apolloKinoMovieTimePatternMatcher = APOLLO_KINO_MOVIE_TIME_PATTERN.matcher(callData);
-        if (apolloKinoMovieTimePatternMatcher.find()) {
-            log.info("Received callback query for APOLLO_KINO_MOVIE_TIME_PATTERN: {}", apolloKinoMovieTimePatternMatcher.group(1));
-            String day = apolloKinoMovieTimePatternMatcher.group(1);
-            String movie = apolloKinoMovieTimePatternMatcher.group(2);
-            String time = apolloKinoMovieTimePatternMatcher.group(3);
-            displayApolloKinoMenu(chatId, day, movie, time);
-            return;
-        }
-        Matcher apolloKinoMoviePatternMatcher = APOLLO_KINO_MOVIE_PATTERN.matcher(callData);
-        if (apolloKinoMoviePatternMatcher.find()) {
-            log.info("Received callback query for APOLLO_KINO_MOVIE_PATTERN: {}", apolloKinoMoviePatternMatcher.group(1));
-            String day = apolloKinoMoviePatternMatcher.group(1);
-            String movie = apolloKinoMoviePatternMatcher.group(2);
-            displayApolloKinoMenu(chatId, day, movie);
-            return;
-        }
-        Matcher apolloKinoPatternMatcher = APOLLO_KINO_PATTERN.matcher(callData);
-        if (apolloKinoPatternMatcher.find()) {
-            log.info("Received callback query for APOLLO_KINO_PATTERN: {}", apolloKinoPatternMatcher.group(1));
-            String day = apolloKinoPatternMatcher.group(1);
-            displayApolloKinoMenu(chatId, day);
+        Matcher apolloKinoSessionIdMatcher = APOLLO_KINO_SESSION_ID_PATTERN.matcher(callData);
+        if (apolloKinoSessionIdMatcher.find()) {
+            Integer sessionId = Integer.parseInt(apolloKinoSessionIdMatcher.group(1));
+            ApolloKinoSession session = sessionManagementService.getSession(sessionId);
+            String chosenOption = apolloKinoSessionIdMatcher.group(2);
+            log.info("Received callback query for APOLLO_KINO_SESSION_ID_PATTERN with session ID {} and chose option {}", sessionId, chosenOption);
+            session.updateLastInteractionTime();
+            displayApolloKinoMenu(chatId, session, chosenOption);
             return;
         }
 
@@ -337,8 +261,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             case METRIC -> sendMessageCode(chatId, getSystemMetrics());
             case APOLLO_KINO -> {
                 ApolloKinoSession newSession = sessionManagementService.createNewSession();
-//                displayApolloKinoMenu(chatId, newSession);
-                displayApolloKinoMenu(chatId);
+                displayApolloKinoMenu(chatId, newSession, null);
             }
             case REBOOT_COMMAND -> {
                 digitalOceanService.rebootDroplet();
@@ -364,184 +287,193 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         }
     }
 
-    private void displayApolloKinoMenu(long chatId, ApolloKinoSession newSession) {
-
-    }
-
-    private void displayApolloKinoMenu(long chatId, String day, String movie, String time, String row, String seat) {
+    /**
+     * Displays the Apollo Kino menu.
+     *
+     * @param chatId  the chat ID
+     * @param session the Apollo
+     */
+    private void displayApolloKinoMenu(long chatId, ApolloKinoSession session, String chosenOption) {
+        log.info("Displaying apollo kino menu for session {} with chosen option {} and current state {}",
+                session.getSessionId(),
+                chosenOption,
+                session.getCurrentState()
+        );
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
 
-        Option.ScreenTime screenTime = apolloKinoService.getOptions().get(day).stream()
-                .filter(screen -> screen.getMovie().equals(movie))
-                .map(Option::getScreenTimes)
-                .flatMap(List::stream)
-                .filter(t -> t.getTime().equals(time))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Screen time not found for " + day + " " + movie + " " + time));
-
-
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-
-        String koht = row + "K" + seat;
-        InlineKeyboardButton confirm = new InlineKeyboardButton("Confirm");
-        confirm.setCallbackData(APOLLO_KINO + "=" + day + "=" + movie + "=" + time + "=" + row + "=" + seat + "=confirm");
-        rowInline.add(confirm);
-
-        rowsInline.add(rowInline);
-
-        markupInline.setKeyboard(rowsInline);
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText("Book: '" + koht + "' for " + movie + ", " + day.toLowerCase() + " kell: " + time + "?");
-        message.setReplyMarkup(markupInline);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Failed to display apollo kino menu with times: {}", e.getMessage());
-        }
-
-    }
-
-    private void displayApolloKinoMenu(long chatId, String day, String movie, String time, String row) {
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-
-        Option.ScreenTime screenTime = apolloKinoService.getOptions().get(day).stream()
-                .filter(screen -> screen.getMovie().equals(movie))
-                .map(Option::getScreenTimes)
-                .flatMap(List::stream)
-                .filter(t -> t.getTime().equals(time))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Screen time not found for " + day + " " + movie + " " + time));
-
-        int maxSeats = screenConfiguration.getScreen(screenTime.getHall()).getSeatCounts().get(row);
-
-        for (int i = 1; i <= maxSeats; i++) {
-            List<InlineKeyboardButton> rowInline = new ArrayList<>();
-            InlineKeyboardButton button = new InlineKeyboardButton(i + "");
-            button.setCallbackData(APOLLO_KINO + "=" + day + "=" + movie + "=" + time + "=" + row + "=" + i);
-            rowInline.add(button);
-            rowsInline.add(rowInline);
-        }
-
-        markupInline.setKeyboard(rowsInline);
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText(String.format("Select a seat in row %s :", row));
-        message.setReplyMarkup(markupInline);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Failed to display apollo kino menu with times: {}", e.getMessage());
-        }
-    }
-
-    private void displayApolloKinoMenu(long chatId, String day, String movie, String time) {
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-
-        Option.ScreenTime screenTime = apolloKinoService.getOptions().get(day).stream()
-                .filter(screen -> screen.getMovie().equals(movie))
-                .map(Option::getScreenTimes)
-                .flatMap(List::stream)
-                .filter(t -> t.getTime().equals(time))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Screen time not found for " + day + " " + movie + " " + time));
-
-        Map<String, Integer> seatCounts = screenConfiguration.getScreen(screenTime.getHall()).getSeatCounts();
-
-        for (Map.Entry<String, Integer> entry : seatCounts.entrySet()) {
-            List<InlineKeyboardButton> rowInline = new ArrayList<>();
-            InlineKeyboardButton button = new InlineKeyboardButton(entry.getKey());
-            button.setCallbackData(APOLLO_KINO + "=" + day + "=" + movie + "=" + time + "=" + entry.getKey());
-            rowInline.add(button);
-            rowsInline.add(rowInline);
-        }
-
-        markupInline.setKeyboard(rowsInline);
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText("Select a row to book:");
-        message.setReplyMarkup(markupInline);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Failed to display apollo kino menu with times: {}", e.getMessage());
-        }
-    }
-
-    private void displayApolloKinoMenu(long chatId, String day, String movie) {
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-        apolloKinoService.getOptions().get(day).stream()
-                .filter(screen -> screen.getMovie().equals(movie))
-                .map(Option::getScreenTimes)
-                .flatMap(List::stream)
-                .forEach(t -> {
-                    InlineKeyboardButton button = new InlineKeyboardButton(t.getTime());
-                    button.setCallbackData(APOLLO_KINO + "=" + day + "=" + movie + "=" + t.getTime());
+        String prompt = "Prompt error"; // Should never be displayed
+        UnaryOperator<String> getCallbackData = (data) -> APOLLO_KINO + "=" + session.getSessionId() + "=" + data;
+        switch (session.getCurrentState()) {
+            case INITIAL -> {
+                session.updateCurrentState();
+                List<InlineKeyboardButton> rowInline = new ArrayList<>();
+                apolloKinoService.getOptions().keySet().forEach(option -> {
+                    InlineKeyboardButton button = new InlineKeyboardButton(option);
+                    button.setCallbackData(getCallbackData.apply(option));
                     rowInline.add(button);
                 });
-
-        rowsInline.add(rowInline);
-
-        markupInline.setKeyboard(rowsInline);
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText("Select a time:");
-        message.setReplyMarkup(markupInline);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Failed to display apollo kino menu with times: {}", e.getMessage());
-        }
-    }
-
-    private void displayApolloKinoMenu(long chatId, String day) {
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-        List<Option> optionsList = apolloKinoService.getOptions().get(day);
-        String title = "";
-        for (int i = 0; i < optionsList.size(); i++) {
-            Option screen = optionsList.get(i);
-            title += screen.getMovie() + (i + 1 < optionsList.size() ? optionsList.get(i + 1).getMovie() : "");
-            InlineKeyboardButton button = new InlineKeyboardButton(screen.getMovie());
-            button.setCallbackData(APOLLO_KINO + "=" + day + "=" + screen.getMovie());
-            rowInline.add(button);
-            if (i % 2 == 1 || title.length() > 40) {
                 rowsInline.add(rowInline);
-                rowInline = new ArrayList<>();
-                title = "";
+                prompt = session.getCurrentState().getPrompt();
+            }
+            case SELECT_DATE -> {
+                session.setSelectedDate(chosenOption);
+                List<InlineKeyboardButton> rowInline = new ArrayList<>();
+                List<Option> optionsList = apolloKinoService.getOptions().get(chosenOption);
+                String title = "";
+                for (int i = 0; i < optionsList.size(); i++) {
+                    Option screen = optionsList.get(i);
+                    title += screen.getMovie() + (i + 1 < optionsList.size() ? optionsList.get(i + 1).getMovie() : "");
+                    InlineKeyboardButton button = new InlineKeyboardButton(screen.getMovie());
+                    String callbackData = getCallbackData.apply(screen.getMovie());
+                    button.setCallbackData(callbackData);
+                    rowInline.add(button);
+                    if (i % 2 == 1 || title.length() > 40) {
+                        rowsInline.add(rowInline);
+                        rowInline = new ArrayList<>();
+                        title = "";
+                    }
+                }
+                if (rowsInline.isEmpty()) {
+                    sendMessage(chatId, "No movies found for " + chosenOption);
+                    return;
+                }
+                rowsInline.add(rowInline);
+                prompt = session.getCurrentState().getPrompt();
+            }
+            case SELECT_MOVIE -> {
+                session.setSelectedMovie(chosenOption);
+                List<InlineKeyboardButton> rowInline = new ArrayList<>();
+                apolloKinoService.getOptions().get(session.getSelectedDate()).stream()
+                        .filter(screen -> screen.getMovie().equals(session.getSelectedMovie()))
+                        .map(Option::getScreenTimes)
+                        .flatMap(List::stream)
+                        .forEach(t -> {
+                            InlineKeyboardButton button = new InlineKeyboardButton(t.getTime());
+                            String callbackData = getCallbackData.apply(t.getTime());
+                            button.setCallbackData(callbackData);
+                            rowInline.add(button);
+                        });
+
+                rowsInline.add(rowInline);
+                prompt = session.getCurrentState().getPrompt();
+            }
+            case SELECT_TIME -> {
+                session.setSelectedTime(chosenOption);
+                Option.ScreenTime screenTime = apolloKinoService.screenTime(session);
+                Map<String, Integer> seatCounts = screenConfiguration.getScreen(screenTime.getHall()).getSeatCounts();
+                for (Map.Entry<String, Integer> entry : seatCounts.entrySet()) {
+                    List<InlineKeyboardButton> rowInline = new ArrayList<>();
+                    InlineKeyboardButton button = new InlineKeyboardButton(entry.getKey());
+                    String callbackData = getCallbackData.apply(entry.getKey());
+                    button.setCallbackData(callbackData);
+                    rowInline.add(button);
+                    rowsInline.add(rowInline);
+                }
+                prompt = session.getCurrentState().getPrompt();
+            }
+            case SELECT_ROW -> {
+                session.setSelectedRow(chosenOption);
+                Option.ScreenTime screenTime = apolloKinoService.screenTime(session);
+                int maxSeats = screenConfiguration.getScreen(screenTime.getHall()).getSeatCounts().get(session.getSelectedRow());
+                for (int i = 1; i <= maxSeats; i++) {
+                    List<InlineKeyboardButton> rowInline = new ArrayList<>();
+                    InlineKeyboardButton button = new InlineKeyboardButton(i + "");
+                    String callbackData = getCallbackData.apply(i + "");
+                    button.setCallbackData(callbackData);
+                    rowInline.add(button);
+                    rowsInline.add(rowInline);
+                }
+                prompt = session.getCurrentState().getPrompt(session.getSelectedRow());
+            }
+            case SELECT_SEAT -> {
+                session.setSelectedSeat(chosenOption);
+                List<InlineKeyboardButton> rowInline = new ArrayList<>();
+                InlineKeyboardButton confirm = new InlineKeyboardButton("Confirm");
+                confirm.setCallbackData(getCallbackData.apply("confirm"));
+                rowInline.add(confirm);
+                rowsInline.add(rowInline);
+                prompt = session.getCurrentState().getPrompt(
+                        session.getKoht(),
+                        session.getSelectedMovie(),
+                        session.getSelectedDate(),
+                        session.getSelectedTime()
+                );
+            }
+            case CONFIRMATION -> {
+                long startTime = System.nanoTime();
+                session.updateCurrentState();
+
+                String koht = session.getKoht();
+
+                Message reply = sendReplyMessage(chatId, session.getMessageId(), "Working on it...");
+                session.setReplyMessageId(reply.getMessageId());
+                session.setChatId(chatId);
+
+                Optional<java.io.File> bookedFile = apolloKinoService.book(session);
+
+                if (bookedFile.isPresent()) {
+                    String confirmationMessage = "Booked " + koht + " for " + session.getSelectedMovie() + ", " +
+                            session.getSelectedDate().toLowerCase() + " kell: " + session.getSelectedTime();
+                    confirmationMessage += "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime).asString() + " seconds";
+                    Message message = sendMessage(chatId, confirmationMessage);
+                    sendImage(chatId, message.getMessageId(), bookedFile.get());
+                } else {
+                    sendMessage(chatId, "Failed to book " + koht + " for " + session.getSelectedMovie() + ", " +
+                            session.getSelectedDate() + " kell: " + session.getSelectedTime());
+                }
+
+                session.updateLastInteractionTime();
+                prompt = session.getCurrentState().getPrompt();
+            }
+            default -> {
+                sendReplyMessage(chatId, session.getMessageId(), "Unexpected value: " + session.getCurrentState());
+                throw new IllegalStateException("Unexpected value: " + session.getCurrentState());
             }
         }
 
-        if (rowInline.isEmpty()) {
-            sendMessage(chatId, "No movies found for " + day);
-            return;
-        }
-
-        rowsInline.add(rowInline);
-
         markupInline.setKeyboard(rowsInline);
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText("Select a movie:");
-        message.setReplyMarkup(markupInline);
 
         try {
-            execute(message);
+            if (session.isCompleted()) {
+                reBookingService.add(session);
+                sessionManagementService.removeSession(session.getSessionId());
+                log.info("Session {} completed", session.getSessionId());
+                Stream.of(session.getMessageId(), session.getReplyMessageId())
+                        .parallel()
+                        .filter(Objects::nonNull)
+                        .forEach(messageId -> {
+                            DeleteMessage deleteMessage = new DeleteMessage();
+                            deleteMessage.setChatId(chatId);
+                            deleteMessage.setMessageId(messageId);
+                            try {
+                                execute(deleteMessage);
+                            } catch (TelegramApiException e) {
+                                log.error("Failed to delete message {} for chat {}", messageId, chatId);
+                            }
+                        });
+                log.info("Deleted messages {} and {} for chat {}", session.getMessageId(), session.getReplyMessageId(), chatId);
+                return;
+            }
+            if (session.getMessageId() == null) {
+                SendMessage message = new SendMessage();
+                message.setChatId(chatId);
+                message.setText(prompt);
+                message.setReplyMarkup(markupInline);
+                Message response = execute(message);
+                session.setMessageId(response.getMessageId());
+            } else {
+                EditMessageText editMessageText = new EditMessageText();
+                editMessageText.setChatId(chatId);
+                editMessageText.setMessageId(session.getMessageId());
+                editMessageText.setText(prompt);
+                editMessageText.setReplyMarkup(markupInline);
+                execute(editMessageText);
+            }
         } catch (TelegramApiException e) {
             log.error("Failed to apollo kino menu with options: {}", e.getMessage());
         }
+
     }
 
     @Override
@@ -604,32 +536,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             return;
         }
         search(startTime, message.getChatId(), plateNumber, message.getMessageId());
-    }
-
-    private void displayApolloKinoMenu(long chatId) {
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-        apolloKinoService.getOptions().keySet().forEach(option -> {
-            InlineKeyboardButton button = new InlineKeyboardButton(option);
-            button.setCallbackData(APOLLO_KINO + "=" + option);
-            rowInline.add(button);
-        });
-
-        rowsInline.add(rowInline);
-
-        markupInline.setKeyboard(rowsInline);
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText("Select an option:");
-        message.setReplyMarkup(markupInline);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Failed to apollo kino menu: {}", e.getMessage());
-        }
     }
 
     private void displayMenu(long chatId) {
@@ -755,6 +661,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         } else if (messageText.equalsIgnoreCase(REBOOT_COMMAND)) {
             digitalOceanService.rebootDroplet();
             sendMessageCode(chatId, messageId, "Droplet reboot initiated!");
+
+        } else if (messageText.equalsIgnoreCase(APOLLO_KINO) || messageText.equalsIgnoreCase("/" + APOLLO_KINO)) {
+            ApolloKinoSession newSession = sessionManagementService.createNewSession();
+            displayApolloKinoMenu(chatId, newSession, null);
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages
@@ -1293,6 +1203,26 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         }
     }
 
+    Message sendReplyMessage(long chatId, Integer replyMessageId, String text) {
+        ensureEditLimit();
+        if (text == null) {
+            log.warn("Not sending null message to chat: {}", chatId);
+            return null;
+        }
+        SendMessage message = new SendMessage();
+        message.setChatId(String.valueOf(chatId));
+        message.setReplyToMessageId(replyMessageId);
+        message.setText(text);
+
+        try {
+            log.info("Sending message to chat: {} with text: {}", chatId, text);
+            return execute(message);
+        } catch (TelegramApiException e) {
+            log.error("Failed to send message: {}", text, e);
+            return null;
+        }
+    }
+
     void sendImage(long chatId, String imageUrl) {
         ensureEditLimit();
         SendPhoto sendPhotoRequest = new SendPhoto();
@@ -1308,6 +1238,18 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private void sendImage(long chatId, java.io.File file) {
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
+        sendPhoto.setPhoto(new InputFile(file));
+        try {
+            execute(sendPhoto);
+        } catch (TelegramApiException e) {
+            log.error("Failed to send image: {}", e.getMessage());
+        }
+    }
+
+    private void sendImage(long chatId, Integer replyMessageId, java.io.File file) {
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(chatId);
+        sendPhoto.setReplyToMessageId(replyMessageId);
         sendPhoto.setPhoto(new InputFile(file));
         try {
             execute(sendPhoto);

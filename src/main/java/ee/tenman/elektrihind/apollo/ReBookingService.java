@@ -82,11 +82,11 @@ public class ReBookingService {
         Optional<File> bookedFile = apolloKinoService.book(session);
         if (bookedFile.isPresent()) {
             log.info("Booked session {}", session.getSessionId());
-            session.updateLastInteractionTime();
             elektriTeemuTelegramService.sendToTelegram(
                     "Booked movie " + session.getSelectedMovie() + " at " + session.getSelectedDateTime(), session.getChatId());
             elektriTeemuTelegramService.sendFileToTelegram(bookedFile.get(), session.getChatId());
         }
+        session.updateLastInteractionTime();
     }
 
     private boolean isSessionExpired(ApolloKinoSession session) {
@@ -100,6 +100,10 @@ public class ReBookingService {
         if (session == null) {
             return false;
         }
-        return Duration.between(session.getLastUpdated(), LocalDateTime.now()).toSeconds() > 900;
+        return Duration.between(session.getLastUpdated(), LocalDateTime.now()).toSeconds() > 910;
+    }
+
+    public int getSessionCount() {
+        return sessions.size();
     }
 }

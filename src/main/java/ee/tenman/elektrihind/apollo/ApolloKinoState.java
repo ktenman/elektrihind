@@ -11,7 +11,7 @@ public enum ApolloKinoState {
     SELECT_TIME("Select a time:"),
     SELECT_ROW("Select a row:"),
     SELECT_SEAT("Select a seat in row %s:"),
-    CONFIRMATION("Book: '%s' for %s, %s kell: %s?"),
+    CONFIRMATION("Book: `%s` for `%s`, `%s` time: `%s`?"),
     COMPLETED("Completed");
 
     private final String prompt;

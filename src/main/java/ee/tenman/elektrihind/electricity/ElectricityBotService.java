@@ -112,6 +112,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final MessageDigest SHA_256_DIGEST;
     private static final String SHA256_ALGORITHM = "SHA-256";
     private static final String REBOOT_COMMAND = "reboot";
+    private static final String CONFIRM_BUTTON = "Confirm";
+    private static final String DECLINE_BUTTON = "Decline";
     private final ConcurrentHashMap<Integer, AtomicBoolean> messageUpdateFlags = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Double> lastPercentages = new ConcurrentHashMap<>();
     private static final int MAX_EDITS_PER_MINUTE = 15;
@@ -388,9 +390,12 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             case SELECT_SEAT -> {
                 session.setSelectedSeat(chosenOption);
                 List<InlineKeyboardButton> rowInline = new ArrayList<>();
-                InlineKeyboardButton confirm = new InlineKeyboardButton("Confirm");
-                confirm.setCallbackData(getCallbackData.apply("confirm"));
+                InlineKeyboardButton confirm = new InlineKeyboardButton(CONFIRM_BUTTON);
+                confirm.setCallbackData(getCallbackData.apply(CONFIRM_BUTTON));
                 rowInline.add(confirm);
+                InlineKeyboardButton decline = new InlineKeyboardButton(DECLINE_BUTTON);
+                decline.setCallbackData(getCallbackData.apply(DECLINE_BUTTON));
+                rowInline.add(decline);
                 rowsInline.add(rowInline);
                 prompt = session.getPrompt(
                         session.getKoht(),
@@ -402,25 +407,27 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             case CONFIRMATION -> {
                 long startTime = System.nanoTime();
                 String koht = session.getKoht();
+                UnaryOperator<String> messageText = (m) -> koht + m + "`" + session.getSelectedMovie() + "` on " +
+                        session.getSelectedDate().format(DATE_TIME_FORMATTER) + " at " + session.getSelectedTime();
+                if (CONFIRM_BUTTON.equals(chosenOption)) {
+                    Message reply = sendReplyMessage(chatId, session.getMessageId(), "Booking...");
+                    session.setReplyMessageId(reply.getMessageId());
+                    session.setChatId(chatId);
 
-                Message reply = sendReplyMessage(chatId, session.getMessageId(), "Working on it...");
-                session.setReplyMessageId(reply.getMessageId());
-                session.setChatId(chatId);
+                    Optional<java.io.File> bookedFile = apolloKinoService.book(session);
 
-                Optional<java.io.File> bookedFile = apolloKinoService.book(session);
+                    if (bookedFile.isPresent()) {
+                        String confirmationMessage = messageText.apply(" booked for ");
+                        confirmationMessage += TimeUtility.durationInSeconds(startTime).getTaskDurationMessage();
+                        Message message = sendMessage(chatId, confirmationMessage);
+                        sendImage(chatId, message.getMessageId(), bookedFile.get());
+                    } else {
+                        sendMessage(chatId, messageText.apply(" booking failed for "));
+                    }
 
-                if (bookedFile.isPresent()) {
-                    String confirmationMessage = "Booked " + koht + " for " + session.getSelectedMovie() + ", " +
-                            session.getSelectedDate().format(DATE_TIME_FORMATTER) + " kell: " + session.getSelectedTime();
-                    confirmationMessage += "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime).asString() + " seconds";
-                    Message message = sendMessage(chatId, confirmationMessage);
-                    sendImage(chatId, message.getMessageId(), bookedFile.get());
-                } else {
-                    sendMessage(chatId, "Failed to book " + koht + " for " + session.getSelectedMovie() + ", " +
-                            session.getSelectedDate() + " kell: " + session.getSelectedTime());
+                } else if (DECLINE_BUTTON.equals(chosenOption)) {
+                    sendMessage(chatId, messageText.apply(" booking declined for "));
                 }
-
-                session.updateLastInteractionTime();
             }
             default -> {
                 sendReplyMessage(chatId, session.getMessageId(), "Unexpected value: " + session.getCurrentState());
@@ -465,6 +472,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 editMessageText.setChatId(chatId);
                 editMessageText.setMessageId(session.getMessageId());
                 editMessageText.setText(prompt);
+                editMessageText.setParseMode("MarkdownV2");
+                editMessageText.enableMarkdown(true);
                 editMessageText.setReplyMarkup(markupInline);
                 execute(editMessageText);
                 Integer messageToDeleteId = messagesToDelete.get(session.getSessionId());
@@ -660,7 +669,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         } else if (chatMatcher.find()) {
             String text = chatMatcher.group(1);
             String response = onlineCheckService.isMacbookOnline() ? chatService.sendMessage(text)
-                    .map(t -> t + "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime).asString() + " seconds")
+                    .map(t -> t + TimeUtility.durationInSeconds(startTime).getTaskDurationMessage())
                     .orElse("Response timeout or Macbook is sleeping.") : "Macbook is offline.";
             sendMessageCode(chatId, messageId, response);
         } else if (messageText.equalsIgnoreCase(REBOOT_COMMAND)) {
@@ -668,6 +677,11 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             sendMessageCode(chatId, messageId, "Droplet reboot initiated!");
 
         } else if (messageText.equalsIgnoreCase(APOLLO_KINO) || messageText.equalsIgnoreCase("/" + APOLLO_KINO)) {
+            int reBookings = reBookingService.getSessionCount();
+            if (reBookings > 4) {
+                sendMessage(chatId, "Too many re-bookings in progress. Please try again later or `/cancel` a re-booking.");
+                return;
+            }
             ApolloKinoSession newSession = sessionManagementService.createNewSession();
             displayApolloKinoMenu(chatId, newSession, null);
         } else if (matcher.find()) {
@@ -914,7 +928,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         try {
             if (isFinalUpdate) {
                 TimeUtility.CustomDuration duration = TimeUtility.durationInSeconds(startTime);
-                editMessage(chatId, messageId, updateText + "\n\nTask duration: " + duration.asString() + " seconds");
+                editMessage(chatId, messageId, updateText + duration.getTaskDurationMessage());
                 messageUpdateFlags.remove(messageId);
                 double animationDuration = duration.asDouble();
                 if (animationDuration > 15 && animationDuration < 240 && carDetails.size() > 2) {
@@ -1198,6 +1212,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
         message.setText(text);
+        message.setParseMode("MarkdownV2");
+        message.enableMarkdown(true);
 
         try {
             log.info("Sending message to chat: {} with text: {}", chatId, text);

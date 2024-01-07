@@ -55,5 +55,9 @@ public class TimeUtility {
         public String toString() {
             return asString();
         }
+
+        public String getTaskDurationMessage() {
+            return "\n\nTask duration: " + asString() + " seconds";
+        }
     }
 }

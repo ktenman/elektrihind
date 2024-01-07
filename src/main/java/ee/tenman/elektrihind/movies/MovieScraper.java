@@ -5,7 +5,7 @@ import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import ee.tenman.elektrihind.movies.imdb.IMDBService;
-import ee.tenman.elektrihind.telegram.TelegramService;
+import ee.tenman.elektrihind.telegram.JavaElekterTelegramService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
@@ -38,7 +38,7 @@ public class MovieScraper {
     private MovieDetailsService movieDetailsService;
 
     @Resource
-    private TelegramService telegramService;
+    private JavaElekterTelegramService javaElekterTelegramService;
 
     @Resource
     private DuckDuckGoClient duckDuckGoClient;
@@ -59,7 +59,7 @@ public class MovieScraper {
             movies.sort(Comparator.comparing(MovieDto::getImdbRating).reversed());
 
             writeMoviesToCsv(movies);
-            telegramService.sendCsvToTelegram(FILE_NAME);
+            javaElekterTelegramService.sendCsvToTelegram(FILE_NAME);
         } catch (Exception e) {
             log.error("Error fetching movies", e);
         } finally {

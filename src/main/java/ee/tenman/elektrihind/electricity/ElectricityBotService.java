@@ -16,7 +16,8 @@ import ee.tenman.elektrihind.digitalocean.DigitalOceanService;
 import ee.tenman.elektrihind.euribor.EuriborRateFetcher;
 import ee.tenman.elektrihind.queue.ChatService;
 import ee.tenman.elektrihind.queue.OnlineCheckService;
-import ee.tenman.elektrihind.telegram.TelegramService;
+import ee.tenman.elektrihind.telegram.JavaElekterTelegramService;
+import ee.tenman.elektrihind.utility.DateTimeConstants;
 import ee.tenman.elektrihind.utility.FileToBase64;
 import ee.tenman.elektrihind.utility.TextUtility;
 import ee.tenman.elektrihind.utility.TimeUtility;
@@ -66,6 +67,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
@@ -91,7 +93,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static ee.tenman.elektrihind.utility.DateTimeConstants.DATE_TIME_FORMATTER;
+import static ee.tenman.elektrihind.apollo.ApolloKinoService.DATE_TIME_FORMATTER;
 
 @Service
 @Slf4j
@@ -116,6 +118,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final long ONE_MINUTE_IN_MILLISECONDS = 60000;
     private final AtomicLong lastEditTimestamp = new AtomicLong(System.currentTimeMillis());
     private final AtomicInteger editCount = new AtomicInteger(0);
+    private final ConcurrentHashMap<Integer, Integer> messagesToDelete = new ConcurrentHashMap<>();
 
     static {
         try {
@@ -138,7 +141,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private CacheService cacheService;
 
     @Resource
-    private TelegramService telegramService;
+    private JavaElekterTelegramService javaElekterTelegramService;
 
     @Resource
     private PriceFinderService priceFinderService;
@@ -246,11 +249,16 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         Matcher apolloKinoSessionIdMatcher = APOLLO_KINO_SESSION_ID_PATTERN.matcher(callData);
         if (apolloKinoSessionIdMatcher.find()) {
             Integer sessionId = Integer.parseInt(apolloKinoSessionIdMatcher.group(1));
-            ApolloKinoSession session = sessionManagementService.getSession(sessionId);
+            Optional<ApolloKinoSession> session = sessionManagementService.getSession(sessionId);
+            if (session.isEmpty()) {
+                log.error("Session {} expired or not found", sessionId);
+                sendMessage(chatId, "Session expired or not found");
+                return;
+            }
             String chosenOption = apolloKinoSessionIdMatcher.group(2);
             log.info("Received callback query for APOLLO_KINO_SESSION_ID_PATTERN with session ID {} and chose option {}", sessionId, chosenOption);
-            session.updateLastInteractionTime();
-            displayApolloKinoMenu(chatId, session, chosenOption);
+            session.get().updateLastInteractionTime();
+            displayApolloKinoMenu(chatId, session.get(), chosenOption);
             return;
         }
 
@@ -287,12 +295,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         }
     }
 
-    /**
-     * Displays the Apollo Kino menu.
-     *
-     * @param chatId  the chat ID
-     * @param session the Apollo
-     */
     private void displayApolloKinoMenu(long chatId, ApolloKinoSession session, String chosenOption) {
         log.info("Displaying apollo kino menu for session {} with chosen option {} and current state {}",
                 session.getSessionId(),
@@ -302,25 +304,29 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
 
-        String prompt = "Prompt error"; // Should never be displayed
+        String prompt = session.getPrompt();
         UnaryOperator<String> getCallbackData = (data) -> APOLLO_KINO + "=" + session.getSessionId() + "=" + data;
         switch (session.getCurrentState()) {
             case INITIAL -> {
-                session.updateCurrentState();
                 List<InlineKeyboardButton> rowInline = new ArrayList<>();
                 apolloKinoService.getOptions().keySet().forEach(option -> {
-                    InlineKeyboardButton button = new InlineKeyboardButton(option);
-                    button.setCallbackData(getCallbackData.apply(option));
+                    InlineKeyboardButton button = new InlineKeyboardButton(option.format(DATE_TIME_FORMATTER));
+                    button.setCallbackData(getCallbackData.apply(option.toString()));
                     rowInline.add(button);
                 });
                 rowsInline.add(rowInline);
-                prompt = session.getCurrentState().getPrompt();
             }
             case SELECT_DATE -> {
-                session.setSelectedDate(chosenOption);
+                LocalDate selectedDate = LocalDate.parse(chosenOption);
+                session.setSelectedDate(selectedDate);
                 List<InlineKeyboardButton> rowInline = new ArrayList<>();
-                List<Option> optionsList = apolloKinoService.getOptions().get(chosenOption);
+                List<Option> optionsList = apolloKinoService.getOptions().get(selectedDate);
                 String title = "";
+                if (optionsList == null || optionsList.isEmpty()) {
+                    Message message = sendMessage(chatId, "No movies found for " + selectedDate.format(DATE_TIME_FORMATTER));
+                    messagesToDelete.put(session.getSessionId(), message.getMessageId());
+                    return;
+                }
                 for (int i = 0; i < optionsList.size(); i++) {
                     Option screen = optionsList.get(i);
                     title += screen.getMovie() + (i + 1 < optionsList.size() ? optionsList.get(i + 1).getMovie() : "");
@@ -334,12 +340,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                         title = "";
                     }
                 }
-                if (rowsInline.isEmpty()) {
-                    sendMessage(chatId, "No movies found for " + chosenOption);
-                    return;
-                }
                 rowsInline.add(rowInline);
-                prompt = session.getCurrentState().getPrompt();
             }
             case SELECT_MOVIE -> {
                 session.setSelectedMovie(chosenOption);
@@ -349,17 +350,16 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                         .map(Option::getScreenTimes)
                         .flatMap(List::stream)
                         .forEach(t -> {
-                            InlineKeyboardButton button = new InlineKeyboardButton(t.getTime());
-                            String callbackData = getCallbackData.apply(t.getTime());
+                            InlineKeyboardButton button = new InlineKeyboardButton(t.getTime().toString());
+                            String callbackData = getCallbackData.apply(t.getTime().toString());
                             button.setCallbackData(callbackData);
                             rowInline.add(button);
                         });
 
                 rowsInline.add(rowInline);
-                prompt = session.getCurrentState().getPrompt();
             }
             case SELECT_TIME -> {
-                session.setSelectedTime(chosenOption);
+                session.setSelectedTime(LocalTime.parse(chosenOption));
                 Option.ScreenTime screenTime = apolloKinoService.screenTime(session);
                 Map<String, Integer> seatCounts = screenConfiguration.getScreen(screenTime.getHall()).getSeatCounts();
                 for (Map.Entry<String, Integer> entry : seatCounts.entrySet()) {
@@ -370,7 +370,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     rowInline.add(button);
                     rowsInline.add(rowInline);
                 }
-                prompt = session.getCurrentState().getPrompt();
             }
             case SELECT_ROW -> {
                 session.setSelectedRow(chosenOption);
@@ -384,7 +383,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     rowInline.add(button);
                     rowsInline.add(rowInline);
                 }
-                prompt = session.getCurrentState().getPrompt(session.getSelectedRow());
+                prompt = session.getPrompt(session.getSelectedRow());
             }
             case SELECT_SEAT -> {
                 session.setSelectedSeat(chosenOption);
@@ -393,17 +392,15 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 confirm.setCallbackData(getCallbackData.apply("confirm"));
                 rowInline.add(confirm);
                 rowsInline.add(rowInline);
-                prompt = session.getCurrentState().getPrompt(
+                prompt = session.getPrompt(
                         session.getKoht(),
                         session.getSelectedMovie(),
-                        session.getSelectedDate(),
-                        session.getSelectedTime()
+                        session.getSelectedDate().format(DATE_TIME_FORMATTER),
+                        session.getSelectedTime().toString()
                 );
             }
             case CONFIRMATION -> {
                 long startTime = System.nanoTime();
-                session.updateCurrentState();
-
                 String koht = session.getKoht();
 
                 Message reply = sendReplyMessage(chatId, session.getMessageId(), "Working on it...");
@@ -414,7 +411,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
                 if (bookedFile.isPresent()) {
                     String confirmationMessage = "Booked " + koht + " for " + session.getSelectedMovie() + ", " +
-                            session.getSelectedDate().toLowerCase() + " kell: " + session.getSelectedTime();
+                            session.getSelectedDate().format(DATE_TIME_FORMATTER) + " kell: " + session.getSelectedTime();
                     confirmationMessage += "\n\nTask duration: " + TimeUtility.durationInSeconds(startTime).asString() + " seconds";
                     Message message = sendMessage(chatId, confirmationMessage);
                     sendImage(chatId, message.getMessageId(), bookedFile.get());
@@ -424,7 +421,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 }
 
                 session.updateLastInteractionTime();
-                prompt = session.getCurrentState().getPrompt();
             }
             default -> {
                 sendReplyMessage(chatId, session.getMessageId(), "Unexpected value: " + session.getCurrentState());
@@ -435,11 +431,12 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         markupInline.setKeyboard(rowsInline);
 
         try {
+            session.updateCurrentState();
             if (session.isCompleted()) {
                 reBookingService.add(session);
                 sessionManagementService.removeSession(session.getSessionId());
                 log.info("Session {} completed", session.getSessionId());
-                Stream.of(session.getMessageId(), session.getReplyMessageId())
+                Stream.of(session.getMessageId(), session.getReplyMessageId(), messagesToDelete.get(session.getSessionId()))
                         .parallel()
                         .filter(Objects::nonNull)
                         .forEach(messageId -> {
@@ -453,6 +450,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                             }
                         });
                 log.info("Deleted messages {} and {} for chat {}", session.getMessageId(), session.getReplyMessageId(), chatId);
+                messagesToDelete.remove(session.getSessionId());
                 return;
             }
             if (session.getMessageId() == null) {
@@ -469,11 +467,18 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 editMessageText.setText(prompt);
                 editMessageText.setReplyMarkup(markupInline);
                 execute(editMessageText);
+                Integer messageToDeleteId = messagesToDelete.get(session.getSessionId());
+                if (messageToDeleteId != null) {
+                    DeleteMessage deleteMessage = new DeleteMessage();
+                    deleteMessage.setChatId(chatId);
+                    deleteMessage.setMessageId(messageToDeleteId);
+                    execute(deleteMessage);
+                    messagesToDelete.remove(session.getSessionId());
+                }
             }
         } catch (TelegramApiException e) {
             log.error("Failed to apollo kino menu with options: {}", e.getMessage());
         }
-
     }
 
     @Override
@@ -1123,7 +1128,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             response.append("No upcoming price data available.");
         } else {
             response.append("Upcoming prices:\n");
-            response.append(telegramService.formatPricesForTelegram(upcomingPrices));
+            response.append(javaElekterTelegramService.formatPricesForTelegram(upcomingPrices));
         }
         return response.toString();
     }
@@ -1159,7 +1164,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     private String formatBestPriceResponseForCurrent(BestPriceResult currentBestPriceResult) {
-        return "\n\nStart consuming immediately at " + LocalDateTime.now(clock).format(DATE_TIME_FORMATTER) + ". " +
+        return "\n\nStart consuming immediately at " + LocalDateTime.now(clock).format(DateTimeConstants.DATE_TIME_FORMATTER) + ". " +
                 "Total cost is " + currentBestPriceResult.getTotalCost() + " cents with average price of " + currentBestPriceResult.getAveragePrice() + " cents/kWh.";
     }
 
@@ -1178,7 +1183,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     String formatBestPriceResponse(BestPriceResult bestPrice) {
-        return "Best time to start is " + bestPrice.getStartTime().format(DATE_TIME_FORMATTER) +
+        return "Best time to start is " + bestPrice.getStartTime().format(DateTimeConstants.DATE_TIME_FORMATTER) +
                 " with average price of " + bestPrice.getAveragePrice() + " cents/kWh. " +
                 "Total cost is " + bestPrice.getTotalCost() + " cents. In " +
                 Duration.between(LocalDateTime.now(clock), bestPrice.getStartTime()).toHours() + " hours!";

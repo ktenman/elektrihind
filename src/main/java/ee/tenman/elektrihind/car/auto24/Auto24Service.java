@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_4;
+import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_4;
 
 @Service
 @Slf4j

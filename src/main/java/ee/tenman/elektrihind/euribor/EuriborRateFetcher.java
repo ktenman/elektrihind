@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import static ee.tenman.elektrihind.config.RedisConfig.TEN_MINUTES;
+import static ee.tenman.elektrihind.config.RedisConfiguration.TEN_MINUTES;
 
 
 @Service

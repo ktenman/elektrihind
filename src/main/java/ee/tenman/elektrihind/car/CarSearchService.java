@@ -19,8 +19,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_2;
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_3;
+import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_2;
+import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_3;
 
 @Service
 @Slf4j

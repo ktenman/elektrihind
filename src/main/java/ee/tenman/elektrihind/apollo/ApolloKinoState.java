@@ -1,5 +1,9 @@
 package ee.tenman.elektrihind.apollo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.Optional;
+
 public enum ApolloKinoState {
     INITIAL(""),
     SELECT_DATE("Select a day:"),
@@ -16,11 +20,12 @@ public enum ApolloKinoState {
         this.prompt = prompt;
     }
 
-    public ApolloKinoState getNextState() {
+    @JsonIgnore
+    public Optional<ApolloKinoState> getNextState() {
         if (ordinal() + 1 < values().length) {
-            return values()[ordinal() + 1];
+            return Optional.of(values()[ordinal() + 1]);
         }
-        return null;
+        return Optional.empty();
     }
 
     public String getPrompt(String... args) {

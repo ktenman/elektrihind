@@ -1,6 +1,5 @@
 package ee.tenman.elektrihind.apollo;
 
-import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
@@ -15,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -46,7 +47,7 @@ public class ApolloKinoService {
     private static final String FIRST_URL = "https://www.apollokino.ee/schedule?theatreAreaID=1017";
     private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     @Getter
-    private final Map<String, List<Option>> options = new LinkedHashMap<>();
+    private final Map<LocalDate, List<Option>> options = new LinkedHashMap<>();
     @Value("${applo-kino.username}")
     private String username;
     @Value("${applo-kino.password}")
@@ -114,7 +115,7 @@ public class ApolloKinoService {
                     String time = screeningElement.find(className("screening-card__time")).text();
                     if (screenConfig.isValidHall(hallName)) {
                         Option.ScreenTime screenTime = Option.ScreenTime.builder()
-                                .time(time)
+                                .time(LocalTime.parse(time))
                                 .url(screeningElement.parent().find(tagName("a")).getAttribute("href"))
                                 .hall(hallName)
                                 .build();
@@ -131,8 +132,8 @@ public class ApolloKinoService {
                 movieOptions.add(movieOption);
             }
             String selectedDay = dayChoice.find(tagName("input")).val();
-//            LocalDate chosenDate = LocalDate.parse(selectedDay, DATE_TIME_FORMATTER);
-            this.options.put(selectedDay, movieOptions);
+            LocalDate chosenDate = LocalDate.parse(selectedDay, DATE_TIME_FORMATTER);
+            this.options.put(chosenDate, movieOptions);
             open(FIRST_URL);
         }
         Selenide.closeWindow();
@@ -150,7 +151,7 @@ public class ApolloKinoService {
     }
 
     public Optional<File> book(ApolloKinoSession session) {
-        Configuration.headless = false;
+//        Configuration.headless = false;
 
         Option.ScreenTime screenTime = screenTime(session);
         String koht = session.getKoht();

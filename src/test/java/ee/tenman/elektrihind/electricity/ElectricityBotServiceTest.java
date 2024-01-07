@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ee.tenman.elektrihind.FileUtils;
 import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.config.FeesConfiguration;
-import ee.tenman.elektrihind.telegram.TelegramService;
+import ee.tenman.elektrihind.telegram.JavaElekterTelegramService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -78,7 +78,7 @@ class ElectricityBotServiceTest {
     private ExecutorService singleThreadExecutor;
 
     @Mock
-    private TelegramService telegramService;
+    private JavaElekterTelegramService javaElekterTelegramService;
 
     @Captor
     private ArgumentCaptor<SendMessage> sendMessageCaptor;
@@ -169,7 +169,7 @@ class ElectricityBotServiceTest {
         when(message.hasText()).thenReturn(true);
         when(message.getText()).thenReturn("elektrihind");
         when(cacheService.getLatestPrices()).thenReturn(ELECTRICITY_PRICES);
-        when(telegramService.formatPricesForTelegram(any())).thenReturn("Sample Formatted Prices");
+        when(javaElekterTelegramService.formatPricesForTelegram(any())).thenReturn("Sample Formatted Prices");
         when(priceFinderService.currentPrice(any())).thenReturn(Optional.of(ELECTRICITY_PRICES.get(47)));
 
         ElectricityBotService spyBotService = spy(botService);
@@ -316,7 +316,7 @@ class ElectricityBotServiceTest {
 
         when(cacheService.getLatestPrices()).thenReturn(electricityPrices);
         when(priceFinderService.currentPrice(any())).thenReturn(Optional.of(electricityPrices.get(10)));
-        when(telegramService.formatPricesForTelegram(any())).thenReturn("Sample Formatted Prices");
+        when(javaElekterTelegramService.formatPricesForTelegram(any())).thenReturn("Sample Formatted Prices");
 
         String response = botService.getElectricityPriceResponse();
 

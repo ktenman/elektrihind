@@ -1,8 +1,10 @@
 package ee.tenman.elektrihind.cache;
 
+import ee.tenman.elektrihind.apollo.ApolloKinoSession;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
 import ee.tenman.elektrihind.utility.GlobalConstants;
+import ee.tenman.elektrihind.utility.JsonUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.Getter;
@@ -19,17 +21,21 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
-import static ee.tenman.elektrihind.config.RedisConfig.MESSAGE_COUNTS_CACHE;
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_DAY_CACHE_1;
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_1;
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_2;
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_3;
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_4;
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_5;
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_YEAR_CACHE_1;
+import static ee.tenman.elektrihind.config.RedisConfiguration.MESSAGE_COUNTS_CACHE;
+import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_DAY_CACHE_1;
+import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_1;
+import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_2;
+import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_3;
+import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_4;
+import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_5;
+import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_YEAR_CACHE_1;
+import static ee.tenman.elektrihind.config.RedisConfiguration.SESSIONS_CACHE;
 
 @Service
 @Slf4j
@@ -54,6 +60,7 @@ public class CacheService {
     private static final String DURATIONS_KEY = "durations";
     private static final String LAST_EURIBOR_MESSAGE_SENT_KEY = "lastEuriborMessageSentDate";
     private static final String LAST_EURIBOR_RATE_KEY = "lastEuriborRate";
+    private static final String SESSIONS_KEY = "sessions";
 
     @Resource
     private CacheManager cacheManager;
@@ -213,4 +220,46 @@ public class CacheService {
         }
     }
 
+    public void updateSessionsJson(String sessionsJson) {
+        Optional.ofNullable(cacheManager.getCache(SESSIONS_CACHE))
+                .ifPresent(c -> c.put(SESSIONS_KEY, sessionsJson));
+        log.info("Updated sessions cache");
+    }
+
+    public Map<UUID, ApolloKinoSession> getRebookingSessions() {
+        log.info("Getting rebooking sessions from cache");
+        Optional<String> sessionsJson = Optional.ofNullable(cacheManager.getCache(SESSIONS_CACHE))
+                .map(c -> c.get(SESSIONS_KEY, String.class));
+        if (sessionsJson.isEmpty()) {
+            log.info("Rebooking sessions not found in cache");
+            return new HashMap<>();
+        }
+        Map<UUID, ApolloKinoSession> rebookingSessionsMap = JsonUtil.deserializeMap(sessionsJson.get());
+        log.info("Rebooking sessions retrieved from cache");
+        return rebookingSessionsMap;
+    }
+
+    private void updateRebookingSessions(Map<UUID, ApolloKinoSession> sessions) {
+        log.info("Updating rebooking sessions in cache");
+        String serializedSessions = JsonUtil.serializeMap(sessions);
+        Optional.ofNullable(cacheManager.getCache(SESSIONS_CACHE))
+                .ifPresent(c -> c.put(SESSIONS_KEY, serializedSessions));
+        log.info("Rebooking sessions updated in cache");
+    }
+
+    public void removeRebookingSession(UUID uuid) {
+        log.info("Removing rebooking session {} from cache", uuid);
+        Map<UUID, ApolloKinoSession> rebookingSessions = getRebookingSessions();
+        rebookingSessions.remove(uuid);
+        updateRebookingSessions(rebookingSessions);
+        log.info("Rebooking session {} removed from cache", uuid);
+    }
+
+    public void addRebookingSession(UUID sessionId, ApolloKinoSession session) {
+        log.info("Adding rebooking session {} to cache", sessionId);
+        Map<UUID, ApolloKinoSession> rebookingSessions = getRebookingSessions();
+        rebookingSessions.put(sessionId, session);
+        updateRebookingSessions(rebookingSessions);
+        log.info("Rebooking session {} added to cache", sessionId);
+    }
 }

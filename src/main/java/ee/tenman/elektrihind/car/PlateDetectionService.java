@@ -2,7 +2,7 @@ package ee.tenman.elektrihind.car;
 
 import ee.tenman.elektrihind.car.googlevision.GoogleVisionService;
 import ee.tenman.elektrihind.car.openai.OpenAiVisionService;
-import ee.tenman.elektrihind.config.RedisConfig;
+import ee.tenman.elektrihind.config.RedisConfiguration;
 import ee.tenman.elektrihind.queue.QueueTextDetectionService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,7 @@ public class PlateDetectionService {
     @Resource
     QueueTextDetectionService queueTextDetectionService;
 
-    @Cacheable(value = RedisConfig.ONE_YEAR_CACHE_1, key = "#imageHashValue")
+    @Cacheable(value = RedisConfiguration.ONE_YEAR_CACHE_1, key = "#imageHashValue")
     public Optional<String> detectPlate(String base64EncodedImage, String imageHashValue) {
         long startTime = System.nanoTime();
         UUID uuid = UUID.randomUUID();

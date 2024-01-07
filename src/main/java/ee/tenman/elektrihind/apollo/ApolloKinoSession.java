@@ -1,29 +1,33 @@
 package ee.tenman.elektrihind.apollo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
-import static ee.tenman.elektrihind.apollo.ApolloKinoService.DATE_TIME_FORMATTER;
+import static ee.tenman.elektrihind.apollo.ApolloKinoState.COMPLETED;
 
 @Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class ApolloKinoSession {
-    private final Integer sessionId;
+    private Integer sessionId;
     private LocalDateTime lastUpdated = LocalDateTime.now();
     private ApolloKinoState currentState = ApolloKinoState.INITIAL;
-
-    @Setter
     private Integer messageId;
-    @Setter
     private Integer replyMessageId;
-    @Setter
     private long chatId;
-
     private String selectedMovie;
-    private String selectedDate;
-    private String selectedTime;
+    private LocalDate selectedDate;
+    private LocalTime selectedTime;
     private String selectedRow;
     private String selectedSeat;
 
@@ -36,50 +40,31 @@ public class ApolloKinoSession {
     }
 
     public void updateCurrentState() {
-        this.currentState = this.currentState.getNextState();
+        this.currentState = this.currentState.getNextState().orElse(COMPLETED);
         updateLastInteractionTime();
     }
 
-    public void setSelectedMovie(String selectedMovie) {
-        this.selectedMovie = selectedMovie;
-        updateCurrentState();
-    }
-
-    public void setSelectedDate(String selectedDate) {
-        this.selectedDate = selectedDate;
-        updateCurrentState();
-    }
-
-    public void setSelectedTime(String selectedTime) {
-        this.selectedTime = selectedTime;
-        updateCurrentState();
-    }
-
-    public void setSelectedRow(String selectedRow) {
-        this.selectedRow = selectedRow;
-        updateCurrentState();
-    }
-
-    public void setSelectedSeat(String selectedSeat) {
-        this.selectedSeat = selectedSeat;
-        updateCurrentState();
-    }
-
+    @JsonIgnore
     public String getKoht() {
         return selectedRow + "K" + selectedSeat;
     }
 
+    @JsonIgnore
     public boolean isCompleted() {
-        return currentState == ApolloKinoState.COMPLETED;
+        return currentState == COMPLETED;
     }
 
+    @JsonIgnore
     public LocalDateTime getSelectedDateTime() {
         try {
-            return LocalDate.parse(selectedDate, DATE_TIME_FORMATTER)
-                    .atTime(Integer.parseInt(selectedTime.split(":")[0]), Integer.parseInt(selectedTime.split(":")[1]));
+            return LocalDateTime.of(selectedDate, selectedTime);
         } catch (Exception e) {
             return null;
         }
     }
 
+    @JsonIgnore
+    public String getPrompt(String... args) {
+        return getCurrentState().getNextState().map(s -> s.getPrompt(args)).orElse("Prompt not found");
+    }
 }

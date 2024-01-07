@@ -3,7 +3,7 @@ package ee.tenman.elektrihind;
 import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
-import ee.tenman.elektrihind.telegram.TelegramService;
+import ee.tenman.elektrihind.telegram.JavaElekterTelegramService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +37,7 @@ class SchedulingServiceTest {
     private CacheService cacheService;
 
     @Mock
-    private TelegramService telegramService;
+    private JavaElekterTelegramService javaElekterTelegramService;
 
     @Mock
     private Clock clock;
@@ -53,11 +53,11 @@ class SchedulingServiceTest {
         mockFetchDailyPrices(createSamplePrices());
         when(cacheService.canSendMessageToday()).thenReturn(true);
         when(cacheService.getLatestPrices()).thenReturn(List.of());
-        when(telegramService.formatPricesForTelegram(createSamplePrices())).thenReturn("Sample Formatted Prices");
+        when(javaElekterTelegramService.formatPricesForTelegram(createSamplePrices())).thenReturn("Sample Formatted Prices");
 
         schedulingService.fetchAndSendPrices();
 
-        verify(telegramService).sendToTelegram(anyString());
+        verify(javaElekterTelegramService).sendToTelegram(anyString());
     }
 
     @Test
@@ -68,7 +68,7 @@ class SchedulingServiceTest {
 
         schedulingService.fetchAndSendPrices();
 
-        verify(telegramService, never()).sendToTelegram(anyString());
+        verify(javaElekterTelegramService, never()).sendToTelegram(anyString());
     }
 
     @Test
@@ -76,7 +76,7 @@ class SchedulingServiceTest {
         String samplePrices = "Sample Formatted Prices";
         schedulingService.sendMessageAndIncrementCount(samplePrices);
 
-        verify(telegramService).sendToTelegram(samplePrices);
+        verify(javaElekterTelegramService).sendToTelegram(samplePrices);
         verify(cacheService, times(1)).incrementMessageCountForToday();
     }
 
@@ -100,11 +100,11 @@ class SchedulingServiceTest {
         mockFetchDailyPrices(createSamplePrices());
         when(cacheService.getLatestPrices()).thenReturn(List.of());
         when(cacheService.canSendMessageToday()).thenReturn(true);
-        when(telegramService.formatPricesForTelegram(createSamplePrices())).thenReturn("Sample Formatted Prices");
+        when(javaElekterTelegramService.formatPricesForTelegram(createSamplePrices())).thenReturn("Sample Formatted Prices");
 
         schedulingService.fetchAndSendPrices();
 
-        verify(telegramService).sendToTelegram(anyString());
+        verify(javaElekterTelegramService).sendToTelegram(anyString());
     }
 
     @Test
@@ -115,7 +115,7 @@ class SchedulingServiceTest {
 
         schedulingService.fetchAndSendPrices();
 
-        verify(telegramService, never()).sendToTelegram(anyString());
+        verify(javaElekterTelegramService, never()).sendToTelegram(anyString());
     }
 
     private List<ElectricityPrice> createSamplePrices() {

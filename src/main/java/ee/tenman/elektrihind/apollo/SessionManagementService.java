@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.apollo;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.math.RandomUtils;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -7,9 +8,11 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
+@Slf4j
 public class SessionManagementService {
     private static final long CLEANUP_RATE_MS = 600_000;
     private static final long SESSION_EXPIRY_DURATION_NANOS = 600;
@@ -30,12 +33,13 @@ public class SessionManagementService {
                 RandomUtils.nextInt(99);
     }
 
-    public ApolloKinoSession getSession(Integer sessionId) {
+    public Optional<ApolloKinoSession> getSession(Integer sessionId) {
         boolean sessionExpired = isSessionExpired(sessionId);
         if (sessionExpired) {
-            throw new RuntimeException("Session expired");
+            log.error("Session expired: {}", sessionId);
+            return Optional.empty();
         }
-        return sessions.get(sessionId);
+        return Optional.ofNullable(sessions.get(sessionId));
     }
 
     @Scheduled(fixedRate = CLEANUP_RATE_MS)

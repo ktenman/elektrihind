@@ -21,7 +21,7 @@ import java.util.concurrent.ExecutorService;
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
 import static com.codeborne.selenide.WebDriverRunner.getWebDriver;
-import static ee.tenman.elektrihind.config.RedisConfig.ONE_MONTH_CACHE_1;
+import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_1;
 
 @Service
 @Slf4j

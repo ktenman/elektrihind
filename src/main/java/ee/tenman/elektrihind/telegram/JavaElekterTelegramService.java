@@ -24,13 +24,19 @@ import java.util.Optional;
 
 @Service
 @Slf4j
-public class TelegramService {
+public class JavaElekterTelegramService {
 
     @Autowired
     private TelegramClient telegramClient;
 
     @Value("${telegram.privateChatId}")
     private String privateChatId;
+
+    @Value("${telegram.monitoringChatId}")
+    private String monitoringChatId;
+
+    @Value("${telegram.botToken}")
+    private String botToken;
 
     @Autowired
     private Clock clock;
@@ -42,7 +48,7 @@ public class TelegramService {
 //        log.info("Message sent to private chat");
 
         log.info("Sending message to Monitoring chat: {}", message);
-        telegramClient.sendMessage(message);
+        telegramClient.sendMessage(botToken, monitoringChatId, message);
         log.info("Message sent to Monitoring chat");
     }
 
@@ -109,7 +115,7 @@ public class TelegramService {
             }
         };
 
-        telegramClient.sendDocument(multipartFile);
+        telegramClient.sendDocument(botToken, monitoringChatId, multipartFile);
         log.info("CSV sent to Monitoring chat");
     }
 

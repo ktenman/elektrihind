@@ -19,13 +19,13 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class TelegramServiceTest {
+class JavaElekterTelegramServiceTest {
 
     @Mock
     Clock clock;
 
     @InjectMocks
-    TelegramService telegramService;
+    JavaElekterTelegramService javaElekterTelegramService;
 
 
     @BeforeEach
@@ -36,7 +36,7 @@ class TelegramServiceTest {
 
     @Test
     void formatPricesForTelegram_givenPrices_shouldFormatCorrectly() {
-        String result = telegramService.formatPricesForTelegram(createSamplePrices());
+        String result = javaElekterTelegramService.formatPricesForTelegram(createSamplePrices());
 
         assertThat(result).contains("Tomorrow, the most expensive:", "Today, the cheapest:");
     }
@@ -50,7 +50,7 @@ class TelegramServiceTest {
 
         LocalDateTime dateTime = LocalDateTime.of(2023, 10, 27, 15, 0);
 
-        String result = telegramService.priceDateLabel(dateTime);
+        String result = javaElekterTelegramService.priceDateLabel(dateTime);
 
         assertThat(result).isEqualTo("Today, ");
     }
@@ -63,7 +63,7 @@ class TelegramServiceTest {
 
         LocalDateTime dateTime = LocalDateTime.of(2023, 10, 28, 15, 0);
 
-        String result = telegramService.priceDateLabel(dateTime);
+        String result = javaElekterTelegramService.priceDateLabel(dateTime);
 
         assertThat(result).isEqualTo("Tomorrow, ");
     }
@@ -76,7 +76,7 @@ class TelegramServiceTest {
 
         LocalDateTime dateTime = LocalDateTime.of(2023, 10, 29, 15, 0);
 
-        String result = telegramService.priceDateLabel(dateTime);
+        String result = javaElekterTelegramService.priceDateLabel(dateTime);
 
         assertThat(result).isEmpty();
     }

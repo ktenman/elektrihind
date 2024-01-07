@@ -4,7 +4,7 @@ import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
 import ee.tenman.elektrihind.euribor.EuriborRateFetcher;
-import ee.tenman.elektrihind.telegram.TelegramService;
+import ee.tenman.elektrihind.telegram.JavaElekterTelegramService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,7 +23,7 @@ public class SchedulingService {
     private ElectricityPricesService electricityPricesService;
 
     @Resource
-    private TelegramService telegramService;
+    private JavaElekterTelegramService javaElekterTelegramService;
 
     @Resource
     private CacheService cacheService;
@@ -47,7 +47,7 @@ public class SchedulingService {
         }
 
         List<ElectricityPrice> filteredPrices = filterPricesForNext24Hours(electricityPrices);
-        String formattedPrices = telegramService.formatPricesForTelegram(filteredPrices);
+        String formattedPrices = javaElekterTelegramService.formatPricesForTelegram(filteredPrices);
 
         if (cacheService.canSendMessageToday()) {
             sendMessageAndIncrementCount(formattedPrices);
@@ -67,7 +67,7 @@ public class SchedulingService {
 
     void sendMessageAndIncrementCount(String formattedPrices) {
         log.debug("Sending message: {}", formattedPrices);
-        telegramService.sendToTelegram(formattedPrices);
+        javaElekterTelegramService.sendToTelegram(formattedPrices);
         cacheService.incrementMessageCountForToday();
         log.debug("Message count for today incremented.");
     }
@@ -98,7 +98,7 @@ public class SchedulingService {
         if (hasEuriborRateChanged(currentRate)) {
             log.info("New Euribor rate detected. Sending message...");
 
-            telegramService.sendToTelegram(euriborRateFetcher.getEuriborRateResponse());
+            javaElekterTelegramService.sendToTelegram(euriborRateFetcher.getEuriborRateResponse());
             cacheService.updateLastMessageSentDate();
             cacheService.setLastEuriborRate(currentRate);
         } else {

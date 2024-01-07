@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @Builder
@@ -20,7 +21,7 @@ public class Option {
     @NoArgsConstructor
     @Data
     public static class ScreenTime {
-        private String time;
+        private LocalTime time;
         private String url;
         private String hall;
     }

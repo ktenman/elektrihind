@@ -1,6 +1,6 @@
 package ee.tenman.elektrihind.queue.redis;
 
-import ee.tenman.elektrihind.config.RedisConfig;
+import ee.tenman.elektrihind.config.RedisConfiguration;
 import ee.tenman.elektrihind.queue.MessagePublisher;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ public class RedisMessagePublisher implements MessagePublisher {
 
     @Override
     public void publishImage(RedisMessage redisMessage) {
-        String imageRequestQueue = RedisConfig.IMAGE_REQUEST_QUEUE;
+        String imageRequestQueue = RedisConfiguration.IMAGE_REQUEST_QUEUE;
         log.debug("Publishing message [UUID: {}] to queue [QueueName: {}]", redisMessage.getUuid(), imageRequestQueue);
         stringRedisTemplate.convertAndSend(imageRequestQueue, redisMessage.toString());
         log.info("Published message [UUID: {}] to queue [QueueName: {}]", redisMessage.getUuid(), imageRequestQueue);

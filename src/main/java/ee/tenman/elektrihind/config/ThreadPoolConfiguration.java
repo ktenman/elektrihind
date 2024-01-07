@@ -7,7 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Configuration
-public class ThreadPoolConfig {
+public class ThreadPoolConfiguration {
 
     @Bean
     public ExecutorService singleThreadExecutor() {

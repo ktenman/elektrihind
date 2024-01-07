@@ -3,6 +3,7 @@ package ee.tenman.elektrihind.config;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.Resource;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ResourceLoader;
@@ -27,6 +28,8 @@ public class FeesConfiguration {
     private BigDecimal renewableEnergyFee;
     private BigDecimal electricityExciseTax;
     private BigDecimal salesTax;
+    @Resource
+    ObjectMapper objectMapper;
 
     public FeesConfiguration(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
@@ -34,9 +37,8 @@ public class FeesConfiguration {
 
     @PostConstruct
     public void init() {
-        ObjectMapper mapper = new ObjectMapper();
         try {
-            Map<String, String> feesMap = mapper.readValue(
+            Map<String, String> feesMap = objectMapper.readValue(
                     resourceLoader.getResource("classpath:fees.json").getInputStream(),
                     new TypeReference<>() {
                     });

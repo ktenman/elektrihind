@@ -3,6 +3,7 @@ package ee.tenman.elektrihind.config;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.Resource;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ResourceLoader;
@@ -18,6 +19,8 @@ import java.util.Set;
 public class HolidaysConfiguration {
 
     private final ResourceLoader resourceLoader;
+    @Resource
+    ObjectMapper objectMapper;
 
     @Getter
     private Set<String> holidays;
@@ -29,10 +32,9 @@ public class HolidaysConfiguration {
 
     @PostConstruct
     public void init() {
-        ObjectMapper mapper = new ObjectMapper();
         try {
             // Adjusted TypeReference to match the JSON structure
-            Map<String, Set<String>> holidayMap = mapper.readValue(
+            Map<String, Set<String>> holidayMap = objectMapper.readValue(
                     resourceLoader.getResource("classpath:holidays.json").getInputStream(),
                     new TypeReference<>() {
                     });

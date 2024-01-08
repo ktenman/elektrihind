@@ -17,16 +17,16 @@ public class Screen {
     private String id;
     private String name;
 
-    public boolean isValidSeat(String seat) {
+    public boolean isValidSeat(String rowAndSeat) {
         if (seatCounts == null) {
             throw new IllegalStateException("seatCounts must be initialized");
         }
-        if (seat != null && seat.length() >= 4) {
-            String row = seat.substring(0, 2).toUpperCase(); // e.g., "S1" or "S2"
+        if (rowAndSeat != null && rowAndSeat.length() >= 4) {
+            String row = rowAndSeat.substring(0, 2).toUpperCase(); // e.g., "S1" or "S2"
             Integer maxSeats = seatCounts.get(row);
 
             if (maxSeats != null) {
-                return isValidSeatNumber(seat.substring(3), maxSeats);
+                return isValidSeatNumber(rowAndSeat.substring(3), maxSeats);
             }
         }
         return false;

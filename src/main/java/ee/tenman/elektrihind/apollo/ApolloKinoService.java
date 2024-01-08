@@ -60,7 +60,7 @@ public class ApolloKinoService {
 
     private static void selectOneSeat() {
         $$(".radio-card__text").find(text("Staaritoolid")).click();
-        sleep(1111);
+        sleep(333);
         for (int i = 0; i < 10; i++) {
             SelenideElement subtractButton = $$(".number__button--subtract ").first();
             if (subtractButton.has(attribute("disabled"))) {
@@ -70,7 +70,7 @@ public class ApolloKinoService {
         }
         $$(".number__button--add").first().click();
         $(id("confirm-button")).click();
-        sleep(1111);
+        sleep(333);
     }
 
     public static String extractUUID(String url) {
@@ -206,7 +206,7 @@ public class ApolloKinoService {
             log.error("Screen time not found");
             return Optional.empty();
         }
-        String koht = session.getKoht();
+        String rowAndSeat = session.getRowAndSeat();
         try {
             open(screenTime.get().getUrl());
             getWebDriver().manage().window().maximize();
@@ -219,23 +219,23 @@ public class ApolloKinoService {
 //            selectOneSeat();
             String currentUrl = getWebDriver().getCurrentUrl();
             String uuid = extractUUID(currentUrl);
-            sleep(444);
+            sleep(222);
             String saal = $(".schedule-card__title-container").findAll(tagName("p")).last().text();
             Screen screen = screenConfig.getScreen(saal);
-            boolean validSeat = screen.isValidSeat(koht);
+            boolean validSeat = screen.isValidSeat(rowAndSeat);
             if (!validSeat) {
                 throw new RuntimeException("Invalid seat");
             }
-            int[] coords = coordinates(screen, koht);
+            int[] coords = coordinates(screen, rowAndSeat);
             int x = coords[0];
             int y = coords[1];
             String showId = extractShowId(currentUrl);
             String seatPlanImageUrl = "https://www.apollokino.ee/websales/seating/" + uuid + "/seatplanimage/" + showId +
                     "/" + screen.getId() + "?posX=" + x + "&posY=" + y + "&posImgWidth=798&t=" + Instant.now().toEpochMilli();
             open(seatPlanImageUrl);
-            sleep(666);
+            sleep(333);
             open(currentUrl);
-            sleep(666);
+            sleep(333);
             ElementsCollection iframeElements = $$(tagName("iframe"));
             switchTo().frame(iframeElements.get(0));
             File screenshot = $(id("seat-plan-img")).screenshot();
@@ -281,8 +281,8 @@ public class ApolloKinoService {
         }
     }
 
-    public int[] coordinates(Screen screen, String koht) {
-        String[] split = koht.split("K");
+    public int[] coordinates(Screen screen, String rowAndSeat) {
+        String[] split = rowAndSeat.split("K");
         String row = split[0];
         int[] points = screen.getCoordinates().get(row);
         int currentSeat = extractInt(split[1]);

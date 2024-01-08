@@ -96,7 +96,7 @@ public class ReBookingService {
         if (bookedFile.isPresent()) {
             log.info("Booked session {}", session.getSessionId());
             elektriTeemuTelegramService.sendToTelegram(
-                    "Booked: " + session.getSelectedMovie() + " [" + session.getKoht() + "] on " +
+                    "Booked: " + session.getSelectedMovie() + " [" + session.getRowAndSeat() + "] on " +
                             session.getSelectedDate().format(ApolloKinoService.DATE_TIME_FORMATTER) + " at " +
                             session.getSelectedTime(), session.getChatId());
             elektriTeemuTelegramService.sendFileToTelegram(bookedFile.get(), session.getChatId());

@@ -4,6 +4,7 @@ import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.telegram.ElektriTeemuTelegramService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j
 public class ReBookingService {
 
+    @Getter
     private ConcurrentHashMap<UUID, ApolloKinoSession> sessions = new ConcurrentHashMap<>();
     private final Lock lock = new ReentrantLock();
     @Resource
@@ -105,5 +107,11 @@ public class ReBookingService {
 
     public int getSessionCount() {
         return sessions.size();
+    }
+
+    public void cancel(UUID bookingUuid) {
+        sessions.remove(bookingUuid);
+        cacheService.removeRebookingSession(bookingUuid);
+        log.info("Cancelled booking session {}", bookingUuid);
     }
 }

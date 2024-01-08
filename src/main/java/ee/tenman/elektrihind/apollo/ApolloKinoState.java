@@ -51,7 +51,7 @@ public enum ApolloKinoState {
     public String getPrompt(String... args) {
         try {
             return String.format(prompt, (Object[]) args);
-        } catch (java.util.MissingFormatArgumentException e) {
+        } catch (Exception e) {
             return "Prompt formatting error for: " + this.name() + " with error: " + e.getMessage();
         }
     }

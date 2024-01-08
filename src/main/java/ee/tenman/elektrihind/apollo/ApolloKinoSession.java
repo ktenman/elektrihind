@@ -2,7 +2,6 @@ package ee.tenman.elektrihind.apollo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,10 +20,10 @@ import static ee.tenman.elektrihind.apollo.ApolloKinoState.INITIAL;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 public class ApolloKinoSession {
+
     private Integer sessionId;
-    private LocalDateTime lastUpdated = LocalDateTime.now();
+    private LocalDateTime updatedAt = LocalDateTime.now();
     private ApolloKinoState currentState = ApolloKinoState.INITIAL;
     private Integer messageId;
     private Integer replyMessageId;
@@ -35,14 +34,13 @@ public class ApolloKinoSession {
     private String selectedRow;
     private String selectedSeat;
     private List<String> selectedOptions = new ArrayList<>();
-    private boolean isBackButtonPressed;
 
     public ApolloKinoSession(Integer sessionId) {
         this.sessionId = sessionId;
     }
 
     public void updateLastInteractionTime() {
-        this.lastUpdated = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void setNextState() {

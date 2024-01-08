@@ -52,7 +52,7 @@ public class SessionManagementService {
         if (session == null) {
             return true;
         }
-        long nanos = Duration.between(session.getLastUpdated(), LocalDateTime.now()).toSeconds();
+        long nanos = Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds();
         return nanos >= SESSION_EXPIRY_DURATION_NANOS;
     }
 

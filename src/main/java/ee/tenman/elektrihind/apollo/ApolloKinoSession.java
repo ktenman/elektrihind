@@ -14,7 +14,6 @@ import java.util.List;
 
 import static ee.tenman.elektrihind.apollo.ApolloKinoState.COMPLETED;
 import static ee.tenman.elektrihind.apollo.ApolloKinoState.DECLINED;
-import static ee.tenman.elektrihind.apollo.ApolloKinoState.FAILED;
 import static ee.tenman.elektrihind.apollo.ApolloKinoState.INITIAL;
 
 @Getter
@@ -45,7 +44,7 @@ public class ApolloKinoSession {
     }
 
     public void setNextState() {
-        if (currentState.isDeclined() || currentState.isFailed()) {
+        if (currentState.isDeclined()) {
             return;
         }
         this.currentState = this.currentState.getNextState().orElse(COMPLETED);
@@ -89,10 +88,5 @@ public class ApolloKinoSession {
     @JsonIgnore
     public boolean isDeclined() {
         return this.currentState == DECLINED;
-    }
-
-    @JsonIgnore
-    public void failed() {
-        this.currentState = FAILED;
     }
 }

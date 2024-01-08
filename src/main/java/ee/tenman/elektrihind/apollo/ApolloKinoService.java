@@ -60,7 +60,7 @@ public class ApolloKinoService {
 
     private static void selectOneSeat() {
         $$(".radio-card__text").find(text("Staaritoolid")).click();
-        sleep(555);
+        sleep(777);
         for (int i = 0; i < 10; i++) {
             SelenideElement subtractButton = $$(".number__button--subtract ").first();
             if (subtractButton.has(attribute("disabled"))) {
@@ -70,7 +70,7 @@ public class ApolloKinoService {
         }
         $$(".number__button--add").first().click();
         $(id("confirm-button")).click();
-        sleep(555);
+        sleep(777);
     }
 
     public static String extractUUID(String url) {
@@ -153,10 +153,11 @@ public class ApolloKinoService {
                 this.options.put(chosenDate, movieOptions);
                 open(FIRST_URL);
             }
+            Selenide.closeWindow();
         } catch (Exception e) {
             log.error("Failed to init", e);
         } finally {
-            Selenide.closeWindow();
+            Selenide.closeWebDriver();
             log.info("Init took {} seconds", TimeUtility.durationInSeconds(startTime).asString());
         }
     }

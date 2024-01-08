@@ -63,11 +63,13 @@ public class ReBookingService {
     public void rebook() {
         if (lock.tryLock()) {
             try {
-                sessions.entrySet().stream().filter(entry -> isReadyToReBook(entry.getValue())).forEach(entry -> {
-                    ApolloKinoSession rebookedSession = book(entry.getValue());
-                    cacheService.removeRebookingSession(entry.getKey());
-                    cacheService.addRebookingSession(entry.getKey(), rebookedSession);
-                });
+                sessions.entrySet().stream()
+                        .filter(entry -> isReadyToReBook(entry.getValue()))
+                        .forEach(entry -> {
+                            ApolloKinoSession rebookedSession = book(entry.getValue());
+                            cacheService.removeRebookingSession(entry.getKey());
+                            cacheService.addRebookingSession(entry.getKey(), rebookedSession);
+                        });
             } catch (Exception e) {
                 log.error("Failed to rebook", e);
                 clearExpiredSessions();

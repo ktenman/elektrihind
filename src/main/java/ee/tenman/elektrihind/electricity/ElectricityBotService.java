@@ -360,17 +360,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         return null;
     }
 
-    public static <T> Optional<T> getSecondLastElement(List<T> list) {
-        return Optional.ofNullable(list)
-                .filter(l -> l.size() > 1)
-                .map(l -> l.get(l.size() - 2));
-    }
-
     private void displayApolloKinoMenu(long chatId, ApolloKinoSession session, String chosenOption) {
-        if (BACK_BUTTON.equals(chosenOption)) {
-            session.setBackButtonPressed(true);
-            session.setPreviousState();
 
+        if (BACK_BUTTON.equals(chosenOption)) {
+            session.setPreviousState();
             if (!session.getSelectedOptions().isEmpty()) {
                 session.getSelectedOptions().removeLast(); // Remove the last option as we are going back
                 if (!session.getSelectedOptions().isEmpty()) {
@@ -378,7 +371,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 }
             }
         } else {
-            session.setBackButtonPressed(false);
             if (chosenOption != null) {
                 session.getSelectedOptions().add(chosenOption);
             }

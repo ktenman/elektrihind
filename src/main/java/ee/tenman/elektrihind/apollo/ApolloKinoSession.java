@@ -57,7 +57,7 @@ public class ApolloKinoSession {
     }
 
     @JsonIgnore
-    public String getKoht() {
+    public String getRowAndSeat() {
         return selectedRow + "K" + selectedSeat;
     }
 

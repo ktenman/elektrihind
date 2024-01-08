@@ -281,9 +281,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 sendMessage(chatId, "Re-booking expired or not found");
                 return;
             }
-            String text = "`" + session.getSelectedMovie() + " (" + session.getKoht() + ") " + session.getSelectedDateTime() + "`";
+            String text = "`" + session.getSelectedMovie() + " [" + session.getRowAndSeat() + "] on " +
+                    session.getSelectedDate().format(DATE_TIME_FORMATTER) + " at " + session.getSelectedTime() + "`";
             reBookingService.cancel(bookingUuid);
-            sendMessage(chatId, "Booking cancelled for " + text);
+            sendMessage(chatId, "Booking cancelled: " + text);
             removeMessage(chatId, bookingUuid.toString());
             return;
         }
@@ -337,7 +338,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         for (Entry<UUID, ApolloKinoSession> entry : sessions.entrySet()) {
             String movie = entry.getValue().getSelectedMovie();
             String shortMovie = movie.length() > 22 ? movie.substring(0, 19) + "..." : movie;
-            String text = shortMovie + " " + entry.getValue().getKoht() + " " +
+            String text = shortMovie + " " + entry.getValue().getRowAndSeat() + " " +
                     entry.getValue().getSelectedDate().format(SHORT_DATE_FORMATTER) + " " + entry.getValue().getSelectedTime();
             InlineKeyboardButton button = new InlineKeyboardButton(text);
             button.setCallbackData(DISPLAY_BOOKINGS + "=" + entry.getKey());
@@ -480,7 +481,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 rowInline.add(decline);
                 rowsInline.add(rowInline);
                 prompt = session.getPrompt(
-                        session.getKoht(),
+                        session.getRowAndSeat(),
                         session.getSelectedMovie(),
                         session.getSelectedDate().format(DATE_TIME_FORMATTER),
                         session.getSelectedTime().toString()
@@ -488,7 +489,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             }
             case CONFIRMATION -> {
                 long startTime = System.nanoTime();
-                String koht = session.getKoht();
+                String koht = session.getRowAndSeat();
                 UnaryOperator<String> messageText = (m) -> koht + m + "`" + session.getSelectedMovie() + "` on " +
                         session.getSelectedDate().format(DATE_TIME_FORMATTER) + " at " + session.getSelectedTime();
                 if (CONFIRM_BUTTON.equals(chosenOption)) {
@@ -692,7 +693,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         rowInline5.add(apolloKino);
         rowInline5.add(bookings);
 
-        // Set the keyboard to the markup
         rowsInline.add(rowInline1);
         rowsInline.add(rowInline2);
         rowsInline.add(rowInline3);
@@ -700,7 +700,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         rowsInline.add(rowInline5);
         markupInline.setKeyboard(rowsInline);
 
-        // Creating a message and setting the markup
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText("Select an option:");

@@ -14,7 +14,7 @@ omdb-api:
   key: ${OMDB_API_KEY}
 
 captcha-solver:
-  url: http://captcha-solver:52525
+  url: http://${RABBITMQ_HOST:captcha-solver}:52525
 
 twocaptcha:
   key: ${TWO_CAPTCHA_API_KEY}

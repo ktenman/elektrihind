@@ -330,7 +330,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         for (Entry<UUID, ApolloKinoSession> entry : sessions.entrySet()) {
             String movie = entry.getValue().getSelectedMovie();
-            String shortMovie = movie.length() > 21 ? movie.substring(0, 18) + "..." : movie;
+            String shortMovie = movie.length() > 22 ? movie.substring(0, 19) + "..." : movie;
             String text = shortMovie + " " + entry.getValue().getKoht() + " " +
                     entry.getValue().getSelectedDate().format(SHORT_DATE_FORMATTER) + " " + entry.getValue().getSelectedTime();
             InlineKeyboardButton button = new InlineKeyboardButton(text);

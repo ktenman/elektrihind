@@ -102,7 +102,7 @@ public class ReBookingService {
         if (session == null) {
             return false;
         }
-        return Duration.between(session.getLastUpdated(), LocalDateTime.now()).toSeconds() > 910;
+        return Duration.between(session.getLastUpdated(), LocalDateTime.now()).toSeconds() > 920;
     }
 
     public int getActiveBookingCount() {

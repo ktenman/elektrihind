@@ -11,9 +11,11 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -22,7 +24,7 @@ public class GoogleVisionService {
     private static final String REGEX = "\\b\\d{3}\\s?[A-Z]{3}\\b";
     public static final Pattern CAR_PLATE_NUMBER_PATTERN = Pattern.compile(REGEX, Pattern.CASE_INSENSITIVE);
     private static final String VEHICLE_REGISTRATION_PLATE = "Vehicle registration plate";
-
+    private static final Set<String> VEHICLE_LABELS = Set.of("vehicle", "car");
     @Resource
     private GoogleVisionClient googleVisionClient;
 
@@ -37,14 +39,15 @@ public class GoogleVisionService {
             GoogleVisionApiResponse googleVisionApiResponse = googleVisionClient.analyzeImage(googleVisionApiRequest);
             log.info("Received label detection response: {}", googleVisionApiResponse);
 
-            boolean hasVehicleRegistrationPlateNumber = googleVisionApiResponse.getLabelAnnotations().stream()
-                    .anyMatch(labelAnnotation -> VEHICLE_REGISTRATION_PLATE.equalsIgnoreCase(labelAnnotation.getDescription()));
-            log.debug("Vehicle registration plate detected: {}", hasVehicleRegistrationPlateNumber);
+            boolean hasVehicleOrCar = googleVisionApiResponse.getLabelAnnotations().stream()
+                    .anyMatch(labelAnnotation -> Stream.of(labelAnnotation.getDescription().toLowerCase().split("\\s+"))
+                            .anyMatch(VEHICLE_LABELS::contains));
+            log.debug("Vehicle/car detected: {}", hasVehicleOrCar);
 
             Map<String, String> response = new HashMap<>();
             String hasCar = hasCar(googleVisionApiResponse.getLabelAnnotations());
             response.put("hasCar", hasCar);
-            if (!hasVehicleRegistrationPlateNumber) {
+            if (!hasVehicleOrCar) {
                 return response;
             }
 

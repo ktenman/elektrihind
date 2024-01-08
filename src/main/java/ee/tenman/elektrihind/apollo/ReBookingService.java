@@ -14,7 +14,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,7 +49,7 @@ public class ReBookingService {
     @Scheduled(cron = "0 */5 * * * *") // Runs every 5 minutes
     public void clearExpiredSessions() {
         List<UUID> idsToRemove = new ArrayList<>();
-        for (Map.Entry<UUID, ApolloKinoSession> sessionMapEntry : sessions.entrySet()) {
+        for (Entry<UUID, ApolloKinoSession> sessionMapEntry : sessions.entrySet()) {
             if (isSessionExpired(sessionMapEntry.getValue())) {
                 log.info("Removing session {}", sessionMapEntry.getKey());
                 idsToRemove.add(sessionMapEntry.getKey());
@@ -63,10 +63,11 @@ public class ReBookingService {
     public void rebook() {
         if (lock.tryLock()) {
             try {
-                sessions.values()
-                        .stream()
-                        .filter(this::isReadyToReBook)
-                        .forEach(this::book);
+                sessions.entrySet().stream().filter(entry -> isReadyToReBook(entry.getValue())).forEach(entry -> {
+                    ApolloKinoSession rebookedSession = book(entry.getValue());
+                    cacheService.removeRebookingSession(entry.getKey());
+                    cacheService.addRebookingSession(entry.getKey(), rebookedSession);
+                });
             } catch (Exception e) {
                 log.error("Failed to rebook", e);
                 clearExpiredSessions();
@@ -78,17 +79,21 @@ public class ReBookingService {
         }
     }
 
-    private void book(ApolloKinoSession session) {
+    private ApolloKinoSession book(ApolloKinoSession session) {
         log.info("Rebooking session {}", session.getSessionId());
 
         Optional<File> bookedFile = apolloKinoService.book(session);
         if (bookedFile.isPresent()) {
             log.info("Booked session {}", session.getSessionId());
             elektriTeemuTelegramService.sendToTelegram(
-                    "Booked movie " + session.getSelectedMovie() + " at " + session.getSelectedDateTime(), session.getChatId());
+                    "Booked " + session.getSelectedMovie() + "(" + session.getKoht() + ") on " +
+                            session.getSelectedDate().format(ApolloKinoService.DATE_TIME_FORMATTER) + " at " +
+                            session.getSelectedTime(), session.getChatId());
             elektriTeemuTelegramService.sendFileToTelegram(bookedFile.get(), session.getChatId());
         }
         session.updateLastInteractionTime();
+
+        return session;
     }
 
     private boolean isSessionExpired(ApolloKinoSession session) {
@@ -102,7 +107,7 @@ public class ReBookingService {
         if (session == null) {
             return false;
         }
-        return Duration.between(session.getLastUpdated(), LocalDateTime.now()).toSeconds() > 920;
+        return Duration.between(session.getLastUpdated(), LocalDateTime.now()).toSeconds() > 930;
     }
 
     public int getActiveBookingCount() {

@@ -283,7 +283,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             reBookingService.cancel(bookingUuid);
             sendMessage(chatId, "Booking cancelled for " + text);
             removeMessage(chatId, bookingUuid.toString());
-            displayBookings(chatId);
             return;
         }
 
@@ -293,6 +292,11 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             case EURIBOR -> sendMessageCode(chatId, euriborRateFetcher.getEuriborRateResponse());
             case METRIC -> sendMessageCode(chatId, getSystemMetrics());
             case APOLLO_KINO -> {
+                int activeBookingsCount = reBookingService.getActiveBookingCount();
+                if (activeBookingsCount > 4) {
+                    sendMessage(chatId, "Too many active bookings. Please try again later or `/cancel` your booking.");
+                    return;
+                }
                 ApolloKinoSession newSession = sessionManagementService.createNewSession();
                 displayApolloKinoMenu(chatId, newSession, null);
             }
@@ -747,9 +751,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             sendMessageCode(chatId, messageId, "Droplet reboot initiated!");
 
         } else if (messageText.equalsIgnoreCase(APOLLO_KINO) || messageText.equalsIgnoreCase("/" + APOLLO_KINO)) {
-            int reBookings = reBookingService.getSessionCount();
-            if (reBookings > 4) {
-                sendMessage(chatId, "Too many re-bookings in progress. Please try again later or `/cancel` a re-booking.");
+            int activeBookingCount = reBookingService.getActiveBookingCount();
+            if (activeBookingCount > 4) {
+                sendMessage(chatId, "Too many active bookings. Please try again later or `/cancel` your booking.");
                 return;
             }
             ApolloKinoSession newSession = sessionManagementService.createNewSession();

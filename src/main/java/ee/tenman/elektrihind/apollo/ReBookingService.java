@@ -105,7 +105,7 @@ public class ReBookingService {
         return Duration.between(session.getLastUpdated(), LocalDateTime.now()).toSeconds() > 910;
     }
 
-    public int getSessionCount() {
+    public int getActiveBookingCount() {
         return sessions.size();
     }
 

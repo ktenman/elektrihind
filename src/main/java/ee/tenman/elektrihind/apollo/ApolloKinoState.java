@@ -61,5 +61,10 @@ public enum ApolloKinoState {
     public boolean isDeclined() {
         return this == DECLINED;
     }
+
+    @JsonIgnore
+    public boolean isFailed() {
+        return this == FAILED;
+    }
 }
 

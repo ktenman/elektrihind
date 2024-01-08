@@ -45,7 +45,7 @@ public class ApolloKinoSession {
     }
 
     public void setNextState() {
-        if (currentState.isDeclined()) {
+        if (currentState.isDeclined() || currentState.isFailed()) {
             return;
         }
         this.currentState = this.currentState.getNextState().orElse(COMPLETED);

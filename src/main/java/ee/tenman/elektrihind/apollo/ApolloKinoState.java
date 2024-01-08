@@ -37,6 +37,17 @@ public enum ApolloKinoState {
         return Optional.empty();
     }
 
+    @JsonIgnore
+    public Optional<ApolloKinoState> getPreviousState() {
+        if (isFinalState()) {
+            return Optional.empty();
+        }
+        if (ordinal() - 2 >= 0) {
+            return Optional.of(values()[ordinal() - 2]);
+        }
+        return Optional.empty();
+    }
+
     public String getPrompt(String... args) {
         try {
             return String.format(prompt, (Object[]) args);

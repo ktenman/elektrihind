@@ -239,7 +239,7 @@ public class CacheService {
         return rebookingSessionsMap;
     }
 
-    private void updateRebookingSessions(Map<UUID, ApolloKinoSession> sessions) {
+    public void updateRebookingSessions(Map<UUID, ApolloKinoSession> sessions) {
         log.info("Updating rebooking sessions in cache");
         String serializedSessions = JsonUtil.serializeMap(sessions);
         Optional.ofNullable(cacheManager.getCache(SESSIONS_CACHE))

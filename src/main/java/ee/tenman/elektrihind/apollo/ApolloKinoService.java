@@ -60,7 +60,7 @@ public class ApolloKinoService {
 
     private static void selectOneSeat() {
         $$(".radio-card__text").find(text("Staaritoolid")).click();
-        sleep(2000);
+        sleep(1111);
         for (int i = 0; i < 10; i++) {
             SelenideElement subtractButton = $$(".number__button--subtract ").first();
             if (subtractButton.has(attribute("disabled"))) {
@@ -70,7 +70,7 @@ public class ApolloKinoService {
         }
         $$(".number__button--add").first().click();
         $(id("confirm-button")).click();
-        sleep(2000);
+        sleep(1111);
     }
 
     public static String extractUUID(String url) {
@@ -219,7 +219,7 @@ public class ApolloKinoService {
 //            selectOneSeat();
             String currentUrl = getWebDriver().getCurrentUrl();
             String uuid = extractUUID(currentUrl);
-            sleep(500);
+            sleep(444);
             String saal = $(".schedule-card__title-container").findAll(tagName("p")).last().text();
             Screen screen = screenConfig.getScreen(saal);
             boolean validSeat = screen.isValidSeat(koht);
@@ -233,9 +233,9 @@ public class ApolloKinoService {
             String seatPlanImageUrl = "https://www.apollokino.ee/websales/seating/" + uuid + "/seatplanimage/" + showId +
                     "/" + screen.getId() + "?posX=" + x + "&posY=" + y + "&posImgWidth=798&t=" + Instant.now().toEpochMilli();
             open(seatPlanImageUrl);
-            sleep(777);
+            sleep(666);
             open(currentUrl);
-            sleep(777);
+            sleep(666);
             ElementsCollection iframeElements = $$(tagName("iframe"));
             switchTo().frame(iframeElements.get(0));
             File screenshot = $(id("seat-plan-img")).screenshot();

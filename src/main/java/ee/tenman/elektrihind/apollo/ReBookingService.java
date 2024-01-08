@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -63,13 +64,20 @@ public class ReBookingService {
     public void rebook() {
         if (lock.tryLock()) {
             try {
+                AtomicBoolean rebooked = new AtomicBoolean(false);
                 sessions.entrySet().stream()
                         .filter(entry -> isReadyToReBook(entry.getValue()))
-                        .forEach(entry -> {
+                        .findFirst()
+                        .ifPresent(entry -> {
                             ApolloKinoSession rebookedSession = book(entry.getValue());
                             cacheService.removeRebookingSession(entry.getKey());
                             cacheService.addRebookingSession(entry.getKey(), rebookedSession);
+                            rebooked.set(true);
                         });
+                if (rebooked.get()) {
+                    sessions.values().forEach(ApolloKinoSession::updateLastInteractionTime);
+                    cacheService.updateRebookingSessions(sessions);
+                }
             } catch (Exception e) {
                 log.error("Failed to rebook", e);
                 clearExpiredSessions();
@@ -88,7 +96,7 @@ public class ReBookingService {
         if (bookedFile.isPresent()) {
             log.info("Booked session {}", session.getSessionId());
             elektriTeemuTelegramService.sendToTelegram(
-                    "Booked " + session.getSelectedMovie() + "(" + session.getKoht() + ") on " +
+                    "Booked: " + session.getSelectedMovie() + " [" + session.getKoht() + "] on " +
                             session.getSelectedDate().format(ApolloKinoService.DATE_TIME_FORMATTER) + " at " +
                             session.getSelectedTime(), session.getChatId());
             elektriTeemuTelegramService.sendFileToTelegram(bookedFile.get(), session.getChatId());
@@ -109,7 +117,7 @@ public class ReBookingService {
         if (session == null) {
             return false;
         }
-        return Duration.between(session.getLastUpdated(), LocalDateTime.now()).toSeconds() > 930;
+        return Duration.between(session.getLastUpdated(), LocalDateTime.now()).toSeconds() > 950;
     }
 
     public int getActiveBookingCount() {

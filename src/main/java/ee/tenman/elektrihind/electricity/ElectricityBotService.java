@@ -504,6 +504,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                         confirmationMessage += TimeUtility.durationInSeconds(startTime).getTaskDurationMessage();
                         Message message = sendMessage(chatId, confirmationMessage);
                         sendImage(chatId, message.getMessageId(), bookedFile.get());
+                        reBookingService.add(session);
                     } else {
                         sendMessage(chatId, messageText.apply(" booking failed for "));
                     }
@@ -535,7 +536,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 log.info("Session {} declined", session.getSessionId());
                 deleteSessionRelatedMessages(chatId, session);
             } else if (session.isCompleted()) {
-                reBookingService.add(session);
                 log.info("Session {} completed", session.getSessionId());
                 deleteSessionRelatedMessages(chatId, session);
             } else if (session.getMessageId() == null) {

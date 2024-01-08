@@ -17,6 +17,8 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - APOLLO_KINO_USERNAME=${APOLLO_KINO_USERNAME}
+      - APOLLO_KINO_PASSWORD=${APOLLO_KINO_PASSWORD}
     volumes:
       - cache-volume:/app/cache
     restart: always

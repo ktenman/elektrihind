@@ -43,6 +43,6 @@ vision:
 openai:
   token:
 
-applo-kino:
-  username: ${APPLO_KINO_USERNAME}
-  password: ${APPLO_KINO_PASSWORD}
+apollo-kino:
+  username: ${APOLLO_KINO_USERNAME}
+  password: ${APOLLO_KINO_PASSWORD}

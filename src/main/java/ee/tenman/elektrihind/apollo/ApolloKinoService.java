@@ -51,9 +51,9 @@ public class ApolloKinoService {
     private static final String FIRST_URL = "https://www.apollokino.ee/schedule?theatreAreaID=1017";
     private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     private final Map<LocalDate, List<Option>> options = new LinkedHashMap<>();
-    @Value("${applo-kino.username}")
+    @Value("${apollo-kino.username}")
     private String username;
-    @Value("${applo-kino.password}")
+    @Value("${apollo-kino.password}")
     private String password;
     @Resource
     private ScreenConfiguration screenConfig;

@@ -3,6 +3,7 @@ package ee.tenman.elektrihind.apollo;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import ee.tenman.elektrihind.apollo.Option.ScreenTime;
 import ee.tenman.elektrihind.config.ScreenConfiguration;
 import ee.tenman.elektrihind.utility.TimeUtility;
 import jakarta.annotation.PostConstruct;
@@ -26,6 +27,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static com.codeborne.selenide.Condition.attribute;
 import static com.codeborne.selenide.Condition.text;
@@ -45,6 +47,7 @@ import static org.openqa.selenium.By.tagName;
 public class ApolloKinoService {
 
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    public static final DateTimeFormatter SHORT_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM");
     private static final String FIRST_URL = "https://www.apollokino.ee/schedule?theatreAreaID=1017";
     private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     private final Map<LocalDate, List<Option>> options = new LinkedHashMap<>();
@@ -91,12 +94,24 @@ public class ApolloKinoService {
     public void init() {
         long startTime = System.nanoTime();
         try {
+            LocalDateTime today = LocalDateTime.now();
+
+            List<String> acceptedDays = Stream.of(today, today.plusDays(1), today.plusDays(2))
+                    .map(d -> d.format(DATE_TIME_FORMATTER))
+                    .toList();
+
             open(FIRST_URL);
             getWebDriver().manage().window().maximize();
             $(".cky-btn-accept").click();
-            for (int i = 0; i < 3; i++) {
-                ElementsCollection elements = $$(".day-picker__choice");
+            ElementsCollection elements = $$(".day-picker__choice");
+            int count = 0;
+            for (int i = 0; (i < elements.size() && count++ < 3); i++) {
+                elements = $$(".day-picker__choice");
                 SelenideElement dayChoice = elements.get(i);
+                String selectedDayValue = dayChoice.find(tagName("input")).val();
+                if (!acceptedDays.contains(selectedDayValue)) {
+                    continue;
+                }
                 dayChoice.click();
                 sleep(2000);
                 TreeMap<String, String> movieTitles = new TreeMap<>();
@@ -109,13 +124,13 @@ public class ApolloKinoService {
                     sleep(444);
                     $(".movie-details__button").click();
                     sleep(444);
-                    List<Option.ScreenTime> screenTimes = new ArrayList<>();
+                    List<ScreenTime> screenTimes = new ArrayList<>();
                     ElementsCollection screeningElements = $$(className("screening-card__top"));
                     for (SelenideElement screeningElement : screeningElements) {
                         String hallName = screeningElement.find(className("screening-card__hall")).text();
                         String time = screeningElement.find(className("screening-card__time")).text();
                         if (screenConfig.isValidHall(hallName)) {
-                            Option.ScreenTime screenTime = Option.ScreenTime.builder()
+                            ScreenTime screenTime = ScreenTime.builder()
                                     .time(LocalTime.parse(time))
                                     .url(screeningElement.parent().find(tagName("a")).getAttribute("href"))
                                     .hall(hallName)
@@ -132,8 +147,7 @@ public class ApolloKinoService {
                     }
                     movieOptions.add(movieOption);
                 }
-                String selectedDay = dayChoice.find(tagName("input")).val();
-                LocalDate chosenDate = Optional.ofNullable(selectedDay)
+                LocalDate chosenDate = Optional.ofNullable(selectedDayValue)
                         .map(d -> LocalDate.parse(d, DATE_TIME_FORMATTER))
                         .orElseThrow(() -> new RuntimeException("Date not found"));
                 this.options.put(chosenDate, movieOptions);
@@ -147,15 +161,13 @@ public class ApolloKinoService {
         }
     }
 
-    public Option.ScreenTime screenTime(ApolloKinoSession session) {
+    public Optional<ScreenTime> screenTime(ApolloKinoSession session) {
         return this.options.get(session.getSelectedDate()).stream()
                 .filter(screen -> screen.getMovie().equals(session.getSelectedMovie()))
                 .map(Option::getScreenTimes)
                 .flatMap(List::stream)
                 .filter(t -> t.getTime().equals(session.getSelectedTime()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Screen time not found for "
-                        + session.getSelectedDate() + " " + session.getSelectedMovie() + " " + session.getSelectedTime()));
+                .findFirst();
     }
 
     public Map<LocalDate, List<Option>> getOptions() {
@@ -165,9 +177,9 @@ public class ApolloKinoService {
             List<Option> movieOptions = optionEntry.getValue();
             List<Option> newMovieOptions = new ArrayList<>();
             for (Option movieOption : movieOptions) {
-                List<Option.ScreenTime> screenTimes = movieOption.getScreenTimes();
-                List<Option.ScreenTime> newScreenTimes = new ArrayList<>();
-                for (Option.ScreenTime screenTime : screenTimes) {
+                List<ScreenTime> screenTimes = movieOption.getScreenTimes();
+                List<ScreenTime> newScreenTimes = new ArrayList<>();
+                for (ScreenTime screenTime : screenTimes) {
                     LocalDateTime dateTime = LocalDateTime.of(optionEntry.getKey(), screenTime.getTime());
                     if (currentDateTime.isBefore(dateTime)) {
                         newScreenTimes.add(screenTime);
@@ -189,10 +201,14 @@ public class ApolloKinoService {
     }
 
     public Optional<File> book(ApolloKinoSession session) {
-        Option.ScreenTime screenTime = screenTime(session);
+        Optional<ScreenTime> screenTime = screenTime(session);
+        if (screenTime.isEmpty()) {
+            log.error("Screen time not found");
+            return Optional.empty();
+        }
         String koht = session.getKoht();
         try {
-            open(screenTime.getUrl());
+            open(screenTime.get().getUrl());
             getWebDriver().manage().window().maximize();
             $(".cky-btn-accept").click();
             login();

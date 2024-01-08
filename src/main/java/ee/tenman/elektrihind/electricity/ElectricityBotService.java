@@ -3,6 +3,7 @@ package ee.tenman.elektrihind.electricity;
 import ee.tenman.elektrihind.apollo.ApolloKinoService;
 import ee.tenman.elektrihind.apollo.ApolloKinoSession;
 import ee.tenman.elektrihind.apollo.Option;
+import ee.tenman.elektrihind.apollo.Option.ScreenTime;
 import ee.tenman.elektrihind.apollo.ReBookingService;
 import ee.tenman.elektrihind.apollo.SessionManagementService;
 import ee.tenman.elektrihind.cache.CacheService;
@@ -75,10 +76,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -94,6 +97,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ee.tenman.elektrihind.apollo.ApolloKinoService.DATE_TIME_FORMATTER;
+import static ee.tenman.elektrihind.apollo.ApolloKinoService.SHORT_DATE_FORMATTER;
 
 @Service
 @Slf4j
@@ -114,13 +118,15 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final String REBOOT_COMMAND = "reboot";
     private static final String CONFIRM_BUTTON = "Confirm";
     private static final String DECLINE_BUTTON = "Decline";
+    private static final String DISPLAY_BOOKINGS = "Bookings";
+    private static final Pattern DISPLAY_BOOKINGS_UUID_PATTERN = Pattern.compile(DISPLAY_BOOKINGS + "=(.+)");
     private final ConcurrentHashMap<Integer, AtomicBoolean> messageUpdateFlags = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Double> lastPercentages = new ConcurrentHashMap<>();
     private static final int MAX_EDITS_PER_MINUTE = 15;
     private static final long ONE_MINUTE_IN_MILLISECONDS = 60000;
     private final AtomicLong lastEditTimestamp = new AtomicLong(System.currentTimeMillis());
     private final AtomicInteger editCount = new AtomicInteger(0);
-    private final ConcurrentHashMap<Integer, Integer> messagesToDelete = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Integer> messagesToDelete = new ConcurrentHashMap<>();
 
     static {
         try {
@@ -263,6 +269,23 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             displayApolloKinoMenu(chatId, session.get(), chosenOption);
             return;
         }
+        Matcher bookingUuidMatcher = DISPLAY_BOOKINGS_UUID_PATTERN.matcher(callData);
+        if (bookingUuidMatcher.find()) {
+            UUID bookingUuid = UUID.fromString(bookingUuidMatcher.group(1));
+            log.info("Received callback query for DISPLAY_BOOKINGS_UUID_PATTERN with session ID {} to cancel", bookingUuid);
+            ApolloKinoSession session = reBookingService.getSessions().get(bookingUuid);
+            if (session == null) {
+                log.error("Re-booking {} expired or not found", bookingUuid);
+                sendMessage(chatId, "Re-booking expired or not found");
+                return;
+            }
+            String text = "`" + session.getSelectedMovie() + " (" + session.getKoht() + ") " + session.getSelectedDateTime() + "`";
+            reBookingService.cancel(bookingUuid);
+            sendMessage(chatId, "Booking cancelled for " + text);
+            removeMessage(chatId, bookingUuid.toString());
+            displayBookings(chatId);
+            return;
+        }
 
         switch (callData) {
             case "check_price" -> sendMessageCode(chatId, getElectricityPriceResponse());
@@ -273,6 +296,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 ApolloKinoSession newSession = sessionManagementService.createNewSession();
                 displayApolloKinoMenu(chatId, newSession, null);
             }
+            case DISPLAY_BOOKINGS -> displayBookings(chatId);
             case REBOOT_COMMAND -> {
                 digitalOceanService.rebootDroplet();
                 sendMessageCode(chatId, "Droplet reboot initiated!");
@@ -295,6 +319,39 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             }
             default -> sendMessage(chatId, "Command not recognized.");
         }
+    }
+
+    private Message displayBookings(long chatId) {
+        ConcurrentHashMap<UUID, ApolloKinoSession> sessions = reBookingService.getSessions();
+        if (sessions.isEmpty()) {
+            return sendMessage(chatId, "No bookings found");
+        }
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+        for (Entry<UUID, ApolloKinoSession> entry : sessions.entrySet()) {
+            String movie = entry.getValue().getSelectedMovie();
+            String shortMovie = movie.length() > 21 ? movie.substring(0, 18) + "..." : movie;
+            String text = shortMovie + " " + entry.getValue().getKoht() + " " +
+                    entry.getValue().getSelectedDate().format(SHORT_DATE_FORMATTER) + " " + entry.getValue().getSelectedTime();
+            InlineKeyboardButton button = new InlineKeyboardButton(text);
+            button.setCallbackData(DISPLAY_BOOKINGS + "=" + entry.getKey());
+            List<InlineKeyboardButton> rowInline = new ArrayList<>();
+            rowInline.add(button);
+            rowsInline.add(rowInline);
+        }
+        markupInline.setKeyboard(rowsInline);
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText("Select a booking to cancel:");
+        message.setReplyMarkup(markupInline);
+        try {
+            Message bookingsMenu = execute(message);
+            sessions.keySet().forEach(uuid -> messagesToDelete.put(uuid.toString(), bookingsMenu.getMessageId()));
+            return bookingsMenu;
+        } catch (TelegramApiException e) {
+            log.error("Failed to display bookings: {}", e.getMessage());
+        }
+        return null;
     }
 
     private void displayApolloKinoMenu(long chatId, ApolloKinoSession session, String chosenOption) {
@@ -326,7 +383,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 String title = "";
                 if (optionsList == null || optionsList.isEmpty()) {
                     Message message = sendMessage(chatId, "No movies found for " + selectedDate.format(DATE_TIME_FORMATTER));
-                    messagesToDelete.put(session.getSessionId(), message.getMessageId());
+                    messagesToDelete.put(session.getSessionId().toString(), message.getMessageId());
                     return;
                 }
                 for (int i = 0; i < optionsList.size(); i++) {
@@ -362,9 +419,11 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             }
             case SELECT_TIME -> {
                 session.setSelectedTime(LocalTime.parse(chosenOption));
-                Option.ScreenTime screenTime = apolloKinoService.screenTime(session);
+                ScreenTime screenTime = apolloKinoService.screenTime(session)
+                        .orElseThrow(() -> new IllegalArgumentException("Screen time not found for "
+                                + session.getSelectedDate() + " " + session.getSelectedMovie() + " " + session.getSelectedTime()));
                 Map<String, Integer> seatCounts = screenConfiguration.getScreen(screenTime.getHall()).getSeatCounts();
-                for (Map.Entry<String, Integer> entry : seatCounts.entrySet()) {
+                for (Entry<String, Integer> entry : seatCounts.entrySet()) {
                     List<InlineKeyboardButton> rowInline = new ArrayList<>();
                     InlineKeyboardButton button = new InlineKeyboardButton(entry.getKey());
                     String callbackData = getCallbackData.apply(entry.getKey());
@@ -375,7 +434,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             }
             case SELECT_ROW -> {
                 session.setSelectedRow(chosenOption);
-                Option.ScreenTime screenTime = apolloKinoService.screenTime(session);
+                ScreenTime screenTime = apolloKinoService.screenTime(session)
+                        .orElseThrow(() -> new IllegalArgumentException("Screen time not found for "
+                                + session.getSelectedDate() + " " + session.getSelectedMovie() + " " + session.getSelectedTime()));
                 int maxSeats = screenConfiguration.getScreen(screenTime.getHall()).getSeatCounts().get(session.getSelectedRow());
                 for (int i = 1; i <= maxSeats; i++) {
                     List<InlineKeyboardButton> rowInline = new ArrayList<>();
@@ -427,6 +488,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
                 } else if (DECLINE_BUTTON.equals(chosenOption)) {
                     sendMessage(chatId, messageText.apply(" booking declined for "));
+                    session.decline();
                 }
             }
             default -> {
@@ -439,28 +501,14 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
         try {
             session.updateCurrentState();
-            if (session.isCompleted()) {
+            if (session.isDeclined()) {
+                log.info("Session {} declined", session.getSessionId());
+                deleteSessionRelatedMessages(chatId, session);
+            } else if (session.isCompleted()) {
                 reBookingService.add(session);
-                sessionManagementService.removeSession(session.getSessionId());
                 log.info("Session {} completed", session.getSessionId());
-                Stream.of(session.getMessageId(), session.getReplyMessageId(), messagesToDelete.get(session.getSessionId()))
-                        .parallel()
-                        .filter(Objects::nonNull)
-                        .forEach(messageId -> {
-                            DeleteMessage deleteMessage = new DeleteMessage();
-                            deleteMessage.setChatId(chatId);
-                            deleteMessage.setMessageId(messageId);
-                            try {
-                                execute(deleteMessage);
-                            } catch (TelegramApiException e) {
-                                log.error("Failed to delete message {} for chat {}", messageId, chatId);
-                            }
-                        });
-                log.info("Deleted messages {} and {} for chat {}", session.getMessageId(), session.getReplyMessageId(), chatId);
-                messagesToDelete.remove(session.getSessionId());
-                return;
-            }
-            if (session.getMessageId() == null) {
+                deleteSessionRelatedMessages(chatId, session);
+            } else if (session.getMessageId() == null) {
                 SendMessage message = new SendMessage();
                 message.setChatId(chatId);
                 message.setText(prompt);
@@ -476,18 +524,33 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 editMessageText.enableMarkdown(true);
                 editMessageText.setReplyMarkup(markupInline);
                 execute(editMessageText);
-                Integer messageToDeleteId = messagesToDelete.get(session.getSessionId());
+                Integer messageToDeleteId = messagesToDelete.get(session.getSessionId().toString());
                 if (messageToDeleteId != null) {
-                    DeleteMessage deleteMessage = new DeleteMessage();
-                    deleteMessage.setChatId(chatId);
-                    deleteMessage.setMessageId(messageToDeleteId);
-                    execute(deleteMessage);
-                    messagesToDelete.remove(session.getSessionId());
+                    removeMessage(chatId, messageToDeleteId.toString());
                 }
             }
         } catch (TelegramApiException e) {
             log.error("Failed to apollo kino menu with options: {}", e.getMessage());
         }
+    }
+
+    private void deleteSessionRelatedMessages(long chatId, ApolloKinoSession session) {
+        Stream.of(session.getMessageId(), session.getReplyMessageId(), messagesToDelete.get(session.getSessionId().toString()))
+                .parallel()
+                .filter(Objects::nonNull)
+                .forEach(messageId -> {
+                    DeleteMessage deleteMessage = new DeleteMessage();
+                    deleteMessage.setChatId(chatId);
+                    deleteMessage.setMessageId(messageId);
+                    try {
+                        execute(deleteMessage);
+                    } catch (TelegramApiException e) {
+                        log.error("Failed to delete message {} for chat {}", messageId, chatId);
+                    }
+                });
+        log.info("Deleted messages {} and {} for chat {}", session.getMessageId(), session.getReplyMessageId(), chatId);
+        messagesToDelete.remove(session.getSessionId().toString());
+        sessionManagementService.removeSession(session.getSessionId());
     }
 
     @Override
@@ -595,7 +658,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         List<InlineKeyboardButton> rowInline5 = new ArrayList<>();
         InlineKeyboardButton apolloKino = new InlineKeyboardButton("Apollo Kino");
         apolloKino.setCallbackData(APOLLO_KINO);
+        InlineKeyboardButton bookings = new InlineKeyboardButton(DISPLAY_BOOKINGS);
+        bookings.setCallbackData(DISPLAY_BOOKINGS);
         rowInline5.add(apolloKino);
+        rowInline5.add(bookings);
 
         // Set the keyboard to the markup
         rowsInline.add(rowInline1);
@@ -666,6 +732,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         } else if (carPriceMatcher.find()) {
             String regNr = carPriceMatcher.group(1).toUpperCase();
             price(startTime, chatId, regNr, messageId);
+        } else if (messageText.equalsIgnoreCase(DISPLAY_BOOKINGS) ||
+                messageText.equalsIgnoreCase("/" + DISPLAY_BOOKINGS) ||
+                "/cancel".equalsIgnoreCase(messageText)) {
+            displayBookings(chatId);
         } else if (chatMatcher.find()) {
             String text = chatMatcher.group(1);
             String response = onlineCheckService.isMacbookOnline() ? chatService.sendMessage(text)
@@ -1221,6 +1291,29 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             log.error("Failed to send message: {}", text, e);
             return null;
+        }
+    }
+
+    void removeMessage(long chatId, String key) {
+        if (key == null) {
+            log.warn("Not removing null message from chat: {}", chatId);
+            return;
+        }
+        Integer messageId = messagesToDelete.get(key);
+        if (messageId == null) {
+            log.warn("Not removing message from chat: {} with key: {}", chatId, key);
+            return;
+        }
+        DeleteMessage deleteMessage = new DeleteMessage();
+        deleteMessage.setChatId(chatId);
+        deleteMessage.setMessageId(messageId);
+        try {
+            execute(deleteMessage);
+            messagesToDelete.remove(key);
+        } catch (TelegramApiException e) {
+            log.error("Failed to remove message: {}", e.getMessage());
+        } finally {
+            log.info("Removed message from chat: {} with key: {}", chatId, key);
         }
     }
 

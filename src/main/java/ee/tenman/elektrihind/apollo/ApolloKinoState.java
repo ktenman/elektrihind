@@ -11,8 +11,9 @@ public enum ApolloKinoState {
     SELECT_TIME("Select a time:"),
     SELECT_ROW("Select a row:"),
     SELECT_SEAT("Select a seat in row %s:"),
-    CONFIRMATION("Book: `%s` for `%s`, `%s` time: `%s`?"),
-    COMPLETED("Completed");
+    CONFIRMATION("Book: `%s` for `%s` on `%s` at `%s`?"),
+    COMPLETED("Completed"),
+    DECLINED("Declined");
 
     private final String prompt;
 
@@ -21,7 +22,15 @@ public enum ApolloKinoState {
     }
 
     @JsonIgnore
+    public boolean isFinalState() {
+        return this == COMPLETED || this == DECLINED;
+    }
+
+    @JsonIgnore
     public Optional<ApolloKinoState> getNextState() {
+        if (isFinalState()) {
+            return Optional.empty();
+        }
         if (ordinal() + 1 < values().length) {
             return Optional.of(values()[ordinal() + 1]);
         }
@@ -34,6 +43,11 @@ public enum ApolloKinoState {
         } catch (java.util.MissingFormatArgumentException e) {
             return "Prompt formatting error for: " + this.name() + " with error: " + e.getMessage();
         }
+    }
+
+    @JsonIgnore
+    public boolean isDeclined() {
+        return this == DECLINED;
     }
 }
 

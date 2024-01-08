@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import static ee.tenman.elektrihind.apollo.ApolloKinoState.COMPLETED;
+import static ee.tenman.elektrihind.apollo.ApolloKinoState.DECLINED;
 
 @Getter
 @Setter
@@ -40,6 +41,9 @@ public class ApolloKinoSession {
     }
 
     public void updateCurrentState() {
+        if (currentState.isDeclined()) {
+            return;
+        }
         this.currentState = this.currentState.getNextState().orElse(COMPLETED);
         updateLastInteractionTime();
     }
@@ -66,5 +70,15 @@ public class ApolloKinoSession {
     @JsonIgnore
     public String getPrompt(String... args) {
         return getCurrentState().getNextState().map(s -> s.getPrompt(args)).orElse("Prompt not found");
+    }
+
+    @JsonIgnore
+    public void decline() {
+        this.currentState = DECLINED;
+    }
+
+    @JsonIgnore
+    public boolean isDeclined() {
+        return this.currentState == DECLINED;
     }
 }

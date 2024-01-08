@@ -2,6 +2,7 @@ package ee.tenman.elektrihind.electricity;
 
 import ee.tenman.elektrihind.apollo.ApolloKinoService;
 import ee.tenman.elektrihind.apollo.ApolloKinoSession;
+import ee.tenman.elektrihind.apollo.ApolloKinoState;
 import ee.tenman.elektrihind.apollo.Option;
 import ee.tenman.elektrihind.apollo.Option.ScreenTime;
 import ee.tenman.elektrihind.apollo.ReBookingService;
@@ -120,6 +121,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final String DECLINE_BUTTON = "Decline";
     private static final String DISPLAY_BOOKINGS = "Bookings";
     private static final Pattern DISPLAY_BOOKINGS_UUID_PATTERN = Pattern.compile(DISPLAY_BOOKINGS + "=(.+)");
+    public static final String BACK_BUTTON = "Back";
     private final ConcurrentHashMap<Integer, AtomicBoolean> messageUpdateFlags = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Double> lastPercentages = new ConcurrentHashMap<>();
     private static final int MAX_EDITS_PER_MINUTE = 15;
@@ -358,7 +360,30 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         return null;
     }
 
+    public static <T> Optional<T> getSecondLastElement(List<T> list) {
+        return Optional.ofNullable(list)
+                .filter(l -> l.size() > 1)
+                .map(l -> l.get(l.size() - 2));
+    }
+
     private void displayApolloKinoMenu(long chatId, ApolloKinoSession session, String chosenOption) {
+        if (BACK_BUTTON.equals(chosenOption)) {
+            session.setBackButtonPressed(true);
+            session.setPreviousState();
+
+            if (!session.getSelectedOptions().isEmpty()) {
+                session.getSelectedOptions().removeLast(); // Remove the last option as we are going back
+                if (!session.getSelectedOptions().isEmpty()) {
+                    chosenOption = session.getSelectedOptions().getLast();
+                }
+            }
+        } else {
+            session.setBackButtonPressed(false);
+            if (chosenOption != null) {
+                session.getSelectedOptions().add(chosenOption);
+            }
+        }
+
         log.info("Displaying apollo kino menu for session {} with chosen option {} and current state {}",
                 session.getSessionId(),
                 chosenOption,
@@ -427,14 +452,14 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                         .orElseThrow(() -> new IllegalArgumentException("Screen time not found for "
                                 + session.getSelectedDate() + " " + session.getSelectedMovie() + " " + session.getSelectedTime()));
                 Map<String, Integer> seatCounts = screenConfiguration.getScreen(screenTime.getHall()).getSeatCounts();
+                List<InlineKeyboardButton> rowInline = new ArrayList<>();
                 for (Entry<String, Integer> entry : seatCounts.entrySet()) {
-                    List<InlineKeyboardButton> rowInline = new ArrayList<>();
                     InlineKeyboardButton button = new InlineKeyboardButton(entry.getKey());
                     String callbackData = getCallbackData.apply(entry.getKey());
                     button.setCallbackData(callbackData);
                     rowInline.add(button);
-                    rowsInline.add(rowInline);
                 }
+                rowsInline.add(rowInline);
             }
             case SELECT_ROW -> {
                 session.setSelectedRow(chosenOption);
@@ -501,10 +526,18 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             }
         }
 
+        if (session.getCurrentState() != ApolloKinoState.INITIAL) {
+            List<InlineKeyboardButton> backRow = new ArrayList<>();
+            InlineKeyboardButton backButton = new InlineKeyboardButton(BACK_BUTTON);
+            backButton.setCallbackData(getCallbackData.apply(BACK_BUTTON));
+            backRow.add(backButton);
+            rowsInline.add(backRow);
+        }
+
         markupInline.setKeyboard(rowsInline);
 
         try {
-            session.updateCurrentState();
+            session.setNextState();
             if (session.isDeclined()) {
                 log.info("Session {} declined", session.getSessionId());
                 deleteSessionRelatedMessages(chatId, session);

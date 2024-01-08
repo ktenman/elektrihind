@@ -10,9 +10,12 @@ import lombok.Setter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import static ee.tenman.elektrihind.apollo.ApolloKinoState.COMPLETED;
 import static ee.tenman.elektrihind.apollo.ApolloKinoState.DECLINED;
+import static ee.tenman.elektrihind.apollo.ApolloKinoState.INITIAL;
 
 @Getter
 @Setter
@@ -31,6 +34,8 @@ public class ApolloKinoSession {
     private LocalTime selectedTime;
     private String selectedRow;
     private String selectedSeat;
+    private List<String> selectedOptions = new ArrayList<>();
+    private boolean isBackButtonPressed;
 
     public ApolloKinoSession(Integer sessionId) {
         this.sessionId = sessionId;
@@ -40,11 +45,16 @@ public class ApolloKinoSession {
         this.lastUpdated = LocalDateTime.now();
     }
 
-    public void updateCurrentState() {
+    public void setNextState() {
         if (currentState.isDeclined()) {
             return;
         }
         this.currentState = this.currentState.getNextState().orElse(COMPLETED);
+        updateLastInteractionTime();
+    }
+
+    public void setPreviousState() {
+        this.currentState = this.currentState.getPreviousState().orElse(INITIAL);
         updateLastInteractionTime();
     }
 

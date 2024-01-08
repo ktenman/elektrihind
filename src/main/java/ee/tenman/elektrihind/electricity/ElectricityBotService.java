@@ -506,13 +506,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                         sendImage(chatId, message.getMessageId(), bookedFile.get());
                         reBookingService.add(session);
                     } else {
-                        session.failed();
                         sendMessage(chatId, messageText.apply("Booking failed: "));
-                        List<InlineKeyboardButton> retryButtonRow = new ArrayList<>();
-                        InlineKeyboardButton retryButton = new InlineKeyboardButton(messageText.apply("Retry: "));
-                        retryButton.setCallbackData(getCallbackData.apply(CONFIRM_BUTTON));
-                        retryButtonRow.add(retryButton);
-                        rowsInline.add(retryButtonRow);
                     }
 
                 } else if (DECLINE_BUTTON.equals(chosenOption)) {

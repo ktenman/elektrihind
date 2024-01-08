@@ -13,6 +13,7 @@ import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -66,6 +67,7 @@ public class ReBookingService {
             try {
                 AtomicBoolean rebooked = new AtomicBoolean(false);
                 sessions.entrySet().stream()
+                        .sorted(Comparator.comparing(o -> o.getValue().getUpdatedAt()))
                         .filter(entry -> isReadyToReBook(entry.getValue()))
                         .findFirst()
                         .ifPresent(entry -> {
@@ -117,7 +119,7 @@ public class ReBookingService {
         if (session == null) {
             return false;
         }
-        return Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds() > 900;
+        return Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds() > 940;
     }
 
     public int getActiveBookingCount() {

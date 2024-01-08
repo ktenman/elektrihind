@@ -60,7 +60,7 @@ logging:
   pattern:
     console: '%d{yyyy-MM-dd''T''HH:mm:ss.SSSZ,Europe/Tallinn} [%thread] %-5level %logger{36} [UUID: %X{uuid}] - %msg%n'
 
-applo-kino:
-  username: ${APPLO_KINO_USERNAME}
-  password: ${APPLO_KINO_PASSWORD}
+apollo-kino:
+  username: ${APOLLO_KINO_USERNAME}
+  password: ${APOLLO_KINO_PASSWORD}
 

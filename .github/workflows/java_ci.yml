@@ -81,6 +81,8 @@ jobs:
           echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
           echo "RABBITMQ_USER=${{ secrets.RABBITMQ_USER }}" >> .env
           echo "RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}" >> .env
+          echo "APOLLO_KINO_USERNAME=${{ secrets.APOLLO_KINO_USERNAME }}" >> .env
+          echo "APOLLO_KINO_PASSWORD=${{ secrets.APOLLO_KINO_PASSWORD }}" >> .env
 
       - name: Copy .env and docker-compose.yml files to server
         run: |

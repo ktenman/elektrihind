@@ -296,7 +296,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             case METRIC -> sendMessageCode(chatId, getSystemMetrics());
             case APOLLO_KINO -> {
                 int activeBookingsCount = reBookingService.getActiveBookingCount();
-                if (activeBookingsCount > 4) {
+                if (activeBookingsCount >= 4) {
                     sendMessage(chatId, "Too many active bookings. Please try again later or `/cancel` your booking.");
                     return;
                 }
@@ -490,7 +490,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             case CONFIRMATION -> {
                 long startTime = System.nanoTime();
                 String koht = session.getRowAndSeat();
-                UnaryOperator<String> messageText = (m) -> koht + m + "`" + session.getSelectedMovie() + "` on " +
+                UnaryOperator<String> messageText = (m) -> m + "`" + session.getSelectedMovie() + " [" + koht + "]` on " +
                         session.getSelectedDate().format(DATE_TIME_FORMATTER) + " at " + session.getSelectedTime();
                 if (CONFIRM_BUTTON.equals(chosenOption)) {
                     Message reply = sendReplyMessage(chatId, session.getMessageId(), "Booking...");
@@ -500,17 +500,23 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     Optional<java.io.File> bookedFile = apolloKinoService.book(session);
 
                     if (bookedFile.isPresent()) {
-                        String confirmationMessage = messageText.apply(" booked for ");
+                        String confirmationMessage = messageText.apply("Booked: ");
                         confirmationMessage += TimeUtility.durationInSeconds(startTime).getTaskDurationMessage();
                         Message message = sendMessage(chatId, confirmationMessage);
                         sendImage(chatId, message.getMessageId(), bookedFile.get());
                         reBookingService.add(session);
                     } else {
-                        sendMessage(chatId, messageText.apply(" booking failed for "));
+                        session.failed();
+                        sendMessage(chatId, messageText.apply("Booking failed: "));
+                        List<InlineKeyboardButton> retryButtonRow = new ArrayList<>();
+                        InlineKeyboardButton retryButton = new InlineKeyboardButton(messageText.apply("Retry: "));
+                        retryButton.setCallbackData(getCallbackData.apply(CONFIRM_BUTTON));
+                        retryButtonRow.add(retryButton);
+                        rowsInline.add(retryButtonRow);
                     }
 
                 } else if (DECLINE_BUTTON.equals(chosenOption)) {
-                    sendMessage(chatId, messageText.apply(" booking declined for "));
+                    sendMessage(chatId, messageText.apply("Booking declined: "));
                     session.decline();
                 }
             }
@@ -776,7 +782,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
         } else if (messageText.equalsIgnoreCase(APOLLO_KINO) || messageText.equalsIgnoreCase("/" + APOLLO_KINO)) {
             int activeBookingCount = reBookingService.getActiveBookingCount();
-            if (activeBookingCount > 4) {
+            if (activeBookingCount >= 4) {
                 sendMessage(chatId, "Too many active bookings. Please try again later or `/cancel` your booking.");
                 return;
             }

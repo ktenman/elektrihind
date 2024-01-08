@@ -13,7 +13,8 @@ public enum ApolloKinoState {
     SELECT_SEAT("Select a seat in row %s:"),
     CONFIRMATION("Book: `%s` for `%s` on `%s` at `%s`?"),
     COMPLETED("Completed"),
-    DECLINED("Declined");
+    DECLINED("Declined"),
+    FAILED("Failed");
 
     private final String prompt;
 
@@ -23,7 +24,7 @@ public enum ApolloKinoState {
 
     @JsonIgnore
     public boolean isFinalState() {
-        return this == COMPLETED || this == DECLINED;
+        return this == COMPLETED || this == DECLINED || this == FAILED;
     }
 
     @JsonIgnore

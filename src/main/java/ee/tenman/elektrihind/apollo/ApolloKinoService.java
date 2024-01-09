@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -201,7 +202,7 @@ public class ApolloKinoService {
         return filteredOptions;
     }
 
-    public Optional<File> book(ApolloKinoSession session) {
+    public Optional<Map.Entry<File, List<String>>> book(ApolloKinoSession session) {
         Optional<ScreenTime> screenTime = screenTime(session);
         if (screenTime.isEmpty()) {
             log.error("Screen time not found");
@@ -242,7 +243,13 @@ public class ApolloKinoService {
             File screenshot = $(id("seat-plan-img")).screenshot();
             switchTo().defaultContent();
             $$(tagName("button")).find(text("Maksma")).click();
-            return Optional.ofNullable(screenshot);
+            sleep(333);
+            ElementsCollection bookedSeats = $$(".table-list__item");
+            List<String> tableItems = new ArrayList<>();
+            if (!bookedSeats.isEmpty()) {
+                tableItems.addAll(bookedSeats.texts());
+            }
+            return Optional.ofNullable(new AbstractMap.SimpleEntry<>(screenshot, tableItems));
         } catch (Exception e) {
             log.error("Failed to book", e);
             return Optional.empty();

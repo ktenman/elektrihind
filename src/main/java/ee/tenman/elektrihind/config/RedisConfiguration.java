@@ -31,7 +31,8 @@ public class RedisConfiguration {
     public static final String ONE_YEAR_CACHE_2 = "one-year-cache-2";
     public static final String MESSAGE_COUNTS_CACHE = "message-counts-cache-1";
     public static final String SESSIONS_CACHE = "sessionsCache";
-    public static final String APOLLO_KINO = "apollo-kino";
+    public static final String APOLLO_KINO_CACHE = "apollo-kino";
+    public static final String ELECTRICITY_PRICES_CACHE = "electricity-prices-cache";
 
     public static final String IMAGE_REQUEST_QUEUE = "image-request-queue";
     public static final String IMAGE_RESPONSE_QUEUE = "image-response-queue";
@@ -67,7 +68,8 @@ public class RedisConfiguration {
         cacheConfigurations.put(ONE_YEAR_CACHE_2, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(365)));
         cacheConfigurations.put(MESSAGE_COUNTS_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(1)));
         cacheConfigurations.put(SESSIONS_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(3)));
-        cacheConfigurations.put(APOLLO_KINO, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(2)));
+        cacheConfigurations.put(APOLLO_KINO_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(2)));
+        cacheConfigurations.put(ELECTRICITY_PRICES_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofHours(2)));
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig().entryTtl(DEFAULT_TTL);
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)

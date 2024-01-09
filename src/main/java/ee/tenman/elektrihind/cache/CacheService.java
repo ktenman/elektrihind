@@ -28,7 +28,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import static ee.tenman.elektrihind.config.RedisConfiguration.APOLLO_KINO;
+import static ee.tenman.elektrihind.config.RedisConfiguration.APOLLO_KINO_CACHE;
+import static ee.tenman.elektrihind.config.RedisConfiguration.ELECTRICITY_PRICES_CACHE;
 import static ee.tenman.elektrihind.config.RedisConfiguration.MESSAGE_COUNTS_CACHE;
 import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_DAY_CACHE_1;
 import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_1;
@@ -77,14 +78,42 @@ public class CacheService {
         }
 
         try {
+            latestPrices = getElectricityPrices();
             if (latestPrices.isEmpty()) {
+                log.info("No electricity prices found in cache. Fetching...");
                 latestPrices = electricityPricesService.fetchDailyPrices();
-                log.info("Latest prices initialized with {} entries", latestPrices.size());
+                log.info("Fetched {} prices.", latestPrices.size());
+                setElectricityPrices(latestPrices);
             }
+            log.info("Latest prices initialized with {} entries", latestPrices.size());
         } catch (Exception e) {
             log.error("Error during initialization: {}", e.getMessage(), e);
         }
         log.info("CacheService initialization completed");
+    }
+
+    private List<ElectricityPrice> getElectricityPrices() {
+        log.info("Getting electricity prices from cache");
+        Optional<String> dataJson = Optional.ofNullable(cacheManager.getCache(ELECTRICITY_PRICES_CACHE))
+                .map(c -> c.get(ELECTRICITY_PRICES_CACHE, String.class));
+        if (dataJson.isEmpty()) {
+            log.info("Electricity prices not found in cache");
+            return new ArrayList<>();
+        }
+
+        TypeReference<List<ElectricityPrice>> typeReference = new TypeReference<>() {
+        };
+        List<ElectricityPrice> result = JsonUtil.deserializeList(dataJson.get(), typeReference);
+        log.info("Electricity prices retrieved from cache");
+        return result;
+    }
+
+    public void setElectricityPrices(List<ElectricityPrice> electricityPrices) {
+        log.info("Setting electricity prices in cache");
+        String serializedData = JsonUtil.serializeList(electricityPrices);
+        Optional.ofNullable(cacheManager.getCache(ELECTRICITY_PRICES_CACHE))
+                .ifPresent(c -> c.put(ELECTRICITY_PRICES_CACHE, serializedData));
+        log.info("Electricity prices set in cache");
     }
 
     public boolean canSendMessageToday() {
@@ -256,15 +285,15 @@ public class CacheService {
     public void updateApolloKinoData(Map<LocalDate, List<Option>> data) {
         log.info("Updating Apollo Kino data in cache");
         String serializedData = JsonUtil.serializeMap(data);
-        Optional.ofNullable(cacheManager.getCache(APOLLO_KINO))
-                .ifPresent(c -> c.put(APOLLO_KINO, serializedData));
+        Optional.ofNullable(cacheManager.getCache(APOLLO_KINO_CACHE))
+                .ifPresent(c -> c.put(APOLLO_KINO_CACHE, serializedData));
         log.info("Apollo Kino data updated in cache");
     }
 
     public Map<LocalDate, List<Option>> getApolloKinoData() {
         log.info("Getting Apollo Kino data from cache");
-        Optional<String> dataJson = Optional.ofNullable(cacheManager.getCache(APOLLO_KINO))
-                .map(c -> c.get(APOLLO_KINO, String.class));
+        Optional<String> dataJson = Optional.ofNullable(cacheManager.getCache(APOLLO_KINO_CACHE))
+                .map(c -> c.get(APOLLO_KINO_CACHE, String.class));
         if (dataJson.isEmpty()) {
             log.info("Apollo Kino data not found in cache");
             return new HashMap<>();

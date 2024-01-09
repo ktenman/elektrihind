@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.electricity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import ee.tenman.elektrihind.config.CustomLocalDateTimeDeserializer;
 import ee.tenman.elektrihind.utility.DateTimeConstants;
@@ -17,6 +18,7 @@ import java.util.Objects;
 @AllArgsConstructor
 public class ElectricityPrice implements Comparable<ElectricityPrice> {
     @JsonDeserialize(using = CustomLocalDateTimeDeserializer.class)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime date;
     private Double price;
 

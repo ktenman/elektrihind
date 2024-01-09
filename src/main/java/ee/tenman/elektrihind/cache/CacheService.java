@@ -78,14 +78,13 @@ public class CacheService {
         }
 
         try {
-//            latestPrices = getElectricityPrices();
-//            if (latestPrices.isEmpty()) {
-//                log.info("No electricity prices found in cache. Fetching...");
-//                latestPrices = electricityPricesService.fetchDailyPrices();
-//                log.info("Fetched {} prices.", latestPrices.size());
-//                setElectricityPrices(latestPrices);
-//            }
-            latestPrices = electricityPricesService.fetchDailyPrices();
+            latestPrices = getElectricityPrices();
+            if (latestPrices.isEmpty()) {
+                log.info("No electricity prices found in cache. Fetching...");
+                latestPrices = electricityPricesService.fetchDailyPrices();
+                log.info("Fetched {} prices.", latestPrices.size());
+                setElectricityPrices(latestPrices);
+            }
             log.info("Latest prices initialized with {} entries", latestPrices.size());
         } catch (Exception e) {
             log.error("Error during initialization: {}", e.getMessage(), e);

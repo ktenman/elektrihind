@@ -136,4 +136,5 @@ public class ReBookingService {
         cacheService.removeRebookingSession(bookingUuid);
         log.info("Cancelled booking session {}", bookingUuid);
     }
+
 }

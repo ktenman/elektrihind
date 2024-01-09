@@ -68,7 +68,7 @@ public class ReBookingService {
         idsToRemove.forEach(cacheService::removeRebookingSession);
     }
 
-    @Scheduled(cron = "0 * * * * *") // Runs every minute
+    @Scheduled(cron = "30 * * * * *") // Runs every minute
     public void rebook() {
         if (lock.tryLock()) {
             try {
@@ -124,7 +124,7 @@ public class ReBookingService {
         if (session == null) {
             return false;
         }
-        return Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds() > 950;
+        return Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds() > 930;
     }
 
     public int getActiveBookingCount() {

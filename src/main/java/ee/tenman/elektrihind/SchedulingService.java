@@ -39,7 +39,7 @@ public class SchedulingService {
         log.info("Fetching and sending prices...");
 
         List<ElectricityPrice> electricityPrices = electricityPricesService.fetchDailyPrices();
-        cacheService.setElectricityPrices(electricityPrices);
+//        cacheService.setElectricityPrices(electricityPrices);
         log.debug("Fetched {} prices.", electricityPrices.size());
 
         if (!isNewPricesAvailable(electricityPrices)) {

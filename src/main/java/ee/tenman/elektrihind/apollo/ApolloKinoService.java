@@ -54,7 +54,7 @@ public class ApolloKinoService {
     public static final DateTimeFormatter SHORT_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM");
     private static final String FIRST_URL = "https://www.apollokino.ee/schedule?theatreAreaID=1017";
     private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
-    private Map<LocalDate, List<Option>> options = new LinkedHashMap<>();
+    private Map<LocalDate, List<Option>> options = new TreeMap<>();
     @Value("${apollo-kino.username}")
     private String username;
     @Value("${apollo-kino.password}")
@@ -91,10 +91,10 @@ public class ApolloKinoService {
 
     @PostConstruct
     public void onStart() {
-        options = cacheService.getApolloKinoData();
+        options = new TreeMap<>(cacheService.getApolloKinoData());
         if (options.isEmpty()) {
             onSchedule();
-            options = cacheService.getApolloKinoData();
+            options = new TreeMap<>(cacheService.getApolloKinoData());
         }
     }
 

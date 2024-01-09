@@ -13,7 +13,6 @@ import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -22,6 +21,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static java.util.Comparator.comparing;
 
 @Service
 @Slf4j
@@ -67,13 +68,12 @@ public class ReBookingService {
             try {
                 AtomicBoolean rebooked = new AtomicBoolean(false);
                 sessions.entrySet().stream()
-                        .sorted(Comparator.comparing((Entry<UUID, ApolloKinoSession> o) -> o.getValue().getUpdatedAt()).reversed())
+                        .sorted(comparing((Entry<UUID, ApolloKinoSession> o) -> o.getValue().getUpdatedAt()).reversed())
                         .filter(entry -> isReadyToReBook(entry.getValue()))
-                        .findFirst()
-                        .ifPresent(entry -> {
+                        .forEach(entry -> {
                             ApolloKinoSession rebookedSession = book(entry.getValue());
-                            cacheService.removeRebookingSession(entry.getKey());
-                            cacheService.addRebookingSession(entry.getKey(), rebookedSession);
+                            sessions.remove(entry.getKey());
+                            sessions.put(entry.getKey(), rebookedSession);
                             rebooked.set(true);
                         });
                 if (rebooked.get()) {

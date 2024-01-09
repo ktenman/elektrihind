@@ -47,6 +47,12 @@ public class ReBookingService {
         UUID sessionId = UUID.randomUUID();
         this.sessions.put(sessionId, session);
         cacheService.addRebookingSession(sessionId, session);
+        updateLastInteractionTimes();
+    }
+
+    private void updateLastInteractionTimes() {
+        sessions.values().forEach(ApolloKinoSession::updateLastInteractionTime);
+        cacheService.updateRebookingSessions(sessions);
     }
 
     @Scheduled(cron = "0 */5 * * * *") // Runs every 5 minutes
@@ -62,7 +68,7 @@ public class ReBookingService {
         idsToRemove.forEach(cacheService::removeRebookingSession);
     }
 
-    @Scheduled(cron = "* * * * * *") // Runs every second
+    @Scheduled(cron = "0 * * * * *") // Runs every minute
     public void rebook() {
         if (lock.tryLock()) {
             try {
@@ -77,8 +83,7 @@ public class ReBookingService {
                             rebooked.set(true);
                         });
                 if (rebooked.get()) {
-                    sessions.values().forEach(ApolloKinoSession::updateLastInteractionTime);
-                    cacheService.updateRebookingSessions(sessions);
+                    updateLastInteractionTimes();
                 }
             } catch (Exception e) {
                 log.error("Failed to rebook", e);

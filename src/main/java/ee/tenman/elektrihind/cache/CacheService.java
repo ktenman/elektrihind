@@ -1,6 +1,8 @@
 package ee.tenman.elektrihind.cache;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import ee.tenman.elektrihind.apollo.ApolloKinoSession;
+import ee.tenman.elektrihind.apollo.Option;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
 import ee.tenman.elektrihind.utility.JsonUtil;
@@ -26,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static ee.tenman.elektrihind.config.RedisConfiguration.APOLLO_KINO;
 import static ee.tenman.elektrihind.config.RedisConfiguration.MESSAGE_COUNTS_CACHE;
 import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_DAY_CACHE_1;
 import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_1;
@@ -234,9 +237,12 @@ public class CacheService {
             log.info("Rebooking sessions not found in cache");
             return new HashMap<>();
         }
-        Map<UUID, ApolloKinoSession> rebookingSessionsMap = JsonUtil.deserializeMap(sessionsJson.get());
+
+        TypeReference<Map<UUID, ApolloKinoSession>> typeReference = new TypeReference<>() {
+        };
+        Map<UUID, ApolloKinoSession> result = JsonUtil.deserializeMap(sessionsJson.get(), typeReference);
         log.info("Rebooking sessions retrieved from cache");
-        return rebookingSessionsMap;
+        return result;
     }
 
     public void updateRebookingSessions(Map<UUID, ApolloKinoSession> sessions) {
@@ -245,6 +251,30 @@ public class CacheService {
         Optional.ofNullable(cacheManager.getCache(SESSIONS_CACHE))
                 .ifPresent(c -> c.put(SESSIONS_KEY, serializedSessions));
         log.info("Rebooking sessions updated in cache");
+    }
+
+    public void updateApolloKinoData(Map<LocalDate, List<Option>> data) {
+        log.info("Updating Apollo Kino data in cache");
+        String serializedData = JsonUtil.serializeMap(data);
+        Optional.ofNullable(cacheManager.getCache(APOLLO_KINO))
+                .ifPresent(c -> c.put(APOLLO_KINO, serializedData));
+        log.info("Apollo Kino data updated in cache");
+    }
+
+    public Map<LocalDate, List<Option>> getApolloKinoData() {
+        log.info("Getting Apollo Kino data from cache");
+        Optional<String> dataJson = Optional.ofNullable(cacheManager.getCache(APOLLO_KINO))
+                .map(c -> c.get(APOLLO_KINO, String.class));
+        if (dataJson.isEmpty()) {
+            log.info("Apollo Kino data not found in cache");
+            return new HashMap<>();
+        }
+
+        TypeReference<Map<LocalDate, List<Option>>> typeReference = new TypeReference<>() {
+        };
+        Map<LocalDate, List<Option>> result = JsonUtil.deserializeMap(dataJson.get(), typeReference);
+        log.info("Apollo Kino data retrieved from cache");
+        return result;
     }
 
     public void removeRebookingSession(UUID uuid) {
@@ -262,4 +292,5 @@ public class CacheService {
         updateRebookingSessions(rebookingSessions);
         log.info("Rebooking session {} added to cache", sessionId);
     }
+
 }

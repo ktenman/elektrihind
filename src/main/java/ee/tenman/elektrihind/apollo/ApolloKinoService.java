@@ -4,6 +4,7 @@ import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import ee.tenman.elektrihind.apollo.Option.ScreenTime;
+import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.config.ScreenConfiguration;
 import ee.tenman.elektrihind.utility.TimeUtility;
 import jakarta.annotation.PostConstruct;
@@ -53,7 +54,7 @@ public class ApolloKinoService {
     public static final DateTimeFormatter SHORT_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM");
     private static final String FIRST_URL = "https://www.apollokino.ee/schedule?theatreAreaID=1017";
     private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
-    private final Map<LocalDate, List<Option>> options = new LinkedHashMap<>();
+    private Map<LocalDate, List<Option>> options = new LinkedHashMap<>();
     @Value("${apollo-kino.username}")
     private String username;
     @Value("${apollo-kino.password}")
@@ -62,6 +63,8 @@ public class ApolloKinoService {
     private ScreenConfiguration screenConfig;
     @Resource
     private Environment environment;
+    @Resource
+    private CacheService cacheService;
 
     private static void selectOneSeat() {
         $$(".radio-card__text").find(text("Staaritoolid")).click();
@@ -88,12 +91,17 @@ public class ApolloKinoService {
 
     @PostConstruct
     public void onStart() {
-        init();
+        options = cacheService.getApolloKinoData();
+        if (options.isEmpty()) {
+            onSchedule();
+            options = cacheService.getApolloKinoData();
+        }
     }
 
     @Scheduled(cron = "0 0 12 * * *")
     public void onSchedule() {
         init();
+        cacheService.updateApolloKinoData(options);
     }
 
     public void init() {

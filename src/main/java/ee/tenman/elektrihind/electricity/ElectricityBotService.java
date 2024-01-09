@@ -607,23 +607,23 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-//        String userName = Optional.ofNullable(update)
-//                .map(Update::getMessage)
-//                .map(Message::getFrom)
-//                .map(org.telegram.telegrambots.meta.api.objects.User::getUserName)
-//                .or(() -> Optional.ofNullable(update)
-//                        .map(Update::getCallbackQuery)
-//                        .map(CallbackQuery::getFrom)
-//                        .map(org.telegram.telegrambots.meta.api.objects.User::getUserName))
-//                .orElse(UNKNOWN_USERNAME);
-//        if (!ALLOWED_USERNAMES.contains(userName)) {
-//            log.info("Ignoring message from {}", userName);
-//            if (update == null || update.getMessage() == null) {
-//                return;
-//            }
-//            sendReplyMessage(update.getMessage().getChatId(), update.getMessage().getMessageId(), NOT_ALLOWED_MESSAGE);
-//            return;
-//        }
+        String userName = Optional.ofNullable(update)
+                .map(Update::getMessage)
+                .map(Message::getFrom)
+                .map(org.telegram.telegrambots.meta.api.objects.User::getUserName)
+                .or(() -> Optional.ofNullable(update)
+                        .map(Update::getCallbackQuery)
+                        .map(CallbackQuery::getFrom)
+                        .map(org.telegram.telegrambots.meta.api.objects.User::getUserName))
+                .orElse(UNKNOWN_USERNAME);
+        if (!validUsernames.contains(userName)) {
+            log.info("Ignoring message from {}", userName);
+            if (update == null || update.getMessage() == null) {
+                return;
+            }
+            sendReplyMessage(update.getMessage().getChatId(), update.getMessage().getMessageId(), NOT_ALLOWED_MESSAGE);
+            return;
+        }
         if (update.hasCallbackQuery()) {
             handleCallbackQuery(update.getCallbackQuery());
         } else if (update.hasMessage()) {

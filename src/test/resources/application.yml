@@ -44,5 +44,5 @@ openai:
   token:
 
 apollo-kino:
-  username: ${APOLLO_KINO_USERNAME}
-  password: ${APOLLO_KINO_PASSWORD}
+  username:
+  password: $

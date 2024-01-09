@@ -265,6 +265,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             if (callbackQuery == null || callbackQuery.getMessage() == null) {
                 return;
             }
+            log.info("Ignoring message from {}", userName);
             sendReplyMessage(callbackQuery.getMessage().getChatId(), callbackQuery.getMessage().getMessageId(), NOT_ALLOWED_MESSAGE);
             return;
         }
@@ -621,6 +622,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             if (update == null || update.getMessage() == null) {
                 return;
             }
+            log.info("Ignoring message from {}", userName);
             sendReplyMessage(update.getMessage().getChatId(), update.getMessage().getMessageId(), NOT_ALLOWED_MESSAGE);
             return;
         }

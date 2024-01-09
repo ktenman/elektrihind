@@ -101,12 +101,13 @@ public class ReBookingService {
 
         Optional<Entry<File, List<String>>> bookedFile = apolloKinoService.book(session);
         if (bookedFile.isPresent()) {
-            log.info("Booked session {}", session.getSessionId());
-            elektriTeemuTelegramService.sendToTelegram(
-                    "Booked: " + session.getSelectedMovie() + " [" + session.getRowAndSeat() + "] on " +
-                            session.getSelectedDate().format(ApolloKinoService.DATE_TIME_FORMATTER) + " at " +
-                            session.getSelectedTime(), session.getChatId());
-            elektriTeemuTelegramService.sendFileToTelegram(bookedFile.get().getKey(), session.getChatId());
+            log.info("Re-booked session {}", session.getSessionId());
+            String message = "Booked: " + session.getSelectedMovie() + " [" + session.getRowAndSeat() + "] on " +
+                    session.getSelectedDate().format(ApolloKinoService.DATE_TIME_FORMATTER) + " at " +
+                    session.getSelectedTime();
+            log.info("Re-booked session {} - {}", session.getSessionId(), message);
+//            elektriTeemuTelegramService.sendToTelegram(message, session.getChatId());
+//            elektriTeemuTelegramService.sendFileToTelegram(bookedFile.get().getKey(), session.getChatId());
         }
         session.updateLastInteractionTime();
 

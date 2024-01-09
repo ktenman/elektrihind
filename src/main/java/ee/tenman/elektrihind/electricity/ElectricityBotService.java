@@ -135,7 +135,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
     @Getter
     private final List<String> validUsernames = new ArrayList<>(List.of(
-            "ElektriGeenius_bot", "ktenman", "JavaElekterBot", "edurbrito"
+            "ElektriGeenius_bot", "ktenman", "JavaElekterBot", "edurbrito", "vladminajev", "kalaindrek"
     ));
 
     static {

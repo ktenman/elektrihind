@@ -515,13 +515,12 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     session.setReplyMessageId(reply.getMessageId());
                     session.setChatId(chatId);
 
-                    Optional<java.io.File> bookedFile = apolloKinoService.book(session);
-
+                    Optional<Entry<java.io.File, List<String>>> bookedFile = apolloKinoService.book(session);
                     if (bookedFile.isPresent()) {
                         String confirmationMessage = messageText.apply("Booked: ");
                         confirmationMessage += TimeUtility.durationInSeconds(startTime).getTaskDurationMessage();
                         Message message = sendMessage(chatId, confirmationMessage);
-                        sendImage(chatId, message.getMessageId(), bookedFile.get());
+                        sendImage(chatId, message.getMessageId(), bookedFile.get().getKey());
                         reBookingService.add(session);
                     } else {
                         sendMessage(chatId, messageText.apply("Booking failed: "));

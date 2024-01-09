@@ -67,7 +67,7 @@ public class ReBookingService {
             try {
                 AtomicBoolean rebooked = new AtomicBoolean(false);
                 sessions.entrySet().stream()
-                        .sorted(Comparator.comparing(o -> o.getValue().getUpdatedAt()))
+                        .sorted(Comparator.comparing((Entry<UUID, ApolloKinoSession> o) -> o.getValue().getUpdatedAt()).reversed())
                         .filter(entry -> isReadyToReBook(entry.getValue()))
                         .findFirst()
                         .ifPresent(entry -> {
@@ -94,14 +94,14 @@ public class ReBookingService {
     private ApolloKinoSession book(ApolloKinoSession session) {
         log.info("Rebooking session {}", session.getSessionId());
 
-        Optional<File> bookedFile = apolloKinoService.book(session);
+        Optional<Entry<File, List<String>>> bookedFile = apolloKinoService.book(session);
         if (bookedFile.isPresent()) {
             log.info("Booked session {}", session.getSessionId());
             elektriTeemuTelegramService.sendToTelegram(
                     "Booked: " + session.getSelectedMovie() + " [" + session.getRowAndSeat() + "] on " +
                             session.getSelectedDate().format(ApolloKinoService.DATE_TIME_FORMATTER) + " at " +
                             session.getSelectedTime(), session.getChatId());
-            elektriTeemuTelegramService.sendFileToTelegram(bookedFile.get(), session.getChatId());
+            elektriTeemuTelegramService.sendFileToTelegram(bookedFile.get().getKey(), session.getChatId());
         }
         session.updateLastInteractionTime();
 

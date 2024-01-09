@@ -25,6 +25,7 @@ import ee.tenman.elektrihind.utility.TextUtility;
 import ee.tenman.elektrihind.utility.TimeUtility;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -122,6 +123,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final String DISPLAY_BOOKINGS = "Bookings";
     private static final Pattern DISPLAY_BOOKINGS_UUID_PATTERN = Pattern.compile(DISPLAY_BOOKINGS + "=(.+)");
     public static final String BACK_BUTTON = "Back";
+    static final String UNKNOWN_USERNAME = "unknown";
+    private static final String NOT_ALLOWED_MESSAGE = "You are not allowed to use this bot. 😘";
     private final ConcurrentHashMap<Integer, AtomicBoolean> messageUpdateFlags = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Double> lastPercentages = new ConcurrentHashMap<>();
     private static final int MAX_EDITS_PER_MINUTE = 15;
@@ -130,7 +133,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private final AtomicInteger editCount = new AtomicInteger(0);
     private final ConcurrentHashMap<String, Integer> messagesToDelete = new ConcurrentHashMap<>();
 
-    private static final List<String> ALLOWED_USERNAMES = List.of("ElektriGeenius_bot", "ktenman", "JavaElekterBot", "edurbrito");
+    @Getter
+    private final List<String> validUsernames = new ArrayList<>(List.of(
+            "ElektriGeenius_bot", "ktenman", "JavaElekterBot", "edurbrito"
+    ));
 
     static {
         try {
@@ -253,14 +259,13 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 .map(org.telegram.telegrambots.meta.api.objects.User::getUserName).or(() -> Optional.ofNullable(callbackQuery)
                         .map(CallbackQuery::getFrom)
                         .map(org.telegram.telegrambots.meta.api.objects.User::getUserName))
-                .orElse("unknown");
-        if (!ALLOWED_USERNAMES.contains(userName)) {
+                .orElse(UNKNOWN_USERNAME);
+        if (!validUsernames.contains(userName)) {
             log.info("Ignoring message from {}", userName);
             if (callbackQuery == null || callbackQuery.getMessage() == null) {
                 return;
             }
-            sendReplyMessage(callbackQuery.getMessage().getChatId(), callbackQuery.getMessage().getMessageId(),
-                    "You are not allowed to use this bot. 😘");
+            sendReplyMessage(callbackQuery.getMessage().getChatId(), callbackQuery.getMessage().getMessageId(), NOT_ALLOWED_MESSAGE);
             return;
         }
         AtomicLong startTime = new AtomicLong(System.nanoTime());
@@ -602,23 +607,23 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        String userName = Optional.ofNullable(update)
-                .map(Update::getMessage)
-                .map(Message::getFrom)
-                .map(org.telegram.telegrambots.meta.api.objects.User::getUserName).or(() -> Optional.ofNullable(update)
-                        .map(Update::getCallbackQuery)
-                        .map(CallbackQuery::getFrom)
-                        .map(org.telegram.telegrambots.meta.api.objects.User::getUserName))
-                .orElse("unknown");
-        if (!ALLOWED_USERNAMES.contains(userName)) {
-            log.info("Ignoring message from {}", userName);
-            if (update == null || update.getMessage() == null) {
-                return;
-            }
-            sendReplyMessage(update.getMessage().getChatId(), update.getMessage().getMessageId(),
-                    "You are not allowed to use this bot. 😘");
-            return;
-        }
+//        String userName = Optional.ofNullable(update)
+//                .map(Update::getMessage)
+//                .map(Message::getFrom)
+//                .map(org.telegram.telegrambots.meta.api.objects.User::getUserName)
+//                .or(() -> Optional.ofNullable(update)
+//                        .map(Update::getCallbackQuery)
+//                        .map(CallbackQuery::getFrom)
+//                        .map(org.telegram.telegrambots.meta.api.objects.User::getUserName))
+//                .orElse(UNKNOWN_USERNAME);
+//        if (!ALLOWED_USERNAMES.contains(userName)) {
+//            log.info("Ignoring message from {}", userName);
+//            if (update == null || update.getMessage() == null) {
+//                return;
+//            }
+//            sendReplyMessage(update.getMessage().getChatId(), update.getMessage().getMessageId(), NOT_ALLOWED_MESSAGE);
+//            return;
+//        }
         if (update.hasCallbackQuery()) {
             handleCallbackQuery(update.getCallbackQuery());
         } else if (update.hasMessage()) {

@@ -38,6 +38,7 @@ import java.util.regex.Matcher;
 
 import static ee.tenman.elektrihind.electricity.ElectricityBotService.CAR_REGISTRATION_PATTERN;
 import static ee.tenman.elektrihind.electricity.ElectricityBotService.DURATION_PATTERN;
+import static ee.tenman.elektrihind.electricity.ElectricityBotService.UNKNOWN_USERNAME;
 import static ee.tenman.elektrihind.electricity.PriceFinderServiceTest.ELECTRICITY_PRICES;
 import static java.time.ZoneOffset.UTC;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -104,6 +105,7 @@ class ElectricityBotServiceTest {
         lenient().when(feesConfiguration.getRenewableEnergyFee()).thenReturn(BigDecimal.valueOf(5.32));
         lenient().when(feesConfiguration.getElectricityExciseTax()).thenReturn(BigDecimal.valueOf(0.021));
         lenient().when(feesConfiguration.getSalesTax()).thenReturn(BigDecimal.valueOf(1.22));
+        botService.getValidUsernames().add(UNKNOWN_USERNAME);
     }
 
     @Test

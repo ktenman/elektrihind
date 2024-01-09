@@ -3,7 +3,6 @@ package ee.tenman.elektrihind.cache;
 import ee.tenman.elektrihind.apollo.ApolloKinoSession;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
-import ee.tenman.elektrihind.utility.GlobalConstants;
 import ee.tenman.elektrihind.utility.JsonUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
@@ -36,6 +35,7 @@ import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_4;
 import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_5;
 import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_YEAR_CACHE_1;
 import static ee.tenman.elektrihind.config.RedisConfiguration.SESSIONS_CACHE;
+import static ee.tenman.elektrihind.utility.GlobalConstants.TEST_PROFILE;
 
 @Service
 @Slf4j
@@ -68,7 +68,7 @@ public class CacheService {
     @PostConstruct
     public void init() {
         log.info("Initializing CacheService...");
-        if (List.of(environment.getActiveProfiles()).contains(GlobalConstants.TEST_PROFILE)) {
+        if (List.of(environment.getActiveProfiles()).contains(TEST_PROFILE)) {
             log.info("Skipping initialization in test profile");
             return;
         }

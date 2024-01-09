@@ -10,6 +10,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +39,7 @@ import static com.codeborne.selenide.Selenide.open;
 import static com.codeborne.selenide.Selenide.sleep;
 import static com.codeborne.selenide.Selenide.switchTo;
 import static com.codeborne.selenide.WebDriverRunner.getWebDriver;
+import static ee.tenman.elektrihind.utility.GlobalConstants.TEST_PROFILE;
 import static org.openqa.selenium.By.className;
 import static org.openqa.selenium.By.id;
 import static org.openqa.selenium.By.name;
@@ -58,6 +60,8 @@ public class ApolloKinoService {
     private String password;
     @Resource
     private ScreenConfiguration screenConfig;
+    @Resource
+    private Environment environment;
 
     private static void selectOneSeat() {
         $$(".radio-card__text").find(text("Staaritoolid")).click();
@@ -93,6 +97,10 @@ public class ApolloKinoService {
     }
 
     public void init() {
+        if (List.of(environment.getActiveProfiles()).contains(TEST_PROFILE)) {
+            log.info("Skipping initialization in test profile");
+            return;
+        }
         long startTime = System.nanoTime();
         try {
             LocalDateTime today = LocalDateTime.now();

@@ -11,16 +11,23 @@ WORKDIR /app
 
 # Install necessary utilities
 RUN apt-get update && \
-    apt-get install -y firefox-esr wget tar && \
+    apt-get install -y wget tar bzip2 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Download and install a specific version of Firefox
+RUN wget https://ftp.mozilla.org/pub/firefox/releases/115.6.0esr/linux-x86_64/en-US/firefox-115.6.0esr.tar.bz2 && \
+    tar -xjf firefox-115.6.0esr.tar.bz2 && \
+    mv firefox /opt/firefox115.6.0esr && \
+    ln -s /opt/firefox115.6.0esr/firefox /usr/bin/firefox && \
+    rm firefox-115.6.0esr.tar.bz2
+
 # Install GeckoDriver
-RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz && \
-    tar -xzf geckodriver-v0.33.0-linux64.tar.gz && \
+RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-linux64.tar.gz && \
+    tar -xzf geckodriver-v0.34.0-linux64.tar.gz && \
     mv geckodriver /usr/bin/ && \
     chmod +x /usr/bin/geckodriver && \
-    rm geckodriver-v0.33.0-linux64.tar.gz
+    rm geckodriver-v0.34.0-linux64.tar.gz
 
 # Set environment variables
 ENV JAVA_OPTS="-Xmx1000m -Xms500m -Duser.timezone=Europe/Tallinn"

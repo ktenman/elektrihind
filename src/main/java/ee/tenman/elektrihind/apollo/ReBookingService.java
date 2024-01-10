@@ -44,10 +44,29 @@ public class ReBookingService {
     }
 
     public void add(ApolloKinoSession session) {
+        Optional<ApolloKinoSession> existingSession = findExistingSession(session);
+        if (existingSession.isPresent()) {
+            log.info("Session already exists. Updating last interaction time");
+            existingSession.get().getSelectedStarSeats().addAll(session.getSelectedStarSeats());
+            updateLastInteractionTimes();
+            return;
+        }
         UUID sessionId = UUID.randomUUID();
         this.sessions.put(sessionId, session);
         cacheService.addRebookingSession(sessionId, session);
         updateLastInteractionTimes();
+    }
+
+    private Optional<ApolloKinoSession> findExistingSession(ApolloKinoSession session) {
+        for (Entry<UUID, ApolloKinoSession> entry : sessions.entrySet()) {
+            ApolloKinoSession existingSession = entry.getValue();
+            if (session.getSelectedMovie().equals(existingSession.getSelectedMovie()) &&
+                    session.getSelectedTime().equals(existingSession.getSelectedTime()) &&
+                    session.getSelectedDate().equals(existingSession.getSelectedDate())) {
+                return Optional.of(existingSession);
+            }
+        }
+        return Optional.empty();
     }
 
     private void updateLastInteractionTimes() {

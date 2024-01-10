@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.apollo;
 
+import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
@@ -221,6 +222,7 @@ public class ApolloKinoService {
     }
 
     public Optional<Map.Entry<File, List<String>>> book(ApolloKinoSession session) {
+        Configuration.headless = false;
         Optional<ScreenTime> screenTime = screenTime(session);
         if (screenTime.isEmpty()) {
             log.error("Screen time not found");
@@ -232,11 +234,7 @@ public class ApolloKinoService {
             getWebDriver().manage().window().maximize();
             $(".cky-btn-accept").click();
             login();
-//            String currentUrl1 = getWebDriver().getCurrentUrl();
             selectSeats(session.getSelectedStarSeats().size());
-//            tühista();
-//            open(currentUrl1);
-//            selectOneSeat();
             String currentUrl = getWebDriver().getCurrentUrl();
             String uuid = extractUUID(currentUrl);
             sleep(333);
@@ -281,13 +279,6 @@ public class ApolloKinoService {
         $(name("username")).setValue(username);
         $(name("password")).setValue(password);
         $(".user__login-submit").click();
-    }
-
-    private void tühista() {
-        $$(".button--block-xs").find(text("Tühista")).click();
-        $$(".modal__button").find(text("TÜHISTA")).click();
-        sleep(1000);
-        Selenide.refresh();
     }
 
     private String extractShowId(String currentUrl) {

@@ -10,7 +10,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static ee.tenman.elektrihind.apollo.ApolloKinoState.COMPLETED;
 import static ee.tenman.elektrihind.apollo.ApolloKinoState.DECLINED;
@@ -31,13 +34,14 @@ public class ApolloKinoSession {
     private String selectedMovie;
     private LocalDate selectedDate;
     private LocalTime selectedTime;
-    private List<StarSeat> selectedStarSeats = new ArrayList<>();
+    private Set<StarSeat> selectedStarSeats = new HashSet<>();
     private List<String> selectedOptions = new ArrayList<>();
 
     public ApolloKinoSession(Integer sessionId) {
         this.sessionId = sessionId;
     }
 
+    @JsonIgnore
     public void setSelectedSeat(String seat) {
         selectedStarSeats.stream()
                 .findFirst()
@@ -51,6 +55,13 @@ public class ApolloKinoSession {
                 .findFirst()
                 .map(StarSeat::getRowAndSeat)
                 .orElseThrow(() -> new IllegalStateException("No row and seat selected"));
+    }
+
+    @JsonIgnore
+    public String getRowAndSeats() {
+        return selectedStarSeats.stream()
+                .map(StarSeat::getRowAndSeat)
+                .collect(Collectors.joining(", "));
     }
 
     public void updateLastInteractionTime() {
@@ -70,6 +81,7 @@ public class ApolloKinoSession {
         updateLastInteractionTime();
     }
 
+    @JsonIgnore
     public String getSelectedRow() {
         return selectedStarSeats.stream()
                 .findFirst()

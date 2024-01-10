@@ -373,8 +373,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         for (Entry<UUID, ApolloKinoSession> entry : sessions.entrySet()) {
             String movie = entry.getValue().getSelectedMovie();
-            String shortMovie = movie.length() > 22 ? movie.substring(0, 19) + "..." : movie;
-            String text = shortMovie + " " + entry.getValue().getRowAndSeat() + " " +
+            String shortMovie = movie.length() > 20 ? movie.substring(0, 17) + "..." : movie;
+            String text = shortMovie + " [" + entry.getValue().getRowAndSeats() + "] " +
                     entry.getValue().getSelectedDate().format(SHORT_DATE_FORMATTER) + " " + entry.getValue().getSelectedTime();
             InlineKeyboardButton button = new InlineKeyboardButton(text);
             button.setCallbackData(DISPLAY_BOOKINGS + "=" + entry.getKey());

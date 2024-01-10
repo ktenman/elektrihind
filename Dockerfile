@@ -16,11 +16,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install GeckoDriver
-RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz && \
-    tar -xzf geckodriver-v0.33.0-linux64.tar.gz && \
+RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-linux64.tar.gz && \
+    tar -xzf geckodriver-v0.34.0-linux64.tar.gz && \
     mv geckodriver /usr/bin/ && \
     chmod +x /usr/bin/geckodriver && \
-    rm geckodriver-v0.33.0-linux64.tar.gz
+    rm geckodriver-v0.34.0-linux64.tar.gz
 
 # Set environment variables
 ENV JAVA_OPTS="-Xmx1000m -Xms500m -Duser.timezone=Europe/Tallinn"

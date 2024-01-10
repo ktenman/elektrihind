@@ -1,6 +1,5 @@
 package ee.tenman.elektrihind.apollo;
 
-import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
@@ -222,7 +221,6 @@ public class ApolloKinoService {
     }
 
     public Optional<Map.Entry<File, List<String>>> book(ApolloKinoSession session) {
-        Configuration.headless = false;
         Optional<ScreenTime> screenTime = screenTime(session);
         if (screenTime.isEmpty()) {
             log.error("Screen time not found");

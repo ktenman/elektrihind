@@ -126,7 +126,7 @@ public class ReBookingService {
         Optional<Entry<File, Set<StarSeat>>> bookingResult = apolloKinoService.book(session);
         if (bookingResult.isPresent()) {
             log.info("Re-booked session {}", session.getSessionId());
-            String message = "Booked: " + session.getSelectedMovie() + " [" + session.getRowAndSeats() + "] on " +
+            String message = "Booked: " + session.getSelectedMovie() + " " + session.getRowAndSeats() + " on " +
                     session.getSelectedDate().format(ApolloKinoService.DATE_TIME_FORMATTER) + " at " +
                     session.getSelectedTime();
             log.info("Re-booked session {} - {}", session.getSessionId(), message);

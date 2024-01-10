@@ -108,8 +108,8 @@ public class ReBookingService {
                     session.getSelectedDate().format(ApolloKinoService.DATE_TIME_FORMATTER) + " at " +
                     session.getSelectedTime();
             log.info("Re-booked session {} - {}", session.getSessionId(), message);
-//            elektriTeemuTelegramService.sendToTelegram(message, session.getChatId());
-//            elektriTeemuTelegramService.sendFileToTelegram(bookedFile.get().getKey(), session.getChatId());
+            elektriTeemuTelegramService.sendToTelegram(message, session.getChatId());
+            elektriTeemuTelegramService.sendFileToTelegram(bookedFile.get().getKey(), session.getChatId());
         }
         session.updateLastInteractionTime();
 

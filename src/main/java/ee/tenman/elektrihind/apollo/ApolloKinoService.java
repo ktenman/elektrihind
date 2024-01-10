@@ -66,7 +66,7 @@ public class ApolloKinoService {
     @Resource
     private CacheService cacheService;
 
-    private static void selectOneSeat() {
+    private static void selectSeats(int count) {
         $$(".radio-card__text").find(text("Staaritoolid")).click();
         sleep(777);
         for (int i = 0; i < 10; i++) {
@@ -76,7 +76,9 @@ public class ApolloKinoService {
             }
             subtractButton.click();
         }
-        $$(".number__button--add").first().click();
+        for (int i = 0; i < count; i++) {
+            $$(".number__button--add").first().click();
+        }
         $(id("confirm-button")).click();
         sleep(777);
     }
@@ -231,7 +233,7 @@ public class ApolloKinoService {
             $(".cky-btn-accept").click();
             login();
 //            String currentUrl1 = getWebDriver().getCurrentUrl();
-            selectOneSeat();
+            selectSeats(session.getSelectedStarSeats().size());
 //            tühista();
 //            open(currentUrl1);
 //            selectOneSeat();

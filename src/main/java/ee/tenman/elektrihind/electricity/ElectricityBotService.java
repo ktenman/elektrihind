@@ -127,10 +127,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final String DECLINE_BUTTON = "Decline";
     private static final String DISPLAY_BOOKINGS = "Bookings";
     private static final Pattern DISPLAY_BOOKINGS_UUID_PATTERN = Pattern.compile(DISPLAY_BOOKINGS + "=(.+)");
-    public static final String BACK_BUTTON = "Back";
+    private static final String BACK_BUTTON = "Back";
     static final String UNKNOWN_USERNAME = "unknown";
     private static final String NOT_ALLOWED_MESSAGE = "You are not allowed to use this bot. 😘";
-    public static final int MAX_BOOKING_COUNT = 6;
+    private static final int MAX_BOOKING_COUNT = 6;
     private final ConcurrentHashMap<Integer, AtomicBoolean> messageUpdateFlags = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Double> lastPercentages = new ConcurrentHashMap<>();
     private static final int MAX_EDITS_PER_MINUTE = 15;

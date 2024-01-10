@@ -299,6 +299,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             String data = apolloKinoSessionIdMatcher.group(2);
             String chosenOption = callbackData.get(UUID.fromString(data), () -> {
                 log.error("Callback data not found for {}", data);
+                sendReplyMessage(chatId, callbackQuery.getMessage().getMessageId(), "Callback data not found for " + data);
                 throw new IllegalStateException("Callback data not found for " + data);
             });
             log.info("Received callback query for APOLLO_KINO_SESSION_ID_PATTERN with session ID {} and chose option {}", sessionId, chosenOption);

@@ -51,8 +51,10 @@ public class ReBookingService {
     }
 
     private void updateLastInteractionTimes() {
+        log.info("Updating last interaction times");
         sessions.values().forEach(ApolloKinoSession::updateLastInteractionTime);
         cacheService.updateRebookingSessions(sessions);
+        log.info("Updated last interaction times");
     }
 
     @Scheduled(cron = "0 */5 * * * *") // Runs every 5 minutes

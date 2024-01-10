@@ -1,5 +1,7 @@
 package ee.tenman.elektrihind.electricity;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import ee.tenman.elektrihind.apollo.ApolloKinoService;
 import ee.tenman.elektrihind.apollo.ApolloKinoSession;
 import ee.tenman.elektrihind.apollo.ApolloKinoState;
@@ -86,6 +88,7 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -132,6 +135,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private final AtomicLong lastEditTimestamp = new AtomicLong(System.currentTimeMillis());
     private final AtomicInteger editCount = new AtomicInteger(0);
     private final ConcurrentHashMap<String, Integer> messagesToDelete = new ConcurrentHashMap<>();
+    private final Cache<UUID, String> callbackData = CacheBuilder.newBuilder()
+            .expireAfterWrite(1, TimeUnit.HOURS)
+            .build();
 
     @Getter
     private final List<String> validUsernames = new ArrayList<>(List.of(
@@ -252,6 +258,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         return token;
     }
 
+    @SneakyThrows(ExecutionException.class)
     private void handleCallbackQuery(CallbackQuery callbackQuery) {
         String userName = Optional.ofNullable(callbackQuery)
                 .map(CallbackQuery::getMessage)
@@ -289,7 +296,11 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 sendMessage(chatId, "Session expired or not found");
                 return;
             }
-            String chosenOption = apolloKinoSessionIdMatcher.group(2);
+            String data = apolloKinoSessionIdMatcher.group(2);
+            String chosenOption = callbackData.get(UUID.fromString(data), () -> {
+                log.error("Callback data not found for {}", data);
+                throw new IllegalStateException("Callback data not found for " + data);
+            });
             log.info("Received callback query for APOLLO_KINO_SESSION_ID_PATTERN with session ID {} and chose option {}", sessionId, chosenOption);
             session.get().updateLastInteractionTime();
             displayApolloKinoMenu(chatId, session.get(), chosenOption);
@@ -410,7 +421,11 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
 
         String prompt = session.getPrompt();
-        UnaryOperator<String> getCallbackData = (data) -> APOLLO_KINO + "=" + session.getSessionId() + "=" + data;
+        UnaryOperator<String> getCallbackData = (data) -> {
+            UUID uniqueId = UUID.randomUUID();
+            callbackData.put(uniqueId, data);
+            return APOLLO_KINO + "=" + session.getSessionId() + "=" + uniqueId;
+        };
         switch (session.getCurrentState()) {
             case INITIAL -> {
                 List<InlineKeyboardButton> rowInline = new ArrayList<>();
@@ -1199,7 +1214,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         return downloadFileAsBytes(fileUrl); // Implement this method to download the file from the URL
     }
 
-    private byte[] downloadFileAsBytes(String fileUrl) throws IOException {
+    @SneakyThrows(IOException.class)
+    private byte[] downloadFileAsBytes(String fileUrl) {
         URL url = new URL(fileUrl);
         try (InputStream in = url.openStream();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -1621,8 +1637,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         return new CostCalculationResult(totalKwh, totalCost, totalDayKwh, totalNightKwh);
     }
 
-
-    java.io.File downloadTelegramFile(String fileId) throws TelegramApiException {
+    @SneakyThrows(TelegramApiException.class)
+    java.io.File downloadTelegramFile(String fileId) {
         GetFile getFileMethod = new GetFile();
         getFileMethod.setFileId(fileId);
         File file = execute(getFileMethod);

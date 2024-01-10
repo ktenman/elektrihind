@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
 import static com.codeborne.selenide.Condition.attribute;
 import static com.codeborne.selenide.Condition.text;
@@ -116,8 +116,8 @@ public class ApolloKinoService {
         long startTime = System.nanoTime();
         try {
             LocalDateTime today = LocalDateTime.now();
-
-            List<String> acceptedDays = Stream.of(today, today.plusDays(1), today.plusDays(2))
+            List<String> acceptedDays = IntStream.range(0, 4)
+                    .mapToObj(today::plusDays)
                     .map(d -> d.format(DATE_TIME_FORMATTER))
                     .toList();
 
@@ -125,8 +125,7 @@ public class ApolloKinoService {
             getWebDriver().manage().window().maximize();
             $(".cky-btn-accept").click();
             ElementsCollection elements = $$(".day-picker__choice");
-            int count = 0;
-            for (int i = 0; (i < elements.size() && count++ < 3); i++) {
+            for (int i = 0; i < elements.size(); i++) {
                 elements = $$(".day-picker__choice");
                 SelenideElement dayChoice = elements.get(i);
                 String selectedDayValue = dayChoice.find(tagName("input")).val();
@@ -172,6 +171,9 @@ public class ApolloKinoService {
                         .map(d -> LocalDate.parse(d, DATE_TIME_FORMATTER))
                         .orElseThrow(() -> new RuntimeException("Date not found"));
                 this.options.put(chosenDate, movieOptions);
+                if (this.options.size() == 4) {
+                    break;
+                }
                 open(FIRST_URL);
             }
             Selenide.closeWindow();

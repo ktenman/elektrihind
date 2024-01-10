@@ -410,12 +410,23 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         };
         switch (session.getCurrentState()) {
             case INITIAL -> {
+                LocalDate currentDate = LocalDate.now();
                 List<InlineKeyboardButton> rowInline = new ArrayList<>();
-                apolloKinoService.getOptions().keySet().forEach(option -> {
-                    InlineKeyboardButton button = new InlineKeyboardButton(option.format(DATE_TIME_FORMATTER));
-                    button.setCallbackData(getCallbackData.apply(option.toString()));
+                int count = 0;
+                for (LocalDate localDate : apolloKinoService.getOptions().keySet()) {
+                    String text = localDate.format(DATE_TIME_FORMATTER);
+                    if (localDate.equals(currentDate)) {
+                        text = "Täna";
+                    } else if (localDate.equals(currentDate.plusDays(1))) {
+                        text = "Homme";
+                    }
+                    InlineKeyboardButton button = new InlineKeyboardButton(text);
+                    button.setCallbackData(getCallbackData.apply(localDate.toString()));
                     rowInline.add(button);
-                });
+                    if (++count == 3) {
+                        break;
+                    }
+                }
                 rowsInline.add(rowInline);
             }
             case SELECT_DATE -> {

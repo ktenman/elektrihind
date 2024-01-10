@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -122,18 +123,18 @@ public class ReBookingService {
     private ApolloKinoSession book(ApolloKinoSession session) {
         log.info("Rebooking session {}", session.getSessionId());
 
-        Optional<Entry<File, List<String>>> bookedFile = apolloKinoService.book(session);
-        if (bookedFile.isPresent()) {
+        Optional<Entry<File, Set<StarSeat>>> bookingResult = apolloKinoService.book(session);
+        if (bookingResult.isPresent()) {
             log.info("Re-booked session {}", session.getSessionId());
             String message = "Booked: " + session.getSelectedMovie() + " [" + session.getRowAndSeat() + "] on " +
                     session.getSelectedDate().format(ApolloKinoService.DATE_TIME_FORMATTER) + " at " +
                     session.getSelectedTime();
             log.info("Re-booked session {} - {}", session.getSessionId(), message);
+            session.setSelectedStarSeats(bookingResult.get().getValue());
             elektriTeemuTelegramService.sendToTelegram(message, session.getChatId());
-            elektriTeemuTelegramService.sendFileToTelegram(bookedFile.get().getKey(), session.getChatId());
+            elektriTeemuTelegramService.sendFileToTelegram(bookingResult.get().getKey(), session.getChatId());
         }
         session.updateLastInteractionTime();
-
         return session;
     }
 
@@ -148,7 +149,7 @@ public class ReBookingService {
         if (session == null) {
             return false;
         }
-        return Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds() > 910;
+        return Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds() > 915;
     }
 
     public int getActiveBookingCount() {

@@ -9,6 +9,7 @@ import ee.tenman.elektrihind.apollo.Option;
 import ee.tenman.elektrihind.apollo.Option.ScreenTime;
 import ee.tenman.elektrihind.apollo.ReBookingService;
 import ee.tenman.elektrihind.apollo.SessionManagementService;
+import ee.tenman.elektrihind.apollo.StarSeat;
 import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.car.CarSearchService;
 import ee.tenman.elektrihind.car.PlateDetectionService;
@@ -84,6 +85,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -374,7 +376,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         for (Entry<UUID, ApolloKinoSession> entry : sessions.entrySet()) {
             String movie = entry.getValue().getSelectedMovie();
             String shortMovie = movie.length() > 20 ? movie.substring(0, 17) + "..." : movie;
-            String text = shortMovie + " [" + entry.getValue().getRowAndSeats() + "] " +
+            String text = shortMovie + " " + entry.getValue().getRowAndSeats() + " " +
                     entry.getValue().getSelectedDate().format(SHORT_DATE_FORMATTER) + " " + entry.getValue().getSelectedTime();
             InlineKeyboardButton button = new InlineKeyboardButton(text);
             button.setCallbackData(DISPLAY_BOOKINGS + "=" + entry.getKey());
@@ -532,20 +534,20 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             }
             case CONFIRMATION -> {
                 long startTime = System.nanoTime();
-                String koht = session.getRowAndSeat();
-                UnaryOperator<String> messageText = (m) -> m + "`" + session.getSelectedMovie() + " [" + koht + "]` on " +
+                UnaryOperator<String> messageText = (m) -> m + "`" + session.getSelectedMovie() + " " + session.getRowAndSeats() + "` on " +
                         session.getSelectedDate().format(DATE_TIME_FORMATTER) + " at " + session.getSelectedTime();
                 if (CONFIRM_BUTTON.equals(chosenOption)) {
                     Message reply = sendReplyMessage(chatId, session.getMessageId(), "Booking...");
                     session.setReplyMessageId(reply.getMessageId());
                     session.setChatId(chatId);
 
-                    Optional<Entry<java.io.File, List<String>>> bookedFile = apolloKinoService.book(session);
-                    if (bookedFile.isPresent()) {
+                    Optional<Entry<java.io.File, Set<StarSeat>>> bookingResult = apolloKinoService.book(session);
+                    if (bookingResult.isPresent()) {
+                        session.setSelectedStarSeats(bookingResult.get().getValue());
                         String confirmationMessage = messageText.apply("Booked: ");
                         confirmationMessage += TimeUtility.durationInSeconds(startTime).getTaskDurationMessage();
                         Message message = sendMessage(chatId, confirmationMessage);
-                        sendImage(chatId, message.getMessageId(), bookedFile.get().getKey());
+                        sendImage(chatId, message.getMessageId(), bookingResult.get().getKey());
                         reBookingService.add(session);
                     } else {
                         sendMessage(chatId, messageText.apply("Booking failed: "));

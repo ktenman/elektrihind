@@ -21,12 +21,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.AbstractMap;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -220,7 +222,7 @@ public class ApolloKinoService {
         return filteredOptions;
     }
 
-    public Optional<Map.Entry<File, List<String>>> book(ApolloKinoSession session) {
+    public Optional<Map.Entry<File, Set<StarSeat>>> book(ApolloKinoSession session) {
         Optional<ScreenTime> screenTime = screenTime(session);
         if (screenTime.isEmpty()) {
             log.error("Screen time not found");
@@ -259,12 +261,23 @@ public class ApolloKinoService {
             switchTo().defaultContent();
             $$(tagName("button")).find(text("Maksma")).click();
             sleep(333);
-            ElementsCollection bookedSeats = $$(".table-list__item");
-            List<String> tableItems = new ArrayList<>();
-            if (!bookedSeats.isEmpty()) {
-                tableItems.addAll(bookedSeats.texts());
+
+            ElementsCollection starSeatRows = $$(className("checkout-card__title")).filter(text(session.getSelectedMovie()))
+                    .first()
+                    .parent()
+                    .parent()
+                    .parent()
+                    .findAll(tagName("tr"))
+                    .filter(text("Staaritoolid"));
+            Set<StarSeat> starSeats = new HashSet<>();
+            for (SelenideElement starSeatRow : starSeatRows) {
+                List<String> texts = starSeatRow.findAll(".table-list__item").texts();
+                starSeats.add(StarSeat.builder()
+                        .row(texts.get(0))
+                        .seat(texts.get(1))
+                        .build());
             }
-            return Optional.ofNullable(new AbstractMap.SimpleEntry<>(screenshot, tableItems));
+            return Optional.of(new SimpleEntry<>(screenshot, starSeats));
         } catch (Exception e) {
             log.error("Failed to book", e);
             return Optional.empty();

@@ -232,7 +232,8 @@ public class ApolloKinoService {
             getWebDriver().manage().window().maximize();
             $(".cky-btn-accept").click();
             login();
-            selectSeats(session.getSelectedStarSeats().size());
+            int selectedSeatsCount = Math.max(session.getSelectedStarSeats().size(), session.getSeatCount());
+            selectSeats(selectedSeatsCount);
             String currentUrl = getWebDriver().getCurrentUrl();
             String uuid = extractUUID(currentUrl);
             sleep(333);

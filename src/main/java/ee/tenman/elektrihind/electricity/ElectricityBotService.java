@@ -501,17 +501,20 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                                 + session.getSelectedDate() + " " + session.getSelectedMovie() + " " + session.getSelectedTime()));
                 int maxSeats = screenConfiguration.getScreen(screenTime.getHall()).getSeatCounts().get(session.getSelectedRow());
                 for (int i = 1; i <= maxSeats; i++) {
-                    List<InlineKeyboardButton> rowInline = new ArrayList<>();
-                    InlineKeyboardButton button = new InlineKeyboardButton(i + "");
-                    String callbackData = getCallbackData.apply(i + "");
-                    button.setCallbackData(callbackData);
-                    rowInline.add(button);
+                    List<InlineKeyboardButton> rowInline = getRowWithButton(getCallbackData, i);
                     rowsInline.add(rowInline);
                 }
                 prompt = session.getPrompt(session.getSelectedRow());
             }
             case SELECT_SEAT -> {
                 session.setSelectedSeat(chosenOption);
+                for (int i = 1; i <= 4; i++) {
+                    List<InlineKeyboardButton> rowInline = getRowWithButton(getCallbackData, i);
+                    rowsInline.add(rowInline);
+                }
+            }
+            case SELECT_SEAT_COUNT -> {
+                session.setSeatCount(Integer.parseInt(chosenOption));
                 List<InlineKeyboardButton> rowInline = new ArrayList<>();
                 InlineKeyboardButton confirm = new InlineKeyboardButton(CONFIRM_BUTTON);
                 confirm.setCallbackData(getCallbackData.apply(CONFIRM_BUTTON));
@@ -601,6 +604,14 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             log.error("Failed to apollo kino menu with options: {}", e.getMessage());
         }
+    }
+
+    private List<InlineKeyboardButton> getRowWithButton(UnaryOperator<String> getCallbackData, int i) {
+        List<InlineKeyboardButton> rowButtons = new ArrayList<>();
+        InlineKeyboardButton button = new InlineKeyboardButton(i + "");
+        button.setCallbackData(getCallbackData.apply(i + ""));
+        rowButtons.add(button);
+        return rowButtons;
     }
 
     private void deleteSessionRelatedMessages(long chatId, ApolloKinoSession session) {

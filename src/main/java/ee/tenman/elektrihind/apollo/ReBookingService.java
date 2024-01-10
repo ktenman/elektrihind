@@ -98,10 +98,12 @@ public class ReBookingService {
                         .sorted(comparing((Entry<UUID, ApolloKinoSession> o) -> o.getValue().getUpdatedAt()).reversed())
                         .filter(entry -> isReadyToReBook(entry.getValue()))
                         .forEach(entry -> {
+                            log.info("Rebooking session {}", entry.getKey());
                             ApolloKinoSession rebookedSession = book(entry.getValue());
                             sessions.remove(entry.getKey());
                             sessions.put(entry.getKey(), rebookedSession);
                             rebooked.set(true);
+                            log.info("Rebooked session {}", entry.getKey());
                         });
                 if (rebooked.get()) {
                     updateLastInteractionTimes();
@@ -146,7 +148,7 @@ public class ReBookingService {
         if (session == null) {
             return false;
         }
-        return Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds() > 900;
+        return Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds() > 910;
     }
 
     public int getActiveBookingCount() {

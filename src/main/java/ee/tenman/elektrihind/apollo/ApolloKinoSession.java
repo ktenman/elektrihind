@@ -41,6 +41,7 @@ public class ApolloKinoSession {
     private String selectedMovie;
     private LocalDate selectedDate;
     private LocalTime selectedTime;
+    private int seatCount;
     private Set<StarSeat> selectedStarSeats = new HashSet<>();
     private List<String> selectedOptions = new ArrayList<>();
 

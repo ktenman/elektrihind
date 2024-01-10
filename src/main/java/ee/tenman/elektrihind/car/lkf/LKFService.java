@@ -57,7 +57,7 @@ public class LKFService implements CaptchaSolver {
         log.info("Found lkf car crashes for regNr: {}", regNr);
         Map<String, String> result = new LinkedHashMap<>();
         result.put("Avariide arv", String.valueOf(crashes));
-        fourThreadExecutor.submit(Selenide::closeWindow);
+        Selenide.closeWindow();
         return result;
     }
 

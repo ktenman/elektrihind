@@ -2,6 +2,7 @@ package ee.tenman.elektrihind.car.ark;
 
 import com.codeborne.selenide.CollectionCondition;
 import com.codeborne.selenide.Condition;
+import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
@@ -9,6 +10,7 @@ import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.electricity.CarSearchUpdateListener;
 import ee.tenman.elektrihind.twocaptcha.TwoCaptchaSolverService;
 import ee.tenman.elektrihind.utility.CaptchaSolver;
+import ee.tenman.elektrihind.utility.PDFDataExtractor;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -19,20 +21,28 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
+import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
 import static com.codeborne.selenide.WebDriverRunner.getWebDriver;
 import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_5;
+import static org.openqa.selenium.By.className;
+import static org.openqa.selenium.By.tagName;
 
 @Service
 @Slf4j
@@ -60,11 +70,20 @@ public class ArkService implements CaptchaSolver {
     }
 
     private Optional<String> extractCarDetail(ElementsCollection elements, String conditionText) {
-        return Optional.of(elements.find(Condition.text(conditionText)))
-                .map(s -> s.sibling(0))
-                .map(SelenideElement::text)
-                .map(s -> s.replace("-", ""))
-                .filter(StringUtils::isNotBlank);
+        try {
+            SelenideElement selenideElement = elements.find(text(conditionText));
+            if (!selenideElement.exists()) {
+                return Optional.empty();
+            }
+            return Optional.of(selenideElement)
+                    .map(s -> s.sibling(0))
+                    .map(SelenideElement::text)
+                    .map(s -> s.replace("-", ""))
+                    .filter(StringUtils::isNotBlank);
+        } catch (Exception e) {
+            log.error("Error extracting car detail", e);
+        }
+        return Optional.empty();
     }
 
     private void parseKeyValuePairs(Map<String, String> carDetails, String input) {
@@ -109,7 +128,7 @@ public class ArkService implements CaptchaSolver {
                 .or(() -> Optional.ofNullable(carDetails.get("CO2 (NEDC)")).map(this::extractNumericValue));
 
         if (co2.isEmpty()) {
-            Selenide.$$(By.tagName("label")).find(Condition.text("puudub")).click();
+            $$(tagName("label")).find(text("puudub")).click();
 
             Optional.ofNullable(carDetails.get("Tühimass"))
                     .map(this::extractNumericValue)
@@ -122,26 +141,26 @@ public class ArkService implements CaptchaSolver {
             if (carDetails.containsKey("Kütus")) {
                 boolean isBensiinFuel = carDetails.get("Kütus").toLowerCase().contains("bensiin");
                 if (!isBensiinFuel) {
-                    Selenide.$$(By.tagName("label")).find(Condition.text("diisel")).click();
+                    $$(tagName("label")).find(text("diisel")).click();
                 }
             }
         } else if (carDetails.containsKey("CO2 (WLTP)")) {
             log.info("Leaving default as is. CO2 (WLTP) for {} - {}", carDetails.get("Mark"), regNr);
         } else if (carDetails.containsKey("CO2 (NEDC)")) {
             log.info("Selecting. Found CO2 (NEDC) for {} - {}", carDetails.get("Mark"), regNr);
-            Selenide.$$(By.tagName("label")).find(Condition.text("NEDC")).click();
+            $$(tagName("label")).find(text("NEDC")).click();
         }
 
         Selenide.$(By.name("register-year")).setValue(year.get());
         Selenide.$(By.name("vehicle-mass")).setValue(taismass.get());
         co2.ifPresent(s -> Selenide.$(By.name("co2-value")).setValue(s));
-        Selenide.$(By.className("tax-submit"))
+        Selenide.$(className("tax-submit"))
                 .shouldBe(Condition.visible)
                 .click();
 
         log.info("Retrieved information for automaks for {} - {}", carDetails.get("Mark"), regNr);
 
-        SelenideElement aastamaks = Selenide.$(By.className("results-container")).shouldBe(Condition.visible);
+        SelenideElement aastamaks = Selenide.$(className("results-container")).shouldBe(Condition.visible);
         if (aastamaks.exists()) {
             Optional.of(aastamaks).map(SelenideElement::text)
                     .ifPresent(s -> parseKeyValuePairs(carDetails, s));
@@ -174,29 +193,42 @@ public class ArkService implements CaptchaSolver {
             throw new RuntimeException("Captcha token is blank");
         }
         log.info("Searching car details for regNr: {}", regNr);
-        Selenide.closeWebDriver();
         Selenide.open(PAGE_URL);
         getWebDriver().manage().window().maximize();
 
-        ElementsCollection spanCollection = $$(By.tagName("span"));
+        ElementsCollection spanCollection = $$(tagName("span"));
 
         spanCollection.shouldBe(CollectionCondition.sizeGreaterThan(1), Duration.ofSeconds(2));
 
-        spanCollection.find(Condition.text("Registreerimismärk"))
+        spanCollection.find(text("Registreerimismärk"))
                 .parent() // Move to the parent td of the span
                 .sibling(0) // Move to the next td sibling
                 .$("input") // Find the input within this td
                 .setValue(regNr);
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
-        $$(By.tagName("button")).find(Condition.text("OTSIN")).click();
+        $$(tagName("button")).find(text("OTSIN")).click();
         TimeUnit.SECONDS.sleep(3);
-        SelenideElement contentTitle = Selenide.$(By.className("content-title"));
+        SelenideElement contentTitle = Selenide.$(className("content-title"));
         if (!contentTitle.exists()) {
             log.info("No car found for regNr: {}", regNr);
             return new LinkedHashMap<>();
         }
+        $$(tagName("a")).filter(text("Salvestan")).last().click();
+        File downloadsMainFolder = new File(Configuration.downloadsFolder);
+        Optional<File> latestPDF = Stream.of(Optional.ofNullable(downloadsMainFolder.listFiles(File::isDirectory))
+                        .orElse(new File[0]))
+                .max(Comparator.comparingLong(File::lastModified))
+                .flatMap(latestDirectory -> Stream.of(Optional.ofNullable(latestDirectory.listFiles(
+                                (dir, name) -> name.toLowerCase().endsWith(".pdf"))).orElse(new File[0]))
+                        .max(Comparator.comparingLong(File::lastModified)));
 
-        ElementsCollection titles = contentTitle.findAll(By.tagName("p"));
+        latestPDF.ifPresent(pdf -> {
+            Map<String, Integer> odometerAndDate = PDFDataExtractor.extractDateAndOdometer(pdf.getAbsolutePath());
+            Optional<Entry<String, Integer>> maxOdometerEntry = PDFDataExtractor.getLastOdometer(odometerAndDate);
+            maxOdometerEntry.ifPresent(entry -> carDetails.put("Läbisõit", entry.getValue() + " (" + entry.getKey() + ")"));
+        });
+
+        ElementsCollection titles = contentTitle.findAll(tagName("p"));
         String carName = Optional.of(titles)
                 .map(ElementsCollection::first)
                 .map(SelenideElement::text)
@@ -217,7 +249,7 @@ public class ArkService implements CaptchaSolver {
 //            }
 //        }
 
-        ElementsCollection rows = Selenide.$(By.className("asset-details")).findAll(By.tagName("tr"));
+        ElementsCollection rows = Selenide.$(className("asset-details")).findAll(tagName("tr"));
 
         carDetails.put("Mark", carName + "\n");
         carDetails.put("Vin", vin + "\n");
@@ -235,13 +267,19 @@ public class ArkService implements CaptchaSolver {
 
         cacheService.setAutomaksEnabled(true);
 
+        ElementsCollection carTitles = $$(className("title"));
         if (cacheService.isAutomaksEnabled()) {
             log.info("Getting automaks for {} - {}", carDetails.get("Mark"), regNr);
-            ElementsCollection carTitles = $$(By.className("title"));
             extractCarDetail(carTitles, "CO2 (NEDC)").ifPresent(s -> carDetails.put("CO2 (NEDC)", s));
             extractCarDetail(carTitles, "CO2 (WLTP)").ifPresent(s -> carDetails.put("CO2 (WLTP)", s));
             extractCarDetail(carTitles, "Täismass").ifPresent(s -> carDetails.put("Täismass", s));
             extractCarDetail(carTitles, "Tühimass").ifPresent(s -> carDetails.put("Tühimass", s));
+            UnaryOperator<String> stringModifier = s -> s.replace(" l/100km", "");
+            extractCarDetail(carTitles, "Keskmine (NEDC)")
+                    .or(() -> extractCarDetail(carTitles, "Keskmine (WLTP)"))
+                    .ifPresent(s -> carDetails.put("Kütusekulu keskmine", stringModifier.apply(s)));
+            extractCarDetail(carTitles, "Linnas").ifPresent(s -> carDetails.put("Kütusekulu linnas", stringModifier.apply(s)));
+            extractCarDetail(carTitles, "Maanteel").ifPresent(s -> carDetails.put("Kütusekulu maanteel", stringModifier.apply(s)));
             getAutoMaks(carDetails, regNr);
         } else {
             log.info("Skipping automaks for {} - {}", carDetails.get("Mark"), regNr);

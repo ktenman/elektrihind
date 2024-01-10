@@ -28,6 +28,7 @@ ENV PATH="/usr/bin/firefox:/usr/bin/geckodriver:${PATH}"
 
 # Optionally, create the cache directory and set proper permissions
 RUN mkdir /app/cache && chown 1000:1000 /app/cache
+RUN mkdir /build && chown 1000:1000 /build
 
 # Copy the JAR file from the build stage
 COPY --from=build /app/target/*.jar app.jar

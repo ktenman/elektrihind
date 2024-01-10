@@ -93,24 +93,19 @@ public class CarSearchService {
     public Map<String, String> searchV2(String regNr, CarSearchUpdateListener updateListener) {
         int timeout = 7;
         TimeUnit timeUnit = TimeUnit.MINUTES;
+
         CompletableFuture<LinkedHashMap<String, String>> carPriceFuture = CompletableFuture.supplyAsync(() -> auto24Service.carPrice(regNr), fourThreadExecutor)
                 .orTimeout(timeout, timeUnit);
-
-        Map<String, String> response = carPriceFuture.get();
-        updateListener.onUpdate(response, false);
-
         CompletableFuture<String> arkCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> arkService.getCaptchaToken(), fourThreadExecutor)
-                .orTimeout(timeout, timeUnit);
-        CompletableFuture<String> auto24CaptchaTokenFuture = CompletableFuture.supplyAsync(() -> auto24Service.getCaptchaToken(), fourThreadExecutor)
                 .orTimeout(timeout, timeUnit);
         CompletableFuture<String> lkfCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> lkfService.getCaptchaToken(), fourThreadExecutor)
                 .orTimeout(timeout, timeUnit);
 
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(arkCaptchaTokenFuture, auto24CaptchaTokenFuture)
-                .orTimeout(timeout, timeUnit);
-        allFutures.join();
+        Map<String, String> response = carPriceFuture.join();
 
-        String arkCaptchaToken = arkCaptchaTokenFuture.get();
+        updateListener.onUpdate(response, false);
+
+        String arkCaptchaToken = arkCaptchaTokenFuture.join();
         Map<String, String> arkDetails = CompletableFuture.supplyAsync(() -> arkService.carDetails(regNr, arkCaptchaToken, response, updateListener), fourThreadExecutor)
                 .orTimeout(timeout, timeUnit)
                 .get();
@@ -121,12 +116,6 @@ public class CarSearchService {
         } else if (arkDetails.size() <= 1) {
             return response;
         }
-
-        String auto24CaptchaToken = auto24CaptchaTokenFuture.get();
-        Map<String, String> scrapeNinjaDetails = CompletableFuture.supplyAsync(() -> scrapeninjaService.scrape(arkDetails.get("Vin"), regNr, auto24CaptchaToken), fourThreadExecutor)
-                .orTimeout(timeout, timeUnit)
-                .get();
-        response.putAll(scrapeNinjaDetails);
         updateListener.onUpdate(response, false);
 
         String lkfCaptchaToken = lkfCaptchaTokenFuture.join();
@@ -138,15 +127,6 @@ public class CarSearchService {
             updateListener.onUpdate(response, false);
         }
 
-        if (!response.containsKey("Läbisõit") && response.containsKey("Vin")) {
-            String captchaToken = auto24Service.getCaptchaToken();
-            Map<String, String> auto24details = CompletableFuture.supplyAsync(() -> auto24Service.carDetails(response, captchaToken), fourThreadExecutor)
-                    .orTimeout(timeout, timeUnit)
-                    .get();
-            response.putAll(auto24details);
-            updateListener.onUpdate(response, false);
-        }
-
         if (response.containsKey("Läbisõit")) {
             String string = response.get("Läbisõit");
             if (string.toLowerCase().contains("maanteeamet")) {
@@ -155,6 +135,9 @@ public class CarSearchService {
         }
 
         removeRedundantInformation(response);
+        String läbisõit = response.get("Läbisõit");
+        response.remove("Läbisõit");
+        response.put("Läbisõit", läbisõit);
 
         return response;
     }

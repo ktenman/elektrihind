@@ -28,6 +28,7 @@ public class CarSearchService {
 
     private static final String REGISTRATION_DOCUMENT = "Registreerimistunnistus";
     private static final String AUTO_MAKS_URL = "https://www.err.ee/1609128527/uuendatud-kalkulaator-vaata-kui-suur-tuleb-sinu-automaks";
+    public static final String ODOMETER = "Läbisõit";
 
     @Resource
     private ArkService arkService;
@@ -127,17 +128,8 @@ public class CarSearchService {
             updateListener.onUpdate(response, false);
         }
 
-        if (response.containsKey("Läbisõit")) {
-            String string = response.get("Läbisõit");
-            if (string.toLowerCase().contains("maanteeamet")) {
-                response.remove("Läbisõit");
-            }
-        }
-
+        response.computeIfPresent(ODOMETER, (k, v) -> v);
         removeRedundantInformation(response);
-        String läbisõit = response.get("Läbisõit");
-        response.remove("Läbisõit");
-        response.put("Läbisõit", läbisõit);
 
         return response;
     }

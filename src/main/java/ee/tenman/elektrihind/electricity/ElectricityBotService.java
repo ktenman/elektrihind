@@ -130,6 +130,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     public static final String BACK_BUTTON = "Back";
     static final String UNKNOWN_USERNAME = "unknown";
     private static final String NOT_ALLOWED_MESSAGE = "You are not allowed to use this bot. 😘";
+    public static final int MAX_BOOKING_COUNT = 6;
     private final ConcurrentHashMap<Integer, AtomicBoolean> messageUpdateFlags = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Double> lastPercentages = new ConcurrentHashMap<>();
     private static final int MAX_EDITS_PER_MINUTE = 15;
@@ -140,12 +141,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private final Cache<UUID, String> callbackData = CacheBuilder.newBuilder()
             .expireAfterWrite(1, TimeUnit.HOURS)
             .build();
-
     @Getter
     private final List<String> validUsernames = new ArrayList<>(List.of(
             "ElektriGeenius_bot", "ktenman", "JavaElekterBot", "edurbrito", "vladminajev", "kalaindrek"
     ));
-
     static {
         try {
             SHA_256_DIGEST = MessageDigest.getInstance(SHA256_ALGORITHM);
@@ -153,64 +152,44 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             throw new RuntimeException(e);
         }
     }
-
     @Resource
     private HolidaysConfiguration holidaysConfiguration;
-
     @Resource
     private FeesConfiguration feesConfiguration;
-
     @Resource
     private Clock clock;
-
     @Resource
     private CacheService cacheService;
-
     @Resource
     private JavaElekterTelegramService javaElekterTelegramService;
-
     @Resource
     private PriceFinderService priceFinderService;
-
     @Resource
     private CarSearchService carSearchService;
-
     @Resource
     private DigitalOceanService digitalOceanService;
-
     @Resource
     private PlateDetectionService plateDetectionService;
-
     @Resource(name = "singleThreadExecutor")
     private ExecutorService singleThreadExecutor;
-
     @Resource
     private EuriborRateFetcher euriborRateFetcher;
-
     @Resource
     private ChatService chatService;
-
     @Resource
     private OnlineCheckService onlineCheckService;
-
     @Value("${telegram.elektriteemu.token}")
     private String token;
-
     @Value("${telegram.elektriteemu.username}")
     private String username;
-
     @Resource
     private Auto24Service auto24Service;
-
     @Resource
     private ApolloKinoService apolloKinoService;
-
     @Resource
     private ScreenConfiguration screenConfiguration;
-
     @Resource
     private SessionManagementService sessionManagementService;
-
     @Resource
     private ReBookingService reBookingService;
 
@@ -334,7 +313,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             case METRIC -> sendMessageCode(chatId, getSystemMetrics());
             case APOLLO_KINO -> {
                 int activeBookingsCount = reBookingService.getActiveBookingCount();
-                if (activeBookingsCount >= 4) {
+                if (activeBookingsCount >= MAX_BOOKING_COUNT) {
                     sendMessage(chatId, "Too many active bookings. Please try again later or `/cancel` your booking.");
                     return;
                 }
@@ -510,7 +489,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             }
             case SELECT_SEAT -> {
                 session.setSelectedSeat(chosenOption);
-                for (int i = 1; i <= 4; i++) {
+                int activeBookingCount = reBookingService.getActiveBookingCount();
+                for (int i = 1; i <= (MAX_BOOKING_COUNT - activeBookingCount); i++) {
                     List<InlineKeyboardButton> rowInline = getRowWithButton(getCallbackData, i);
                     rowsInline.add(rowInline);
                 }
@@ -846,7 +826,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
         } else if (messageText.equalsIgnoreCase(APOLLO_KINO) || messageText.equalsIgnoreCase("/" + APOLLO_KINO)) {
             int activeBookingCount = reBookingService.getActiveBookingCount();
-            if (activeBookingCount >= 4) {
+            if (activeBookingCount >= MAX_BOOKING_COUNT) {
                 sendMessage(chatId, "Too many active bookings. Please try again later or `/cancel` your booking.");
                 return;
             }

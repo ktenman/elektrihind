@@ -319,4 +319,5 @@ public class ApolloKinoService {
         int x = (currentSeat % 2 == 1 ? points[0] : points[1]) + points[2] * index;
         return new int[]{x, points[3]};
     }
+
 }

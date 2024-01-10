@@ -105,7 +105,7 @@ public class ApolloKinoSession {
                 .map(entry -> {
                     List<Integer> seats = entry.getValue();
                     Collections.sort(seats);
-                    return entry.getKey() + ": " + formatRange(seats);
+                    return entry.getKey() + "K" + formatRange(seats);
                 })
                 .collect(joining(", "));
     }

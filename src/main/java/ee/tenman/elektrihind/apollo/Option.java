@@ -23,7 +23,7 @@ public class Option {
 
     @JsonIgnore
     public String getMovieTitleWithImdbRating() {
-        return imdbRating == null ? movie : movie + " [" + imdbRating + "]";
+        return imdbRating == null || imdbRating.equals(0.0) ? movie : movie + " [" + imdbRating + "]";
     }
 
     @Builder

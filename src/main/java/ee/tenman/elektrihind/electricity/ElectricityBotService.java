@@ -733,10 +733,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 //        List<InlineKeyboardButton> rowInline3 = new ArrayList<>();
 //        InlineKeyboardButton autoMaticFetchingEnablingButton = getAutoMaticFetchingEnablingButton();
 //        rowInline3.add(autoMaticFetchingEnablingButton);
-//
-//        List<InlineKeyboardButton> rowInline4 = new ArrayList<>();
-//        InlineKeyboardButton automaksEnablingButton = getAutomaksEnablingButton();
-//        rowInline4.add(automaksEnablingButton);
 
         List<InlineKeyboardButton> rowInline5 = new ArrayList<>();
         InlineKeyboardButton apolloKino = new InlineKeyboardButton("Apollo Kino");
@@ -749,7 +745,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         rowsInline.add(rowInline1);
         rowsInline.add(rowInline2);
 //        rowsInline.add(rowInline3);
-//        rowsInline.add(rowInline4);
         rowsInline.add(rowInline5);
         markupInline.setKeyboard(rowsInline);
 

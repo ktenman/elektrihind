@@ -193,7 +193,13 @@ public class ApolloKinoService {
             for (List<Option> optionList : options.values()) {
                 for (Option option : optionList) {
                     movieDetailsService.fetchMovieDetails(option.getMovieOriginalTitle())
-                            .ifPresent(d -> option.setImdbRating(d.getImdbRating()));
+                            .ifPresent(d -> {
+                                try {
+                                    option.setImdbRating(Double.parseDouble(d.getImdbRating()));
+                                } catch (Exception e) {
+                                    log.error("Failed to parse rating", e);
+                                }
+                            });
                 }
             }
             Selenide.closeWindow();

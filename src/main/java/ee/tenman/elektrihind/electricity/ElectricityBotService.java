@@ -430,6 +430,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     messagesToDelete.put(session.getSessionId().toString(), message.getMessageId());
                     return;
                 }
+                optionsList.sort(Comparator.comparing(Option::getImdbRating).reversed());
                 for (Option option : optionsList) {
                     List<InlineKeyboardButton> rowInline = new ArrayList<>();
                     InlineKeyboardButton button = new InlineKeyboardButton(option.getMovieTitleWithImdbRating());

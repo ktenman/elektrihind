@@ -127,7 +127,11 @@ public class CarSearchService {
             updateListener.onUpdate(response, false);
         }
 
-        response.computeIfPresent(ODOMETER, (key, value) -> response.remove(key));
+        if (response.containsKey(ODOMETER)) {
+            String string = response.remove(ODOMETER);
+            response.put(ODOMETER, string);
+        }
+
         removeRedundantInformation(response);
 
         return response;

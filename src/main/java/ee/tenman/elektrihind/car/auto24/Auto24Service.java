@@ -135,7 +135,6 @@ public class Auto24Service implements CaptchaSolver {
                 .parent()
                 .text()
                 .replace("\n", " ");
-        Selenide.closeWindow();
         String[] split = response.split(": ");
         if (split.length <= 1) {
             result.put("Reg nr", regNr);

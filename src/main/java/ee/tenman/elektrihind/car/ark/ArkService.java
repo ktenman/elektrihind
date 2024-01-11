@@ -273,7 +273,7 @@ public class ArkService implements CaptchaSolver {
         getAutoMaks(carDetails, regNr);
 
         log.info("Found car details for regNr: {}", regNr);
-        Selenide.closeWindow();
+        fourThreadExecutor.submit(Selenide::closeWindow);
         return carDetails;
     }
 

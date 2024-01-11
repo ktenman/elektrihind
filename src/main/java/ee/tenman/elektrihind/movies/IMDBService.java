@@ -1,6 +1,5 @@
 package ee.tenman.elektrihind.movies;
 
-import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -30,24 +29,22 @@ public class IMDBService {
         return null;
     }
 
-    @Retryable(value = FeignException.class, maxAttempts = 7, backoff = @Backoff(delay = 7777))
+    @Retryable(maxAttempts = 7, backoff = @Backoff(delay = 7777))
     public Optional<String> getImdbRatingV2(String imdbId) {
         try {
-            log.info("Fetching movie details for ID: {}", imdbId);
+            log.info("Fetching IMDB rating for ID: {}", imdbId);
             Document document = Jsoup.connect("https://www.imdb.com/title/" + imdbId).get();
             Element element = document.selectFirst("[data-testid=\"hero-rating-bar__aggregate-rating__score\"] span");
-            if (element != null) {
-                String rating = element.text();
-                log.info("Fetched movie details: {}", rating);
-                return Optional.of(rating);
-            }
+            return Optional.ofNullable(element).map(Element::text);
         } catch (Exception e) {
-            log.error("Error fetching movie details for ID: {}", imdbId, e);
+            log.error("Error fetching IMDB rating for ID: {}", imdbId, e);
+        } finally {
+            log.info("Fetched IMDB rating for ID: {}", imdbId);
         }
         return Optional.empty();
     }
 
-    @Retryable(value = FeignException.class, maxAttempts = 7, backoff = @Backoff(delay = 7777))
+    @Retryable(maxAttempts = 7, backoff = @Backoff(delay = 7777))
     public Optional<String> getIMDbId(String text) {
         try {
             log.info("Fetching movie imdb ID for text: {}", text);

@@ -197,6 +197,7 @@ public class ApolloKinoService {
                                 try {
                                     option.setImdbRating(Double.parseDouble(d.getImdbRating()));
                                 } catch (Exception e) {
+                                    option.setImdbRating(0.0);
                                     log.error("Failed to parse rating", e);
                                 }
                             });

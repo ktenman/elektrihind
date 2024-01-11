@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,8 +38,10 @@ import java.util.stream.Stream;
 import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
+import static com.codeborne.selenide.Selenide.open;
 import static com.codeborne.selenide.WebDriverRunner.getWebDriver;
 import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_5;
+import static java.util.Comparator.comparingLong;
 import static org.openqa.selenium.By.className;
 import static org.openqa.selenium.By.tagName;
 
@@ -93,13 +94,69 @@ public class ArkService implements CaptchaSolver {
         }
     }
 
+    private static void addMarkAndVin(Map<String, String> carDetails, SelenideElement contentTitle) {
+        ElementsCollection titles = contentTitle.findAll(tagName("p"));
+        String carName = Optional.of(titles)
+                .map(ElementsCollection::first)
+                .map(SelenideElement::text)
+                .orElseThrow(() -> new RuntimeException("Car name not found"));
+        String vin = Optional.of(titles)
+                .map(ElementsCollection::last)
+                .map(SelenideElement::text)
+                .map(text -> text.split("VIN: "))
+                .map(strings -> strings[1])
+                .orElseThrow(() -> new RuntimeException("VIN not found"));
+
+        ElementsCollection rows = Selenide.$(className("asset-details")).findAll(tagName("tr"));
+
+        carDetails.put("Mark", carName + "\n");
+        carDetails.put("Vin", vin + "\n");
+        for (int i = 0; i < rows.size(); i++) {
+            ElementsCollection td = rows.get(i).$$("td");
+            String key = td.get(0).getText().replace(":", "");
+            String value = td.get(1).getText();
+            carDetails.put(key, value);
+        }
+    }
+
+    private String extractNumericValue(String string) {
+        if (string == null || !string.contains(" ")) {
+            return null;
+        }
+
+        Pattern pattern = Pattern.compile("\\b\\d{2,4}\\b");
+        Matcher matcher = pattern.matcher(string);
+        if (matcher.find()) {
+            return matcher.group();
+        }
+
+        return null;
+    }
+
+    private static void addLatestOdometerFromPDF(Map<String, String> carDetails) {
+        $$(tagName("a")).filter(text("Salvestan")).last().click();
+        File downloadsMainFolder = new File(Configuration.downloadsFolder);
+        Optional<File> latestPDF = Stream.of(Optional.ofNullable(downloadsMainFolder.listFiles(File::isDirectory))
+                        .orElse(new File[0]))
+                .max(comparingLong(File::lastModified))
+                .flatMap(latestDirectory -> Stream.of(Optional.ofNullable(latestDirectory.listFiles(
+                                (dir, name) -> name.toLowerCase().endsWith(".pdf"))).orElse(new File[0]))
+                        .max(comparingLong(File::lastModified)));
+        latestPDF.ifPresent(pdf -> {
+            Map<String, Integer> odometerAndDate = PDFDataExtractor.extractDateAndOdometer(pdf.getAbsolutePath());
+            Optional<Entry<String, Integer>> maxOdometerEntry = PDFDataExtractor.getLastOdometer(odometerAndDate);
+            maxOdometerEntry.ifPresent(entry -> carDetails.put("Läbisõit", entry.getValue() + " (" + entry.getKey() + ")"));
+        });
+    }
+
     private Map<String, String> getAutoMaks(Map<String, String> carDetails, String regNr) {
+        log.info("Getting automaks for {} - {}", carDetails.get("Mark"), regNr);
         if (!StringUtils.containsIgnoreCase(carDetails.get("Kategooria"), "sõiduauto")) {
             log.warn("Skipping. Car is not sõiduauto: {}", carDetails);
             return carDetails;
         }
 
-        Selenide.open(AUTO_MAKS_URL);
+        open(AUTO_MAKS_URL);
 
         log.info("Filling in information for {} - {}", carDetails.get("Mark"), regNr);
 
@@ -171,20 +228,6 @@ public class ArkService implements CaptchaSolver {
         return carDetails;
     }
 
-    private String extractNumericValue(String string) {
-        if (string == null || !string.contains(" ")) {
-            return null;
-        }
-
-        Pattern pattern = Pattern.compile("\\b\\d{2,4}\\b");
-        Matcher matcher = pattern.matcher(string);
-        if (matcher.find()) {
-            return matcher.group();
-        }
-
-        return null;
-    }
-
     @SneakyThrows
     @Cacheable(value = ONE_MONTH_CACHE_5, key = "#regNr")
     @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000))
@@ -193,17 +236,15 @@ public class ArkService implements CaptchaSolver {
             throw new RuntimeException("Captcha token is blank");
         }
         log.info("Searching car details for regNr: {}", regNr);
-        Selenide.open(PAGE_URL);
+        open(PAGE_URL);
         getWebDriver().manage().window().maximize();
 
         ElementsCollection spanCollection = $$(tagName("span"));
-
         spanCollection.shouldBe(CollectionCondition.sizeGreaterThan(1), Duration.ofSeconds(2));
-
         spanCollection.find(text("Registreerimismärk"))
-                .parent() // Move to the parent td of the span
-                .sibling(0) // Move to the next td sibling
-                .$("input") // Find the input within this td
+                .parent()
+                .sibling(0)
+                .$("input")
                 .setValue(regNr);
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
         $$(tagName("button")).find(text("OTSIN")).click();
@@ -213,77 +254,23 @@ public class ArkService implements CaptchaSolver {
             log.info("No car found for regNr: {}", regNr);
             return new LinkedHashMap<>();
         }
-        $$(tagName("a")).filter(text("Salvestan")).last().click();
-        File downloadsMainFolder = new File(Configuration.downloadsFolder);
-        Optional<File> latestPDF = Stream.of(Optional.ofNullable(downloadsMainFolder.listFiles(File::isDirectory))
-                        .orElse(new File[0]))
-                .max(Comparator.comparingLong(File::lastModified))
-                .flatMap(latestDirectory -> Stream.of(Optional.ofNullable(latestDirectory.listFiles(
-                                (dir, name) -> name.toLowerCase().endsWith(".pdf"))).orElse(new File[0]))
-                        .max(Comparator.comparingLong(File::lastModified)));
 
-        latestPDF.ifPresent(pdf -> {
-            Map<String, Integer> odometerAndDate = PDFDataExtractor.extractDateAndOdometer(pdf.getAbsolutePath());
-            Optional<Entry<String, Integer>> maxOdometerEntry = PDFDataExtractor.getLastOdometer(odometerAndDate);
-            maxOdometerEntry.ifPresent(entry -> carDetails.put("Läbisõit", entry.getValue() + " (" + entry.getKey() + ")"));
-        });
-
-        ElementsCollection titles = contentTitle.findAll(tagName("p"));
-        String carName = Optional.of(titles)
-                .map(ElementsCollection::first)
-                .map(SelenideElement::text)
-                .orElseThrow(() -> new RuntimeException("Car name not found"));
-        String vin = Optional.of(titles)
-                .map(ElementsCollection::last)
-                .map(SelenideElement::text)
-                .map(text -> text.split("VIN: "))
-                .map(strings -> strings[1])
-                .orElseThrow(() -> new RuntimeException("VIN not found"));
-
-//        SelenideElement logoElement = Selenide.$(By.className("asset-image"));
-//        String logo = null;
-//        if (logoElement.exists()) {
-//            SelenideElement imageElement = logoElement.find(By.tagName("img"));
-//            if (imageElement.exists()) {
-//                logo = imageElement.attr("src");
-//            }
-//        }
-
-        ElementsCollection rows = Selenide.$(className("asset-details")).findAll(tagName("tr"));
-
-        carDetails.put("Mark", carName + "\n");
-        carDetails.put("Vin", vin + "\n");
-//        if (logo != null) {
-//            carDetails.put("Logo", logo);
-//        }
-        for (int i = 0; i < rows.size(); i++) {
-            ElementsCollection td = rows.get(i).$$("td");
-            String key = td.get(0).getText().replace(":", "");
-            String value = td.get(1).getText();
-            carDetails.put(key, value);
-        }
-
+        addLatestOdometerFromPDF(carDetails);
+        addMarkAndVin(carDetails, contentTitle);
         updateListener.onUpdate(carDetails, false);
 
-        cacheService.setAutomaksEnabled(true);
-
         ElementsCollection carTitles = $$(className("title"));
-        if (cacheService.isAutomaksEnabled()) {
-            log.info("Getting automaks for {} - {}", carDetails.get("Mark"), regNr);
-            extractCarDetail(carTitles, "CO2 (NEDC)").ifPresent(s -> carDetails.put("CO2 (NEDC)", s));
-            extractCarDetail(carTitles, "CO2 (WLTP)").ifPresent(s -> carDetails.put("CO2 (WLTP)", s));
-            extractCarDetail(carTitles, "Täismass").ifPresent(s -> carDetails.put("Täismass", s));
-            extractCarDetail(carTitles, "Tühimass").ifPresent(s -> carDetails.put("Tühimass", s));
-            UnaryOperator<String> stringModifier = s -> s.replace(" l/100km", "");
-            extractCarDetail(carTitles, "Keskmine (NEDC)")
-                    .or(() -> extractCarDetail(carTitles, "Keskmine (WLTP)"))
-                    .ifPresent(s -> carDetails.put("Kütusekulu keskmine", stringModifier.apply(s)));
-            extractCarDetail(carTitles, "Linnas").ifPresent(s -> carDetails.put("Kütusekulu linnas", stringModifier.apply(s)));
-            extractCarDetail(carTitles, "Maanteel").ifPresent(s -> carDetails.put("Kütusekulu maanteel", stringModifier.apply(s)));
-            getAutoMaks(carDetails, regNr);
-        } else {
-            log.info("Skipping automaks for {} - {}", carDetails.get("Mark"), regNr);
-        }
+        extractCarDetail(carTitles, "CO2 (NEDC)").ifPresent(s -> carDetails.put("CO2 (NEDC)", s));
+        extractCarDetail(carTitles, "CO2 (WLTP)").ifPresent(s -> carDetails.put("CO2 (WLTP)", s));
+        extractCarDetail(carTitles, "Täismass").ifPresent(s -> carDetails.put("Täismass", s));
+        extractCarDetail(carTitles, "Tühimass").ifPresent(s -> carDetails.put("Tühimass", s));
+        UnaryOperator<String> stringModifier = s -> s.replace(" l/100km", "");
+        extractCarDetail(carTitles, "Keskmine (NEDC)")
+                .or(() -> extractCarDetail(carTitles, "Keskmine (WLTP)"))
+                .ifPresent(s -> carDetails.put("Kütusekulu keskmine", stringModifier.apply(s)));
+        extractCarDetail(carTitles, "Linnas").ifPresent(s -> carDetails.put("Kütusekulu linnas", stringModifier.apply(s)));
+        extractCarDetail(carTitles, "Maanteel").ifPresent(s -> carDetails.put("Kütusekulu maanteel", stringModifier.apply(s)));
+        getAutoMaks(carDetails, regNr);
 
         log.info("Found car details for regNr: {}", regNr);
         Selenide.closeWindow();

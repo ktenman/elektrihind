@@ -333,14 +333,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 cacheService.setAutomaticFetchingEnabled(false);
                 sendMessage(chatId, "Automatic fetching disabled.");
             }
-            case "automaks true" -> {
-                cacheService.setAutomaksEnabled(true);
-                sendMessage(chatId, "Automaks enabled.");
-            }
-            case "automaks false" -> {
-                cacheService.setAutomaksEnabled(false);
-                sendMessage(chatId, "Automaks disabled.");
-            }
             default -> sendMessage(chatId, "Command not recognized.");
         }
     }
@@ -778,14 +770,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         boolean automaticFetchingEnabled = cacheService.isAutomaticFetchingEnabled();
         inlineKeyboardButton.setText(automaticFetchingEnabled ? "Disable automatic fetching" : "Enable automatic fetching");
         inlineKeyboardButton.setCallbackData("automaticFetching " + !automaticFetchingEnabled);
-        return inlineKeyboardButton;
-    }
-
-    private InlineKeyboardButton getAutomaksEnablingButton() {
-        InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
-        boolean isAutomaksEnabled = cacheService.isAutomaksEnabled();
-        inlineKeyboardButton.setText(isAutomaksEnabled ? "Disable automaks" : "Enable automaks");
-        inlineKeyboardButton.setCallbackData("automaks " + !isAutomaksEnabled);
         return inlineKeyboardButton;
     }
 

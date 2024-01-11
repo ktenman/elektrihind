@@ -59,7 +59,6 @@ public class CacheService {
     @Getter
     private List<ElectricityPrice> latestPrices = new ArrayList<>();
 
-    private static final String AUTOMAKS_KEY = "automaks";
     public static final String AUTOMATIC_FETCHING_KEY = "automaticFetching";
     private static final String DURATIONS_KEY = "durations";
     private static final String LAST_EURIBOR_MESSAGE_SENT_KEY = "lastEuriborMessageSentDate";
@@ -139,14 +138,6 @@ public class CacheService {
 
     public void setAutomaticFetchingEnabled(Boolean automaticFetchingEnabled) {
         setBooleanInCache(AUTOMATIC_FETCHING_KEY, automaticFetchingEnabled);
-    }
-
-    public boolean isAutomaksEnabled() {
-        return getBooleanFromCache(AUTOMAKS_KEY);
-    }
-
-    public void setAutomaksEnabled(Boolean automaticFetchingEnabled) {
-        setBooleanInCache(AUTOMAKS_KEY, automaticFetchingEnabled);
     }
 
     private boolean getBooleanFromCache(String key) {

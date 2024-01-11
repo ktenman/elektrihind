@@ -723,9 +723,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         rowInline2.add(buttonMetric);
         rowInline2.add(buttonReboot);
 
-//        List<InlineKeyboardButton> rowInline3 = new ArrayList<>();
-//        InlineKeyboardButton autoMaticFetchingEnablingButton = getAutoMaticFetchingEnablingButton();
-//        rowInline3.add(autoMaticFetchingEnablingButton);
+        List<InlineKeyboardButton> rowInline3 = new ArrayList<>();
+        InlineKeyboardButton autoMaticFetchingEnablingButton = getAutoMaticFetchingEnablingButton();
+        rowInline3.add(autoMaticFetchingEnablingButton);
 
         List<InlineKeyboardButton> rowInline5 = new ArrayList<>();
         InlineKeyboardButton apolloKino = new InlineKeyboardButton("Apollo Kino");

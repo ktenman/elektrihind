@@ -434,12 +434,12 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 }
                 for (int i = 0; i < optionsList.size(); i++) {
                     Option screen = optionsList.get(i);
-                    title += screen.getMovie() + (i + 1 < optionsList.size() ? optionsList.get(i + 1).getMovie() : "");
-                    InlineKeyboardButton button = new InlineKeyboardButton(screen.getMovie());
+                    title += screen.getMovie() + (i + 1 < optionsList.size() ? optionsList.get(i + 1).getMovieTitleWithImdbRating() : "");
+                    InlineKeyboardButton button = new InlineKeyboardButton(screen.getMovieTitleWithImdbRating());
                     String callbackData = getCallbackData.apply(screen.getMovie());
                     button.setCallbackData(callbackData);
                     rowInline.add(button);
-                    if (i % 2 == 1 || title.length() > 40) {
+                    if (i % 2 == 1 || title.length() > 30) {
                         rowsInline.add(rowInline);
                         rowInline = new ArrayList<>();
                         title = "";

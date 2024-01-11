@@ -6,6 +6,8 @@ import com.codeborne.selenide.SelenideElement;
 import ee.tenman.elektrihind.apollo.Option.ScreenTime;
 import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.config.ScreenConfiguration;
+import ee.tenman.elektrihind.movies.MovieDetailsService;
+import ee.tenman.elektrihind.utility.AsyncRunner;
 import ee.tenman.elektrihind.utility.TimeUtility;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
@@ -67,6 +69,10 @@ public class ApolloKinoService {
     private Environment environment;
     @Resource
     private CacheService cacheService;
+    @Resource
+    private MovieDetailsService movieDetailsService;
+    @Resource
+    private AsyncRunner asyncRunner;
 
     private static void selectSeats(int count) {
         $$(".radio-card__text").find(text("Staaritoolid")).click();
@@ -142,6 +148,13 @@ public class ApolloKinoService {
                 for (Map.Entry<String, String> element : movieTitles.entrySet()) {
                     open(element.getValue());
                     sleep(444);
+                    SelenideElement originalTitleElement = $(".movie-details__original-title");
+                    String movieOriginalTitle = "";
+                    if (originalTitleElement.exists()) {
+                        String text = originalTitleElement.text();
+                        asyncRunner.run(() -> movieDetailsService.fetchMovieDetails(text));
+                        movieOriginalTitle = text;
+                    }
                     $(".movie-details__button").click();
                     sleep(444);
                     List<ScreenTime> screenTimes = new ArrayList<>();
@@ -161,6 +174,7 @@ public class ApolloKinoService {
                     Option movieOption = Option.builder()
                             .movie(element.getKey())
                             .screenTimes(screenTimes)
+                            .movieOriginalTitle(movieOriginalTitle)
                             .build();
                     if (screenTimes.isEmpty()) {
                         continue;
@@ -175,6 +189,12 @@ public class ApolloKinoService {
                     break;
                 }
                 open(FIRST_URL);
+            }
+            for (List<Option> optionList : options.values()) {
+                for (Option option : optionList) {
+                    movieDetailsService.fetchMovieDetails(option.getMovieOriginalTitle())
+                            .ifPresent(d -> option.setImdbRating(d.getImdbRating()));
+                }
             }
             Selenide.closeWindow();
         } catch (Exception e) {
@@ -213,6 +233,8 @@ public class ApolloKinoService {
                     Option newMovieOption = Option.builder()
                             .movie(movieOption.getMovie())
                             .screenTimes(newScreenTimes)
+                            .movieOriginalTitle(movieOption.getMovieOriginalTitle())
+                            .imdbRating(movieOption.getImdbRating())
                             .build();
                     newMovieOptions.add(newMovieOption);
                 }

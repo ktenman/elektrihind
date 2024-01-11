@@ -4,7 +4,6 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
-import ee.tenman.elektrihind.movies.imdb.IMDBService;
 import ee.tenman.elektrihind.telegram.JavaElekterTelegramService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -237,9 +236,9 @@ public class MovieScraper {
     }
 
     private void updateMovieRating(MovieDto movie) {
-        imdbService.getImdbRating(movie.getImdbId()).ifPresentOrElse(
+        imdbService.getImdbRatingV2(movie.getImdbId()).ifPresentOrElse(
                 newRating -> {
-                    movie.setImdbRating(newRating);
+                    movie.setImdbRating(Double.parseDouble(newRating));
                     log.info("Updated rating for movie {}: {}", movie.getTitle(), newRating);
                 },
                 () -> log.warn("Failed to fetch IMDb rating for movie: {}", movie.getTitle())

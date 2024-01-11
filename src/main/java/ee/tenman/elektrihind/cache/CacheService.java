@@ -5,6 +5,7 @@ import ee.tenman.elektrihind.apollo.ApolloKinoSession;
 import ee.tenman.elektrihind.apollo.Option;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
+import ee.tenman.elektrihind.movies.MovieDetails;
 import ee.tenman.elektrihind.utility.JsonUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
@@ -31,6 +32,7 @@ import java.util.UUID;
 import static ee.tenman.elektrihind.config.RedisConfiguration.APOLLO_KINO_CACHE;
 import static ee.tenman.elektrihind.config.RedisConfiguration.ELECTRICITY_PRICES_CACHE;
 import static ee.tenman.elektrihind.config.RedisConfiguration.MESSAGE_COUNTS_CACHE;
+import static ee.tenman.elektrihind.config.RedisConfiguration.MOVIE_DETAILS_CACHE;
 import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_DAY_CACHE_1;
 import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_1;
 import static ee.tenman.elektrihind.config.RedisConfiguration.ONE_MONTH_CACHE_2;
@@ -313,4 +315,15 @@ public class CacheService {
         log.info("Rebooking session {} added to cache", sessionId);
     }
 
+    public Optional<MovieDetails> fetchMovieDetails(String title) {
+        return Optional.ofNullable(cacheManager.getCache(MOVIE_DETAILS_CACHE))
+                .map(c -> c.get(title, MovieDetails.class));
+    }
+
+    public void saveMovieDetails(String title, MovieDetails movieDetails) {
+        log.info("Saving movie details for title: {}", title);
+        Optional.ofNullable(cacheManager.getCache(MOVIE_DETAILS_CACHE))
+                .ifPresent(c -> c.put(title, movieDetails));
+        log.info("Movie details saved for title: {}", title);
+    }
 }

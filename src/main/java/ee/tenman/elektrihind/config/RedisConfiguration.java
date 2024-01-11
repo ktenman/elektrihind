@@ -36,6 +36,7 @@ public class RedisConfiguration {
 
     public static final String IMAGE_REQUEST_QUEUE = "image-request-queue";
     public static final String IMAGE_RESPONSE_QUEUE = "image-response-queue";
+    public static final String MOVIE_DETAILS_CACHE = "movie-details";
 
     private static final Duration DEFAULT_TTL = Duration.ofMinutes(10);
 
@@ -70,6 +71,7 @@ public class RedisConfiguration {
         cacheConfigurations.put(SESSIONS_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(3)));
         cacheConfigurations.put(APOLLO_KINO_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(2)));
         cacheConfigurations.put(ELECTRICITY_PRICES_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofHours(2)));
+        cacheConfigurations.put(MOVIE_DETAILS_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofHours(3)));
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig().entryTtl(DEFAULT_TTL);
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)

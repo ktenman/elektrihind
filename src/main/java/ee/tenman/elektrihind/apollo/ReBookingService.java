@@ -90,7 +90,7 @@ public class ReBookingService {
         idsToRemove.forEach(cacheService::removeRebookingSession);
     }
 
-    @Scheduled(cron = "* * * * * *") // Runs every minute
+    @Scheduled(cron = "30 * * * * *") // Runs every minute
     public void rebook() {
         if (lock.tryLock()) {
             try {

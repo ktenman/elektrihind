@@ -424,28 +424,20 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             case SELECT_DATE -> {
                 LocalDate selectedDate = LocalDate.parse(chosenOption);
                 session.setSelectedDate(selectedDate);
-                List<InlineKeyboardButton> rowInline = new ArrayList<>();
                 List<Option> optionsList = apolloKinoService.getOptions().get(selectedDate);
-                String title = "";
                 if (optionsList == null || optionsList.isEmpty()) {
                     Message message = sendMessage(chatId, "No movies found for " + selectedDate.format(DATE_TIME_FORMATTER));
                     messagesToDelete.put(session.getSessionId().toString(), message.getMessageId());
                     return;
                 }
-                for (int i = 0; i < optionsList.size(); i++) {
-                    Option screen = optionsList.get(i);
-                    title += screen.getMovie() + (i + 1 < optionsList.size() ? optionsList.get(i + 1).getMovieTitleWithImdbRating() : "");
-                    InlineKeyboardButton button = new InlineKeyboardButton(screen.getMovieTitleWithImdbRating());
-                    String callbackData = getCallbackData.apply(screen.getMovie());
+                for (Option option : optionsList) {
+                    List<InlineKeyboardButton> rowInline = new ArrayList<>();
+                    InlineKeyboardButton button = new InlineKeyboardButton(option.getMovieTitleWithImdbRating());
+                    String callbackData = getCallbackData.apply(option.getMovie());
                     button.setCallbackData(callbackData);
                     rowInline.add(button);
-                    if (i % 2 == 1 || title.length() > 30) {
-                        rowsInline.add(rowInline);
-                        rowInline = new ArrayList<>();
-                        title = "";
-                    }
+                    rowsInline.add(rowInline);
                 }
-                rowsInline.add(rowInline);
             }
             case SELECT_MOVIE -> {
                 session.setSelectedMovie(chosenOption);

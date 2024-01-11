@@ -542,7 +542,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
         if (session.getCurrentState() != ApolloKinoState.INITIAL) {
             List<InlineKeyboardButton> backRow = new ArrayList<>();
-            InlineKeyboardButton backButton = new InlineKeyboardButton(BACK_BUTTON);
+            InlineKeyboardButton backButton = new InlineKeyboardButton("← " + BACK_BUTTON);
             backButton.setCallbackData(getCallbackData.apply(BACK_BUTTON));
             backRow.add(backButton);
             rowsInline.add(backRow);

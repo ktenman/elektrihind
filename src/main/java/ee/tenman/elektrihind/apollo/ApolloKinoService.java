@@ -56,7 +56,8 @@ public class ApolloKinoService {
 
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final DateTimeFormatter SHORT_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM");
-    private static final String FIRST_URL = "https://www.apollokino.ee/schedule?theatreAreaID=1017";
+    private static final String ULEMISTE = "https://www.apollokino.ee/schedule?theatreAreaID=1017";
+    private static final String MUSTAMAE = "https://www.apollokino.ee/schedule?theatreAreaID=1007";
     private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     private Map<LocalDate, List<Option>> options = new TreeMap<>();
     @Value("${apollo-kino.username}")
@@ -127,7 +128,7 @@ public class ApolloKinoService {
                     .map(d -> d.format(DATE_TIME_FORMATTER))
                     .toList();
 
-            open(FIRST_URL);
+            open(ULEMISTE);
             getWebDriver().manage().window().maximize();
             $(".cky-btn-accept").click();
             ElementsCollection elements = $$(".day-picker__choice");
@@ -188,7 +189,7 @@ public class ApolloKinoService {
                 if (this.options.size() == 4) {
                     break;
                 }
-                open(FIRST_URL);
+                open(ULEMISTE);
             }
             for (List<Option> optionList : options.values()) {
                 for (Option option : optionList) {

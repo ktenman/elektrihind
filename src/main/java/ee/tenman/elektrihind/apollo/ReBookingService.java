@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static ee.tenman.elektrihind.apollo.ApolloKinoService.DATE_TIME_FORMATTER;
 import static java.util.Comparator.comparing;
 
 @Service
@@ -125,12 +126,14 @@ public class ReBookingService {
 
         Optional<Entry<File, Set<StarSeat>>> bookingResult = apolloKinoService.book(session);
         if (bookingResult.isPresent()) {
-            log.info("Re-booked session {}", session.getSessionId());
-            String message = "Booked: " + session.getSelectedMovie() + " " + session.getRowAndSeats() + " on " +
-                    session.getSelectedDate().format(ApolloKinoService.DATE_TIME_FORMATTER) + " at " +
-                    session.getSelectedTime();
-            log.info("Re-booked session {} - {}", session.getSessionId(), message);
-            session.setSelectedStarSeats(bookingResult.get().getValue());
+            Set<StarSeat> actualSeats = bookingResult.get().getValue();
+            String message = String.format("Re-booked: %s %s wanted: %s on %s at %s",
+                    session.getSelectedMovie(),
+                    actualSeats,
+                    session.getSelectedStarSeats(),
+                    session.getSelectedDate().format(DATE_TIME_FORMATTER),
+                    session.getSelectedTime());
+            log.info(message);
             elektriTeemuTelegramService.sendToTelegram(message, session.getChatId());
             elektriTeemuTelegramService.sendFileToTelegram(bookingResult.get().getKey(), session.getChatId());
         }

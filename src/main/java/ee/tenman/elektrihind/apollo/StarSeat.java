@@ -35,4 +35,9 @@ public class StarSeat {
     public int hashCode() {
         return Objects.hash(row, seat);
     }
+
+    @Override
+    public String toString() {
+        return getRowAndSeat();
+    }
 }

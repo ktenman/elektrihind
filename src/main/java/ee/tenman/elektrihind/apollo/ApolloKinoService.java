@@ -109,13 +109,14 @@ public class ApolloKinoService {
         }
     }
 
-    @Scheduled(cron = "0 0 12 * * *")
+    @Scheduled(cron = "0 0 10 * * *")
     public void onSchedule() {
         init();
         cacheService.updateApolloKinoData(options);
     }
 
     public void init() {
+        log.info("Initializing Apollo Kino");
         if (List.of(environment.getActiveProfiles()).contains(TEST_PROFILE)) {
             log.info("Skipping initialization in test profile");
             return;
@@ -128,6 +129,10 @@ public class ApolloKinoService {
                     .map(d -> d.format(DATE_TIME_FORMATTER))
                     .toList();
 
+            options.keySet().stream()
+                    .map(optionList -> optionList.format(DATE_TIME_FORMATTER))
+                    .filter(day -> !acceptedDays.contains(day))
+                    .forEach(s -> options.remove(LocalDate.parse(s, DATE_TIME_FORMATTER)));
             open(ULEMISTE);
             getWebDriver().manage().window().maximize();
             $(".cky-btn-accept").click();
@@ -139,6 +144,7 @@ public class ApolloKinoService {
                 if (!acceptedDays.contains(selectedDayValue)) {
                     continue;
                 }
+                log.info("Selected day {}", selectedDayValue);
                 dayChoice.click();
                 sleep(2000);
                 TreeMap<String, String> movieTitles = new TreeMap<>();

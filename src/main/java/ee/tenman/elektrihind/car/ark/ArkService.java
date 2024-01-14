@@ -30,8 +30,6 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static com.codeborne.selenide.Condition.text;
@@ -86,13 +84,6 @@ public class ArkService implements CaptchaSolver {
         return Optional.empty();
     }
 
-    private void parseKeyValuePairs(Map<String, String> carDetails, String input) {
-        String[] lines = input.split("\n");
-        for (int i = 0; i < lines.length; i += 2) {
-            carDetails.put(lines[i], lines[i + 1]);
-        }
-    }
-
     private static void addMarkAndVin(Map<String, String> carDetails, SelenideElement contentTitle) {
         ElementsCollection titles = contentTitle.findAll(tagName("p"));
         String carName = Optional.of(titles)
@@ -116,20 +107,6 @@ public class ArkService implements CaptchaSolver {
             String value = td.get(1).getText();
             carDetails.put(key, value);
         }
-    }
-
-    private String extractNumericValue(String string) {
-        if (string == null || !string.contains(" ")) {
-            return null;
-        }
-
-        Pattern pattern = Pattern.compile("\\b\\d{2,4}\\b");
-        Matcher matcher = pattern.matcher(string);
-        if (matcher.find()) {
-            return matcher.group();
-        }
-
-        return null;
     }
 
     private static void addLatestOdometerFromPDF(Map<String, String> carDetails) {

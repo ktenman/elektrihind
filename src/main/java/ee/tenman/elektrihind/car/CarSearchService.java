@@ -54,6 +54,7 @@ public class CarSearchService {
         response.remove("Tühimass");
         response.remove("CO2 (NEDC)");
         response.remove("CO2 (WLTP)");
+        response.remove("Kategooria tähis");
     }
 
     @SneakyThrows

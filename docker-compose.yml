@@ -26,6 +26,7 @@ services:
       - redis
       - rabbitmq
       - captcha-solver
+      - automaks
 
   captcha-solver:
     container_name: captcha_solver_main

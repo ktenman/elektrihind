@@ -115,6 +115,12 @@ public class ApolloKinoService {
         cacheService.updateApolloKinoData(options);
     }
 
+    @Scheduled(cron = "37 25 20 14 1 ? 2024")
+    public void onTime() {
+        init();
+        cacheService.updateApolloKinoData(options);
+    }
+
     public void init() {
         log.info("Initializing Apollo Kino");
         if (List.of(environment.getActiveProfiles()).contains(TEST_PROFILE)) {

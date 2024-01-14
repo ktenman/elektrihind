@@ -116,7 +116,7 @@ public class ApolloKinoService {
     }
 
     @Scheduled(cron = "37 25 20 14 1 ? 2024")
-    public void onTime() {
+    public void onlyOnce() {
         init();
         cacheService.updateApolloKinoData(options);
     }

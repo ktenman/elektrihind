@@ -30,6 +30,7 @@ import static java.util.Comparator.comparing;
 @Slf4j
 public class ReBookingService {
 
+    public static final String REBOOKING_SESSION_TEMPLATE = "Rebooking session {}";
     @Getter
     private ConcurrentHashMap<UUID, ApolloKinoSession> sessions = new ConcurrentHashMap<>();
     private final Lock lock = new ReentrantLock();
@@ -96,11 +97,23 @@ public class ReBookingService {
         if (lock.tryLock()) {
             try {
                 AtomicBoolean rebooked = new AtomicBoolean(false);
+                if (cacheService.isRebookEverything()) {
+                    log.info("Rebooking everything");
+                    sessions.forEach((k, v) -> {
+                        log.info(REBOOKING_SESSION_TEMPLATE, k);
+                        ApolloKinoSession rebookedSession = book(v);
+                        sessions.remove(k);
+                        sessions.put(k, rebookedSession);
+                        rebooked.set(true);
+                        log.info("Rebooked session {}", k);
+                    });
+                    cacheService.setRebookEverything(false);
+                }
                 sessions.entrySet().stream()
                         .sorted(comparing((Entry<UUID, ApolloKinoSession> o) -> o.getValue().getUpdatedAt()).reversed())
                         .filter(entry -> isReadyToReBook(entry.getValue()))
                         .forEach(entry -> {
-                            log.info("Rebooking session {}", entry.getKey());
+                            log.info(REBOOKING_SESSION_TEMPLATE, entry.getKey());
                             ApolloKinoSession rebookedSession = book(entry.getValue());
                             sessions.remove(entry.getKey());
                             sessions.put(entry.getKey(), rebookedSession);
@@ -122,7 +135,7 @@ public class ReBookingService {
     }
 
     private ApolloKinoSession book(ApolloKinoSession session) {
-        log.info("Rebooking session {}", session.getSessionId());
+        log.info(REBOOKING_SESSION_TEMPLATE, session.getSessionId());
 
         Optional<Entry<File, Set<StarSeat>>> bookingResult = apolloKinoService.reBook(session);
         if (bookingResult.isPresent()) {

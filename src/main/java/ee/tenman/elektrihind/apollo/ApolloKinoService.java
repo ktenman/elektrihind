@@ -366,9 +366,10 @@ public class ApolloKinoService {
                 sleep(3000);
             }
             $$("span.button__text").find(Condition.text("Eemalda piletid")).click();
+            cacheService.setRebookEverything(true);
             return book(session);
         } catch (Exception e) {
-            log.error("Failed to book", e);
+            log.error("Failed to re-book", e);
             return Optional.empty();
         } finally {
             Selenide.closeWindow();

@@ -326,4 +326,13 @@ public class CacheService {
                 .ifPresent(c -> c.put(title, movieDetails));
         log.info("Movie details saved for title: {}", title);
     }
+
+    public boolean isRebookEverything() {
+        return getBooleanFromCache("rebookEverything");
+    }
+
+    public void setRebookEverything(boolean isRebookEverything) {
+        setBooleanInCache("rebookEverything", isRebookEverything);
+    }
+
 }

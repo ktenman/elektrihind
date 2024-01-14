@@ -94,8 +94,10 @@ jobs:
             docker-compose down || true && \
             docker rm elektrihind_main -f || true && \
             docker rm captcha_solver_main -f || true && \
+            docker rm automaks_main -f || true && \
             docker pull '$DOCKER_IMAGE_NAME:latest' || true && \
             docker pull ktenman/captcha-solver:latest || true && \
+            docker pull ktenman/automaks:latest || true && \
             docker-compose up -d && \
             echo 'Pruning unused Docker images...' && \
             docker image prune -af"

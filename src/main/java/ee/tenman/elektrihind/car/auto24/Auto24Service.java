@@ -21,7 +21,12 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -47,7 +52,10 @@ public class Auto24Service implements CaptchaSolver {
 
     private static final String DIRECTORY_PATH = "images267k";
     private static final String DIRECTORY_PATH_2 = "imagesPPP8";
-    private final Set<String> fileNames = getFileNames(DIRECTORY_PATH, DIRECTORY_PATH_2);
+    private static final String DIRECTORY_PATH_3 = "imagesNEW";
+    private static final String DIRECTORY_PATH_4 = "imagesCORRECT";
+    //    private final Set<String> fileNames = getFileNames(DIRECTORY_PATH, DIRECTORY_PATH_2);
+    private final Set<String> fileNames = getFileNames();
 
     private static final List<String> ACCEPTED_KEYS = List.of(
             "Kütusekulu keskmine (l/ 100 km)",
@@ -220,6 +228,7 @@ public class Auto24Service implements CaptchaSolver {
         }
         xThreadExecutor.submit(Selenide::closeWindow);
     }
+
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
     public Map<String, String> carDetails(Map<String, String> carDetails, String captchaToken) {
         log.info("Searching car details for regNr: {}", carDetails.get("Reg nr"));
@@ -275,4 +284,26 @@ public class Auto24Service implements CaptchaSolver {
         log.info("Auto24 captcha solved");
         return token;
     }
+
+    @SneakyThrows
+    public static void downloadImage(String imageUrlString, String outputFilePath) {
+        URL url = URI.create(imageUrlString).toURL();
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.addRequestProperty("Referer", imageUrlString);
+
+        try (InputStream in = connection.getInputStream();
+             FileOutputStream out = new FileOutputStream(outputFilePath)) {
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = in.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
+            log.info("Downloaded image: {}", outputFilePath);
+        } finally {
+            connection.disconnect();
+        }
+    }
+
 }

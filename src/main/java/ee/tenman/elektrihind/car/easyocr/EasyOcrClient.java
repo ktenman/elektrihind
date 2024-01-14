@@ -13,7 +13,7 @@ import static ee.tenman.elektrihind.car.easyocr.EasyOcrClient.CLIENT_URL;
 public interface EasyOcrClient {
 
     String CLIENT_NAME = "easyOcrClient";
-    String CLIENT_URL = "http://localhost:55238";
+    String CLIENT_URL = "http://localhost:55225";
 
     @PostMapping(value = "/predict")
     PredictResponse predict(@RequestBody PredictRequest request);

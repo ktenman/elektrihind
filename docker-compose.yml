@@ -36,6 +36,13 @@ services:
       - FLASK_ENV=development
     restart: always
 
+  automaks:
+    container_name: automaks_main
+    image: ktenman/automaks:latest
+    ports:
+      - "52526:8080"
+    restart: always
+
   redis:
     image: redis:7.2.3-alpine
     ports:

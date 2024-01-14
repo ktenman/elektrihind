@@ -16,6 +16,9 @@ omdb-api:
 captcha-solver:
   url: http://localhost:55224
 
+automaks:
+  url: http://localhost:52526
+
 twocaptcha:
   key:
 

@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.apollo;
 
+import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
@@ -113,11 +114,6 @@ public class ApolloKinoService {
     public void onSchedule() {
         init();
         cacheService.updateApolloKinoData(options);
-    }
-
-    @Scheduled(cron = "33 30 20 14 1 *")
-    public void onlyOnce() {
-        onSchedule();
     }
 
     public void init() {
@@ -265,6 +261,17 @@ public class ApolloKinoService {
         return filteredOptions;
     }
 
+    private static int toSeconds(String time) {
+        try {
+            String[] split = time.split(":");
+            int minutes = Integer.parseInt(split[0]) * 60;
+            int seconds = Integer.parseInt(split[1]);
+            return minutes + seconds;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse time", e);
+        }
+    }
+
     public Optional<Map.Entry<File, Set<StarSeat>>> book(ApolloKinoSession session) {
         Optional<ScreenTime> screenTime = screenTime(session);
         if (screenTime.isEmpty()) {
@@ -275,8 +282,15 @@ public class ApolloKinoService {
         try {
             open(screenTime.get().getUrl());
             getWebDriver().manage().window().maximize();
-            $(".cky-btn-accept").click();
-            login();
+            ElementsCollection elements = $$(className("user__account-name"));
+            boolean acceptedTerms = false;
+            if (!elements.isEmpty()) {
+                acceptedTerms = elements.texts().stream().anyMatch("Konrad"::equals);
+            }
+            if (!acceptedTerms) {
+                $(".cky-btn-accept").click();
+                login();
+            }
             int selectedSeatsCount = Math.max(session.getSelectedStarSeats().size(), session.getSeatCount());
             selectSeats(selectedSeatsCount);
             String currentUrl = getWebDriver().getCurrentUrl();
@@ -321,6 +335,38 @@ public class ApolloKinoService {
                         .build());
             }
             return Optional.of(new SimpleEntry<>(screenshot, starSeats));
+        } catch (Exception e) {
+            log.error("Failed to book", e);
+            return Optional.empty();
+        } finally {
+            Selenide.closeWindow();
+        }
+
+    }
+
+    public Optional<Map.Entry<File, Set<StarSeat>>> reBook(ApolloKinoSession session) {
+        Optional<ScreenTime> screenTime = screenTime(session);
+        if (screenTime.isEmpty()) {
+            log.error("Screen time not found");
+            return Optional.empty();
+        }
+        try {
+            open("https://www.apollokino.ee/account/tickets");
+            getWebDriver().manage().window().maximize();
+            $(".cky-btn-accept").click();
+            login();
+
+            SelenideElement headerTimer = $(".header__timer");
+            if (!headerTimer.exists()) {
+                return book(session);
+            }
+            headerTimer.click();
+            while (toSeconds($(".cart-session-timer").text()) > 5) {
+                Selenide.refresh();
+                sleep(3000);
+            }
+            $$("span.button__text").find(Condition.text("Eemalda piletid")).click();
+            return book(session);
         } catch (Exception e) {
             log.error("Failed to book", e);
             return Optional.empty();

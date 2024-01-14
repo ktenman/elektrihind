@@ -124,7 +124,7 @@ public class ReBookingService {
     private ApolloKinoSession book(ApolloKinoSession session) {
         log.info("Rebooking session {}", session.getSessionId());
 
-        Optional<Entry<File, Set<StarSeat>>> bookingResult = apolloKinoService.book(session);
+        Optional<Entry<File, Set<StarSeat>>> bookingResult = apolloKinoService.reBook(session);
         if (bookingResult.isPresent()) {
             Set<StarSeat> actualSeats = bookingResult.get().getValue();
             String message = String.format("Re-booked: %s %s wanted: %s on %s at %s",
@@ -152,7 +152,7 @@ public class ReBookingService {
         if (session == null) {
             return false;
         }
-        return Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds() > 945;
+        return Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds() > 870;
     }
 
     public int getActiveBookingCount() {

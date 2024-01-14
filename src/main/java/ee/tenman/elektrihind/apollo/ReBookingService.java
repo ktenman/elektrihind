@@ -92,29 +92,29 @@ public class ReBookingService {
         idsToRemove.forEach(cacheService::removeRebookingSession);
     }
 
-    @Scheduled(cron = "15,45 * * * * *") // Runs every 30 seconds
+    @Scheduled(cron = "10,30,50 * * * * *") // Runs every 30 seconds
     public void rebook() {
         if (lock.tryLock()) {
             try {
                 AtomicBoolean rebooked = new AtomicBoolean(false);
-                if (cacheService.isRebookEverything()) {
-                    log.info("Rebooking everything");
-                    sessions.forEach((k, v) -> {
-                        log.info(REBOOKING_SESSION_TEMPLATE, k);
-                        ApolloKinoSession rebookedSession = book(v);
-                        sessions.remove(k);
-                        sessions.put(k, rebookedSession);
-                        rebooked.set(true);
-                        log.info("Rebooked session {}", k);
-                    });
-                    cacheService.setRebookEverything(false);
-                }
+//                if (cacheService.isRebookEverything()) {
+//                    log.info("Rebooking everything");
+//                    sessions.forEach((k, v) -> {
+//                        log.info(REBOOKING_SESSION_TEMPLATE, k);
+//                        ApolloKinoSession rebookedSession = reBook(v);
+//                        sessions.remove(k);
+//                        sessions.put(k, rebookedSession);
+//                        rebooked.set(true);
+//                        log.info("Rebooked session {}", k);
+//                    });
+//                    cacheService.setRebookEverything(false);
+//                }
                 sessions.entrySet().stream()
                         .sorted(comparing((Entry<UUID, ApolloKinoSession> o) -> o.getValue().getUpdatedAt()).reversed())
                         .filter(entry -> isReadyToReBook(entry.getValue()))
                         .forEach(entry -> {
                             log.info(REBOOKING_SESSION_TEMPLATE, entry.getKey());
-                            ApolloKinoSession rebookedSession = book(entry.getValue());
+                            ApolloKinoSession rebookedSession = reBook(entry.getValue());
                             sessions.remove(entry.getKey());
                             sessions.put(entry.getKey(), rebookedSession);
                             rebooked.set(true);
@@ -134,7 +134,7 @@ public class ReBookingService {
         }
     }
 
-    private ApolloKinoSession book(ApolloKinoSession session) {
+    private ApolloKinoSession reBook(ApolloKinoSession session) {
         log.info(REBOOKING_SESSION_TEMPLATE, session.getSessionId());
 
         Optional<Entry<File, Set<StarSeat>>> bookingResult = apolloKinoService.reBook(session);
@@ -165,7 +165,8 @@ public class ReBookingService {
         if (session == null) {
             return false;
         }
-        return Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds() > 870;
+        long seconds = Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds();
+        return seconds > 840;
     }
 
     public int getActiveBookingCount() {

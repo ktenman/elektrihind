@@ -1,6 +1,6 @@
 package ee.tenman.elektrihind.apollo;
 
-import com.codeborne.selenide.Condition;
+import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
@@ -13,6 +13,7 @@ import ee.tenman.elektrihind.utility.TimeUtility;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.openqa.selenium.By;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -339,12 +340,12 @@ public class ApolloKinoService {
             log.error("Failed to book", e);
             return Optional.empty();
         } finally {
-            Selenide.closeWindow();
+            Selenide.closeWebDriver();
         }
-
     }
 
     public Optional<Map.Entry<File, Set<StarSeat>>> reBook(ApolloKinoSession session) {
+        Configuration.headless = false;
         Optional<ScreenTime> screenTime = screenTime(session);
         if (screenTime.isEmpty()) {
             log.error("Screen time not found");
@@ -361,18 +362,15 @@ public class ApolloKinoService {
                 return book(session);
             }
             headerTimer.click();
-            while (toSeconds($(".cart-session-timer").text()) > 5) {
-                Selenide.refresh();
-                sleep(3000);
-            }
-            $$("span.button__text").find(Condition.text("Eemalda piletid")).click();
-            cacheService.setRebookEverything(true);
+
+            int seconds = toSeconds($(".cart-session-timer").text()) - 5;
+            CountdownTimer.startTimer(seconds);
+
+            $$(By.tagName("button")).find(text("Eemalda piletid")).click();
             return book(session);
         } catch (Exception e) {
             log.error("Failed to re-book", e);
             return Optional.empty();
-        } finally {
-            Selenide.closeWindow();
         }
 
     }

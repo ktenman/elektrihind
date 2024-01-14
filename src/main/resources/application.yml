@@ -17,7 +17,7 @@ captcha-solver:
   url: http://${RABBITMQ_HOST:captcha-solver}:52525
 
 automaks:
-  url: http://${RABBITMQ_HOST:automaks}:52526
+  url: http://${RABBITMQ_HOST:127.0.0.1}:52526
 
 twocaptcha:
   key: ${TWO_CAPTCHA_API_KEY}

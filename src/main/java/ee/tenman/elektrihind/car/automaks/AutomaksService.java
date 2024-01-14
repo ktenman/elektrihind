@@ -21,7 +21,7 @@ public class AutomaksService {
         try {
             return Optional.ofNullable(automaksClient.calculate(carDetails));
         } catch (Exception e) {
-            log.info("Failed to get prediction response from Automaks: ", e);
+            log.error("Failed to get tax response from Automaks: ", e);
             return Optional.empty();
         }
     }

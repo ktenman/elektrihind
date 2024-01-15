@@ -97,6 +97,17 @@ public class ReBookingService {
         if (lock.tryLock()) {
             try {
                 AtomicBoolean rebooked = new AtomicBoolean(false);
+                sessions.entrySet().stream()
+                        .sorted(comparing((Entry<UUID, ApolloKinoSession> o) -> o.getValue().getUpdatedAt()).reversed())
+                        .filter(entry -> isReadyToReBook(entry.getValue()))
+                        .forEach(entry -> {
+                            log.info(REBOOKING_SESSION_TEMPLATE, entry.getKey());
+                            ApolloKinoSession rebookedSession = reBook(entry.getValue());
+                            sessions.remove(entry.getKey());
+                            sessions.put(entry.getKey(), rebookedSession);
+                            rebooked.set(true);
+                            log.info("Rebooked session {}", entry.getKey());
+                        });
                 if (cacheService.isRebookEverything()) {
                     log.info("Rebooking everything");
                     sessions.forEach((k, v) -> {
@@ -109,17 +120,6 @@ public class ReBookingService {
                     });
                     cacheService.setRebookEverything(false);
                 }
-                sessions.entrySet().stream()
-                        .sorted(comparing((Entry<UUID, ApolloKinoSession> o) -> o.getValue().getUpdatedAt()).reversed())
-                        .filter(entry -> isReadyToReBook(entry.getValue()))
-                        .forEach(entry -> {
-                            log.info(REBOOKING_SESSION_TEMPLATE, entry.getKey());
-                            ApolloKinoSession rebookedSession = reBook(entry.getValue());
-                            sessions.remove(entry.getKey());
-                            sessions.put(entry.getKey(), rebookedSession);
-                            rebooked.set(true);
-                            log.info("Rebooked session {}", entry.getKey());
-                        });
                 if (rebooked.get()) {
                     updateLastInteractionTimes();
                 }

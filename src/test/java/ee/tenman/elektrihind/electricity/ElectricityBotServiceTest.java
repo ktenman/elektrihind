@@ -118,9 +118,8 @@ class ElectricityBotServiceTest {
         CostCalculationResult result = botService.calculateTotalCost(data);
 
         assertNotNull(result);
-        assertThat(result.getTotalCost()).isPositive();
-        assertThat(result.getTotalKwh()).isEqualByComparingTo(new BigDecimal("300.00"));
-        assertThat(result.getTotalCost()).isGreaterThan(new BigDecimal("0.00"));
+        assertThat(result.totalKwh()).isEqualByComparingTo(new BigDecimal("300.00"));
+        assertThat(result.totalCost()).isGreaterThan(new BigDecimal("0.00"));
     }
 
     @Test
@@ -132,9 +131,8 @@ class ElectricityBotServiceTest {
         CostCalculationResult result = botService.calculateTotalCost(data);
 
         assertNotNull(result);
-        assertThat(result.getTotalCost()).isPositive(); // Assuming that the method adds a fixed surcharge and this should be reflected in total cost
-        assertThat(result.getTotalKwh()).isEqualByComparingTo(new BigDecimal("200.00")); // This should only include the valid row
-        assertThat(result.getTotalCost()).isGreaterThan(new BigDecimal("0.00")); // This should reflect the cost from the valid row
+        assertThat(result.totalKwh()).isEqualByComparingTo(new BigDecimal("200.00")); // This should only include the valid row
+        assertThat(result.totalCost()).isGreaterThan(new BigDecimal("0.00")); // This should reflect the cost from the valid row
     }
 
     @Test

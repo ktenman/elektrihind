@@ -1535,8 +1535,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                             "Total cost: %.2f EUR\n" +
                             "Daytime electricity consumed: %.3f kWh\n" +
                             "Nighttime electricity consumed: %.3f kWh",
-                    result.getTotalKwh(), result.getTotalCost(),
-                    result.getTotalDayKwh(), result.getTotalNightKwh());
+                    result.totalKwh(), result.totalCost(),
+                    result.totalDayKwh(), result.totalNightKwh());
 
             // Send the response
             sendMessage(chatId, response);

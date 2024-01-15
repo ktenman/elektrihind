@@ -140,12 +140,11 @@ public class ReBookingService {
         Optional<Entry<File, Set<StarSeat>>> bookingResult = apolloKinoService.reBook(session);
         if (bookingResult.isPresent()) {
             Set<StarSeat> actualSeats = bookingResult.get().getValue();
-            String message = String.format("Re-booked: %s %s wanted: %s on %s at %s",
+            String message = String.format("Re-booked: %s %s wanted: %s on %s",
                     session.getSelectedMovie(),
                     session.formatStarSeats(actualSeats),
                     session.formatStarSeats(session.getSelectedStarSeats()),
-                    session.getSelectedDate().format(DATE_TIME_FORMATTER),
-                    session.getSelectedTime());
+                    session.getSelectedDate().format(DATE_TIME_FORMATTER));
             log.info(message);
             elektriTeemuTelegramService.sendToTelegram(message, session.getChatId());
             elektriTeemuTelegramService.sendFileToTelegram(bookingResult.get().getKey(), session.getChatId());

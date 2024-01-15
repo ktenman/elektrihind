@@ -131,6 +131,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     static final String UNKNOWN_USERNAME = "unknown";
     private static final String NOT_ALLOWED_MESSAGE = "You are not allowed to use this bot. 😘";
     private static final int MAX_BOOKING_COUNT = 6;
+    private static final int MAX_BOOKING_SESSION_COUNT = 2;
     private final ConcurrentHashMap<Integer, AtomicBoolean> messageUpdateFlags = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Double> lastPercentages = new ConcurrentHashMap<>();
     private static final int MAX_EDITS_PER_MINUTE = 15;
@@ -313,11 +314,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             case EURIBOR -> sendMessageCode(chatId, euriborRateFetcher.getEuriborRateResponse());
             case METRIC -> sendMessageCode(chatId, getSystemMetrics());
             case APOLLO_KINO -> {
-                int activeBookingsCount = reBookingService.getActiveBookingCount();
-                if (activeBookingsCount >= MAX_BOOKING_COUNT) {
-                    sendMessage(chatId, "Too many active bookings. Please try again later or `/cancel` your booking.");
-                    return;
-                }
+                if (isBookingOverLimit(chatId)) return;
                 ApolloKinoSession newSession = sessionManagementService.createNewSession();
                 displayApolloKinoMenu(chatId, newSession, null);
             }
@@ -336,6 +333,20 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             }
             default -> sendMessage(chatId, "Command not recognized.");
         }
+    }
+
+    private boolean isBookingOverLimit(long chatId) {
+        int activeBookingsCount = reBookingService.getActiveBookingCount();
+        if (activeBookingsCount >= MAX_BOOKING_COUNT) {
+            sendMessage(chatId, "Too many active bookings. Please try again later or `/cancel` your booking.");
+            return true;
+        }
+        int activeMovieSessionsCount = reBookingService.getActiveMovieSessionsCount();
+        if (activeMovieSessionsCount >= MAX_BOOKING_SESSION_COUNT) {
+            sendMessage(chatId, "Too many active movie sessions. Please try again later or `/cancel` your booking.");
+            return true;
+        }
+        return false;
     }
 
     private Message displayBookings(long chatId) {
@@ -809,11 +820,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             sendMessageCode(chatId, messageId, "Droplet reboot initiated!");
 
         } else if (messageText.equalsIgnoreCase(APOLLO_KINO) || messageText.equalsIgnoreCase("/" + APOLLO_KINO)) {
-            int activeBookingCount = reBookingService.getActiveBookingCount();
-            if (activeBookingCount >= MAX_BOOKING_COUNT) {
-                sendMessage(chatId, "Too many active bookings. Please try again later or `/cancel` your booking.");
-                return;
-            }
+            if (isBookingOverLimit(chatId)) return;
             ApolloKinoSession newSession = sessionManagementService.createNewSession();
             displayApolloKinoMenu(chatId, newSession, null);
         } else if (matcher.find()) {

@@ -92,7 +92,7 @@ public class ReBookingService {
         idsToRemove.forEach(cacheService::removeRebookingSession);
     }
 
-    @Scheduled(cron = "10,25,40,55 * * * * *") // Runs every 15 seconds
+    @Scheduled(cron = "10,30,50 * * * * *") // Runs every 20 seconds
     public void rebook() {
         if (lock.tryLock()) {
             try {
@@ -173,6 +173,10 @@ public class ReBookingService {
                 .map(ApolloKinoSession::getSelectedStarSeats)
                 .mapToInt(Set::size)
                 .sum();
+    }
+
+    public int getActiveMovieSessionsCount() {
+        return sessions.values().size();
     }
 
     public void cancel(UUID bookingUuid) {

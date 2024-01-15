@@ -92,7 +92,7 @@ public class ApolloKinoSession {
 
     @JsonIgnore
     public String getRowAndSeats() {
-        return Optional.of(selectedStarSeats).map(this::formatStarSeats).map(s -> "[" + s + "]").orElse("");
+        return Optional.of(selectedStarSeats).map(this::formatStarSeats).orElse("");
     }
 
     public String formatStarSeats(Collection<StarSeat> starSeats) {
@@ -107,7 +107,8 @@ public class ApolloKinoSession {
                     Collections.sort(seats);
                     return entry.getKey() + "K" + formatRange(seats);
                 })
-                .collect(joining(", "));
+                .collect(joining(", "))
+                .formatted("[%s]");
     }
 
     public void updateLastInteractionTime() {

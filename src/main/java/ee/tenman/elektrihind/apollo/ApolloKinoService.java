@@ -361,7 +361,7 @@ public class ApolloKinoService {
             }
             headerTimer.click();
 
-            int seconds = toSeconds($(".cart-session-timer").text()) - 5;
+            int seconds = toSeconds($(".cart-session-timer").text()) - 10;
             CountdownTimer.startTimer(seconds);
 
             $$(By.tagName("button")).find(text("Eemalda piletid")).click();

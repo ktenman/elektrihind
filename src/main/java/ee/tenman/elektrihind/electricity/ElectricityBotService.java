@@ -484,7 +484,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 ScreenTime screenTime = apolloKinoService.screenTime(session)
                         .orElseThrow(() -> new IllegalArgumentException("Screen time not found for "
                                 + session.getSelectedDate() + " " + session.getSelectedMovie() + " " + session.getSelectedTime()));
-                Map<String, Integer> seatCounts = screenConfiguration.getScreen(session.getCinema(), screenTime.getHall()).getSeatCounts();
+                Map<String, Integer> seatCounts = screenConfiguration.getScreen(session.getCinema(), screenTime.getHall()).seatCounts();
                 List<InlineKeyboardButton> rowInline = new ArrayList<>();
                 for (Entry<String, Integer> entry : seatCounts.entrySet()) {
                     InlineKeyboardButton button = new InlineKeyboardButton(entry.getKey());
@@ -499,7 +499,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 ScreenTime screenTime = apolloKinoService.screenTime(session)
                         .orElseThrow(() -> new IllegalArgumentException("Screen time not found for "
                                 + session.getSelectedDate() + " " + session.getSelectedMovie() + " " + session.getSelectedTime()));
-                int maxSeats = screenConfiguration.getScreen(session.getCinema(), screenTime.getHall()).getSeatCounts().get(session.getSelectedRow());
+                int maxSeats = screenConfiguration.getScreen(session.getCinema(), screenTime.getHall()).seatCounts().get(session.getSelectedRow());
                 for (int i = 1; i <= maxSeats; i++) {
                     List<InlineKeyboardButton> rowInline = getRowWithButton(getCallbackData, i);
                     rowsInline.add(rowInline);

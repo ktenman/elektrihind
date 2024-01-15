@@ -303,16 +303,12 @@ public class ApolloKinoService {
             sleep(333);
             String saal = $(".schedule-card__title-container").findAll(tagName("p")).last().text();
             Screen screen = screenConfig.getScreen(session.getCinema(), saal);
-            boolean validSeat = screen.isValidSeat(rowAndSeat);
-            if (!validSeat) {
-                throw new RuntimeException("Invalid seat");
-            }
             int[] coords = coordinates(screen, rowAndSeat);
             int x = coords[0];
             int y = coords[1];
             String showId = extractShowId(currentUrl);
             String seatPlanImageUrl = "https://www.apollokino.ee/websales/seating/" + uuid + "/seatplanimage/" + showId +
-                    "/" + screen.getId() + "?posX=" + x + "&posY=" + y + "&posImgWidth=798&t=" + Instant.now().toEpochMilli();
+                    "/" + screen.id() + "?posX=" + x + "&posY=" + y + "&posImgWidth=798&t=" + Instant.now().toEpochMilli();
             open(seatPlanImageUrl);
             sleep(444);
             open(currentUrl);
@@ -402,7 +398,7 @@ public class ApolloKinoService {
     public int[] coordinates(Screen screen, String rowAndSeat) {
         String[] split = rowAndSeat.split("K");
         String row = split[0];
-        int[] points = screen.getCoordinates().get(row);
+        int[] points = screen.coordinates().get(row);
         int currentSeat = extractInt(split[1]);
         int index = (currentSeat - 1) / 2;
         int x = (currentSeat % 2 == 1 ? points[0] : points[1]) + points[2] * index;

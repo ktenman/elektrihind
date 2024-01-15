@@ -46,7 +46,7 @@ public class ScreenConfiguration {
                     new TypeReference<>() {
                     });
             screenList.forEach((k, v) -> screenMap.put(k, v.stream()
-                    .collect(Collectors.toMap(Screen::getName, Function.identity()))));
+                    .collect(Collectors.toMap(Screen::name, Function.identity()))));
         } catch (IOException e) {
             log.error("Failed to read screan.json", e);
         }

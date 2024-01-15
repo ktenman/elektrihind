@@ -129,7 +129,6 @@ public class ApolloKinoService {
                     .toList();
 
             for (Cinema cinema : Cinema.values()) {
-                options.put(cinema, new LinkedHashMap<>());
                 init(cinema, acceptedDays);
             }
             Selenide.closeWindow();
@@ -141,12 +140,11 @@ public class ApolloKinoService {
     }
 
     private void init(Cinema cinema, List<String> acceptedDays) {
-        Optional.ofNullable(options.get(cinema)).ifPresent(cinemaOptions ->
-                cinemaOptions.keySet().stream()
-                        .map(optionList -> optionList.format(DATE_TIME_FORMATTER))
-                        .filter(day -> !acceptedDays.contains(day))
-                        .forEach(s -> cinemaOptions.remove(LocalDate.parse(s, DATE_TIME_FORMATTER)))
-        );
+        options.computeIfAbsent(cinema, k -> new TreeMap<>());
+        options.get(cinema).keySet().stream()
+                .map(optionList -> optionList.format(DATE_TIME_FORMATTER))
+                .filter(day -> !acceptedDays.contains(day))
+                .forEach(s -> options.get(cinema).remove(LocalDate.parse(s, DATE_TIME_FORMATTER)));
         open(cinema.getUrl());
         getWebDriver().manage().window().maximize();
         $(".cky-btn-accept").click();

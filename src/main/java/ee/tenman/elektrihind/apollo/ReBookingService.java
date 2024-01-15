@@ -92,23 +92,23 @@ public class ReBookingService {
         idsToRemove.forEach(cacheService::removeRebookingSession);
     }
 
-    @Scheduled(cron = "10,30,50 * * * * *") // Runs every 30 seconds
+    @Scheduled(cron = "10,25,40,55 * * * * *") // Runs every 15 seconds
     public void rebook() {
         if (lock.tryLock()) {
             try {
                 AtomicBoolean rebooked = new AtomicBoolean(false);
-//                if (cacheService.isRebookEverything()) {
-//                    log.info("Rebooking everything");
-//                    sessions.forEach((k, v) -> {
-//                        log.info(REBOOKING_SESSION_TEMPLATE, k);
-//                        ApolloKinoSession rebookedSession = reBook(v);
-//                        sessions.remove(k);
-//                        sessions.put(k, rebookedSession);
-//                        rebooked.set(true);
-//                        log.info("Rebooked session {}", k);
-//                    });
-//                    cacheService.setRebookEverything(false);
-//                }
+                if (cacheService.isRebookEverything()) {
+                    log.info("Rebooking everything");
+                    sessions.forEach((k, v) -> {
+                        log.info(REBOOKING_SESSION_TEMPLATE, k);
+                        ApolloKinoSession rebookedSession = reBook(v);
+                        sessions.remove(k);
+                        sessions.put(k, rebookedSession);
+                        rebooked.set(true);
+                        log.info("Rebooked session {}", k);
+                    });
+                    cacheService.setRebookEverything(false);
+                }
                 sessions.entrySet().stream()
                         .sorted(comparing((Entry<UUID, ApolloKinoSession> o) -> o.getValue().getUpdatedAt()).reversed())
                         .filter(entry -> isReadyToReBook(entry.getValue()))

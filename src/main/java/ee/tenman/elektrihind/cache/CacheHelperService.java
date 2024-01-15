@@ -1,8 +1,6 @@
 package ee.tenman.elektrihind.cache;
 
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -14,9 +12,6 @@ import static ee.tenman.elektrihind.config.RedisConfiguration.MESSAGE_COUNTS_CAC
 @Service
 @Slf4j
 public class CacheHelperService {
-
-    @Resource
-    private CacheManager cacheManager;
 
     @Cacheable(value = MESSAGE_COUNTS_CACHE, key = "#date")
     public int getMessageCount(LocalDate date) {

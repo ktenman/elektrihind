@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,13 +25,4 @@ public class Option {
         return imdbRating == null || imdbRating.equals(0.0) ? movie : movie + " [" + imdbRating + "]";
     }
 
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Data
-    public static class ScreenTime {
-        private LocalTime time;
-        private String url;
-        private String hall;
-    }
 }

@@ -3,7 +3,6 @@ package ee.tenman.elektrihind.apollo;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
-import ee.tenman.elektrihind.apollo.Option.ScreenTime;
 import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.config.ScreenConfiguration;
 import ee.tenman.elektrihind.movies.MovieDetailsService;
@@ -182,11 +181,11 @@ public class ApolloKinoService {
                     String hallName = screeningElement.find(className("screening-card__hall")).text();
                     String time = screeningElement.find(className("screening-card__time")).text();
                     if (screenConfig.isValidHall(cinema, hallName)) {
-                        ScreenTime screenTime = ScreenTime.builder()
-                                .time(LocalTime.parse(time))
-                                .url(screeningElement.parent().find(tagName("a")).getAttribute("href"))
-                                .hall(hallName)
-                                .build();
+                        ScreenTime screenTime = new ScreenTime(
+                                LocalTime.parse(time),
+                                screeningElement.parent().find(tagName("a")).getAttribute("href"),
+                                hallName
+                        );
                         screenTimes.add(screenTime);
                     }
                 }
@@ -230,7 +229,7 @@ public class ApolloKinoService {
                 .filter(screen -> screen.getMovie().equals(session.getSelectedMovie()))
                 .map(Option::getScreenTimes)
                 .flatMap(List::stream)
-                .filter(t -> t.getTime().equals(session.getSelectedTime()))
+                .filter(t -> t.time().equals(session.getSelectedTime()))
                 .findFirst();
     }
 
@@ -244,7 +243,7 @@ public class ApolloKinoService {
                 List<ScreenTime> screenTimes = movieOption.getScreenTimes();
                 List<ScreenTime> newScreenTimes = new ArrayList<>();
                 for (ScreenTime screenTime : screenTimes) {
-                    LocalDateTime dateTime = LocalDateTime.of(optionEntry.getKey(), screenTime.getTime());
+                    LocalDateTime dateTime = LocalDateTime.of(optionEntry.getKey(), screenTime.time());
                     if (currentDateTime.isBefore(dateTime)) {
                         newScreenTimes.add(screenTime);
                     }
@@ -285,7 +284,7 @@ public class ApolloKinoService {
         }
         String rowAndSeat = session.getRowAndSeat();
         try {
-            open(screenTime.get().getUrl());
+            open(screenTime.get().url());
             getWebDriver().manage().window().maximize();
             ElementsCollection elements = $$(className("user__account-name"));
             boolean acceptedTerms = false;

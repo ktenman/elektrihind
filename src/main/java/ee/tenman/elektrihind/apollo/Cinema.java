@@ -1,5 +1,8 @@
 package ee.tenman.elektrihind.apollo;
 
+import lombok.Getter;
+
+@Getter
 public enum Cinema {
 
     ULEMISTE("Ülemiste", "https://www.apollokino.ee/schedule?theatreAreaID=1017"),
@@ -11,14 +14,6 @@ public enum Cinema {
     Cinema(String name, String url) {
         this.name = name;
         this.url = url;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getUrl() {
-        return url;
     }
 
 }

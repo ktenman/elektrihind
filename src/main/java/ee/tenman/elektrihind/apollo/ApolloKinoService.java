@@ -134,7 +134,7 @@ public class ApolloKinoService {
         } catch (Exception e) {
             log.error("Failed to init", e);
         } finally {
-            Selenide.closeWindow();
+            Selenide.closeWebDriver();
             log.info("Init took {} seconds", TimeUtility.durationInSeconds(startTime).asString());
         }
     }

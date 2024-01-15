@@ -408,10 +408,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
 
         String prompt = session.getPrompt();
-        UnaryOperator<String> getCallbackData = (data) -> {
-            UUID uniqueId = UUID.randomUUID();
-            callbackData.put(uniqueId, data);
-            return APOLLO_KINO + "=" + session.getSessionId() + "=" + uniqueId;
+        UnaryOperator<String> getCallbackData = data -> {
+            UUID uuid = UUID.randomUUID();
+            callbackData.put(uuid, data);
+            return APOLLO_KINO + "=" + session.getSessionId() + "=" + uuid;
         };
         switch (session.getCurrentState()) {
             case INITIAL -> {

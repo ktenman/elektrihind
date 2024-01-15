@@ -31,7 +31,7 @@ public class RedisConfiguration {
     public static final String ONE_YEAR_CACHE_2 = "one-year-cache-2";
     public static final String MESSAGE_COUNTS_CACHE = "message-counts-cache-1";
     public static final String SESSIONS_CACHE = "sessionsCache";
-    public static final String APOLLO_KINO_CACHE = "apollo-kino";
+    public static final String APOLLO_KINO_CACHE = "apollo-kino-2";
     public static final String ELECTRICITY_PRICES_CACHE = "electricity-prices-cache";
 
     public static final String IMAGE_REQUEST_QUEUE = "image-request-queue";

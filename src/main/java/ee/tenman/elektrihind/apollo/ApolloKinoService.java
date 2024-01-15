@@ -127,7 +127,6 @@ public class ApolloKinoService {
                     .mapToObj(today::plusDays)
                     .map(d -> d.format(DATE_TIME_FORMATTER))
                     .toList();
-
             for (Cinema cinema : Cinema.values()) {
                 init(cinema, acceptedDays);
             }
@@ -135,6 +134,7 @@ public class ApolloKinoService {
         } catch (Exception e) {
             log.error("Failed to init", e);
         } finally {
+            Selenide.closeWindow();
             log.info("Init took {} seconds", TimeUtility.durationInSeconds(startTime).asString());
         }
     }

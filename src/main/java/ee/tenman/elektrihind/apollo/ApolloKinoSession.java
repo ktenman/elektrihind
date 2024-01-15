@@ -44,6 +44,7 @@ public class ApolloKinoSession {
     private int seatCount;
     private Set<StarSeat> selectedStarSeats = new HashSet<>();
     private List<String> selectedOptions = new ArrayList<>();
+    private Cinema cinema;
 
     public ApolloKinoSession(Integer sessionId) {
         this.sessionId = sessionId;

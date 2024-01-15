@@ -6,6 +6,7 @@ import java.util.Optional;
 
 public enum ApolloKinoState {
     INITIAL(""),
+    SELECT_CINEMA("Select a cinema:"),
     SELECT_DATE("Select a day:"),
     SELECT_MOVIE("Select a movie:"),
     SELECT_TIME("Select a time:"),

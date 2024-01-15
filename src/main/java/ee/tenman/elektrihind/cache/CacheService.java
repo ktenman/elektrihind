@@ -2,6 +2,7 @@ package ee.tenman.elektrihind.cache;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import ee.tenman.elektrihind.apollo.ApolloKinoSession;
+import ee.tenman.elektrihind.apollo.Cinema;
 import ee.tenman.elektrihind.apollo.Option;
 import ee.tenman.elektrihind.electricity.ElectricityPrice;
 import ee.tenman.elektrihind.electricity.ElectricityPricesService;
@@ -23,6 +24,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -275,7 +277,7 @@ public class CacheService {
         log.info("Rebooking sessions updated in cache");
     }
 
-    public void updateApolloKinoData(Map<LocalDate, List<Option>> data) {
+    public void updateApolloKinoData(Map<Cinema, Map<LocalDate, List<Option>>> data) {
         log.info("Updating Apollo Kino data in cache");
         String serializedData = JsonUtil.serializeMap(data);
         Optional.ofNullable(cacheManager.getCache(APOLLO_KINO_CACHE))
@@ -283,18 +285,17 @@ public class CacheService {
         log.info("Apollo Kino data updated in cache");
     }
 
-    public Map<LocalDate, List<Option>> getApolloKinoData() {
+    public Map<Cinema, Map<LocalDate, List<Option>>> getApolloKinoData() {
         log.info("Getting Apollo Kino data from cache");
         Optional<String> dataJson = Optional.ofNullable(cacheManager.getCache(APOLLO_KINO_CACHE))
                 .map(c -> c.get(APOLLO_KINO_CACHE, String.class));
         if (dataJson.isEmpty()) {
             log.info("Apollo Kino data not found in cache");
-            return new HashMap<>();
+            return Collections.emptyMap();
         }
-
-        TypeReference<Map<LocalDate, List<Option>>> typeReference = new TypeReference<>() {
+        TypeReference<Map<Cinema, Map<LocalDate, List<Option>>>> typeReference = new TypeReference<>() {
         };
-        Map<LocalDate, List<Option>> result = JsonUtil.deserializeMap(dataJson.get(), typeReference);
+        Map<Cinema, Map<LocalDate, List<Option>>> result = JsonUtil.deserializeMap(dataJson.get(), typeReference);
         log.info("Apollo Kino data retrieved from cache");
         return result;
     }

@@ -57,10 +57,8 @@ public class ApolloKinoService {
 
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final DateTimeFormatter SHORT_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM");
-    private static final String ULEMISTE = "https://www.apollokino.ee/schedule?theatreAreaID=1017";
-    private static final String MUSTAMAE = "https://www.apollokino.ee/schedule?theatreAreaID=1007";
     private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
-    private Map<LocalDate, List<Option>> options = new TreeMap<>();
+    private Map<Cinema, Map<LocalDate, List<Option>>> options = new TreeMap<>();
     @Value("${apollo-kino.username}")
     private String username;
     @Value("${apollo-kino.password}")
@@ -130,98 +128,107 @@ public class ApolloKinoService {
                     .map(d -> d.format(DATE_TIME_FORMATTER))
                     .toList();
 
-            options.keySet().stream()
-                    .map(optionList -> optionList.format(DATE_TIME_FORMATTER))
-                    .filter(day -> !acceptedDays.contains(day))
-                    .forEach(s -> options.remove(LocalDate.parse(s, DATE_TIME_FORMATTER)));
-            open(ULEMISTE);
-            getWebDriver().manage().window().maximize();
-            $(".cky-btn-accept").click();
-            ElementsCollection elements = $$(".day-picker__choice");
-            for (int i = 0; i < elements.size(); i++) {
-                elements = $$(".day-picker__choice");
-                SelenideElement dayChoice = elements.get(i);
-                String selectedDayValue = dayChoice.find(tagName("input")).val();
-                if (!acceptedDays.contains(selectedDayValue)) {
-                    continue;
-                }
-                log.info("Selected day {}", selectedDayValue);
-                dayChoice.click();
-                sleep(2000);
-                TreeMap<String, String> movieTitles = new TreeMap<>();
-                $$(".schedule-card__title")
-                        .forEach(m -> movieTitles.put(m.text(), m.parent().parent().find(tagName("a")).getAttribute("href")));
-
-                List<Option> movieOptions = new ArrayList<>();
-                for (Map.Entry<String, String> element : movieTitles.entrySet()) {
-                    open(element.getValue());
-                    sleep(444);
-                    SelenideElement originalTitleElement = $(".movie-details__original-title");
-                    String movieOriginalTitle = "";
-                    if (originalTitleElement.exists()) {
-                        String text = originalTitleElement.text();
-                        asyncRunner.run(() -> movieDetailsService.fetchMovieDetails(text));
-                        movieOriginalTitle = text;
-                    }
-                    $(".movie-details__button").click();
-                    sleep(444);
-                    List<ScreenTime> screenTimes = new ArrayList<>();
-                    ElementsCollection screeningElements = $$(className("screening-card__top"));
-                    for (SelenideElement screeningElement : screeningElements) {
-                        String hallName = screeningElement.find(className("screening-card__hall")).text();
-                        String time = screeningElement.find(className("screening-card__time")).text();
-                        if (screenConfig.isValidHall(hallName)) {
-                            ScreenTime screenTime = ScreenTime.builder()
-                                    .time(LocalTime.parse(time))
-                                    .url(screeningElement.parent().find(tagName("a")).getAttribute("href"))
-                                    .hall(hallName)
-                                    .build();
-                            screenTimes.add(screenTime);
-                        }
-                    }
-                    Option movieOption = Option.builder()
-                            .movie(element.getKey())
-                            .screenTimes(screenTimes)
-                            .movieOriginalTitle(movieOriginalTitle)
-                            .build();
-                    if (screenTimes.isEmpty()) {
-                        continue;
-                    }
-                    movieOptions.add(movieOption);
-                }
-                LocalDate chosenDate = Optional.ofNullable(selectedDayValue)
-                        .map(d -> LocalDate.parse(d, DATE_TIME_FORMATTER))
-                        .orElseThrow(() -> new RuntimeException("Date not found"));
-                this.options.put(chosenDate, movieOptions);
-                if (this.options.size() == 4) {
-                    break;
-                }
-                open(ULEMISTE);
-            }
-            for (List<Option> optionList : options.values()) {
-                for (Option option : optionList) {
-                    movieDetailsService.fetchMovieDetails(option.getMovieOriginalTitle())
-                            .ifPresent(d -> {
-                                try {
-                                    option.setImdbRating(Double.parseDouble(d.getImdbRating()));
-                                } catch (Exception e) {
-                                    option.setImdbRating(0.0);
-                                    log.error("Failed to parse rating", e);
-                                }
-                            });
-                }
+            for (Cinema cinema : Cinema.values()) {
+                options.put(cinema, new LinkedHashMap<>());
+                init(cinema, acceptedDays);
             }
             Selenide.closeWindow();
         } catch (Exception e) {
             log.error("Failed to init", e);
         } finally {
-            Selenide.closeWebDriver();
             log.info("Init took {} seconds", TimeUtility.durationInSeconds(startTime).asString());
         }
     }
 
+    private void init(Cinema cinema, List<String> acceptedDays) {
+        Optional.ofNullable(options.get(cinema)).ifPresent(cinemaOptions ->
+                cinemaOptions.keySet().stream()
+                        .map(optionList -> optionList.format(DATE_TIME_FORMATTER))
+                        .filter(day -> !acceptedDays.contains(day))
+                        .forEach(s -> cinemaOptions.remove(LocalDate.parse(s, DATE_TIME_FORMATTER)))
+        );
+        open(cinema.getUrl());
+        getWebDriver().manage().window().maximize();
+        $(".cky-btn-accept").click();
+        ElementsCollection elements = $$(".day-picker__choice");
+        for (int i = 0; i < elements.size(); i++) {
+            elements = $$(".day-picker__choice");
+            SelenideElement dayChoice = elements.get(i);
+            String selectedDayValue = dayChoice.find(tagName("input")).val();
+            if (!acceptedDays.contains(selectedDayValue)) {
+                continue;
+            }
+            log.info("Selected day {} for cinema {}", selectedDayValue, cinema);
+            dayChoice.click();
+            sleep(2000);
+            TreeMap<String, String> movieTitles = new TreeMap<>();
+            $$(".schedule-card__title")
+                    .forEach(m -> movieTitles.put(m.text(), m.parent().parent().find(tagName("a")).getAttribute("href")));
+
+            List<Option> movieOptions = new ArrayList<>();
+            for (Map.Entry<String, String> element : movieTitles.entrySet()) {
+                open(element.getValue());
+                sleep(444);
+                SelenideElement originalTitleElement = $(".movie-details__original-title");
+                String movieOriginalTitle = "";
+                if (originalTitleElement.exists()) {
+                    String text = originalTitleElement.text();
+                    asyncRunner.run(() -> movieDetailsService.fetchMovieDetails(text));
+                    movieOriginalTitle = text;
+                }
+                $(".movie-details__button").click();
+                sleep(444);
+                List<ScreenTime> screenTimes = new ArrayList<>();
+                ElementsCollection screeningElements = $$(className("screening-card__top"));
+                for (SelenideElement screeningElement : screeningElements) {
+                    String hallName = screeningElement.find(className("screening-card__hall")).text();
+                    String time = screeningElement.find(className("screening-card__time")).text();
+                    if (screenConfig.isValidHall(cinema, hallName)) {
+                        ScreenTime screenTime = ScreenTime.builder()
+                                .time(LocalTime.parse(time))
+                                .url(screeningElement.parent().find(tagName("a")).getAttribute("href"))
+                                .hall(hallName)
+                                .build();
+                        screenTimes.add(screenTime);
+                    }
+                }
+                Option movieOption = Option.builder()
+                        .movie(element.getKey())
+                        .screenTimes(screenTimes)
+                        .movieOriginalTitle(movieOriginalTitle)
+                        .build();
+                if (screenTimes.isEmpty()) {
+                    continue;
+                }
+                movieOptions.add(movieOption);
+            }
+            LocalDate chosenDate = Optional.ofNullable(selectedDayValue)
+                    .map(d -> LocalDate.parse(d, DATE_TIME_FORMATTER))
+                    .orElseThrow(() -> new RuntimeException("Date not found"));
+            this.options.get(cinema).put(chosenDate, movieOptions);
+            if (this.options.get(cinema).size() == 4) {
+                break;
+            }
+            open(cinema.getUrl());
+        }
+        for (List<Option> optionList : options.get(cinema).values()) {
+            for (Option option : optionList) {
+                movieDetailsService.fetchMovieDetails(option.getMovieOriginalTitle())
+                        .ifPresent(d -> {
+                            try {
+                                option.setImdbRating(Double.parseDouble(d.getImdbRating()));
+                            } catch (Exception e) {
+                                option.setImdbRating(0.0);
+                                log.error("Failed to parse rating", e);
+                            }
+                        });
+            }
+        }
+        Selenide.clearBrowserCookies();
+    }
+
     public Optional<ScreenTime> screenTime(ApolloKinoSession session) {
-        return this.options.get(session.getSelectedDate()).stream()
+        return this.options.get(session.getCinema()).get(session.getSelectedDate()).stream()
                 .filter(screen -> screen.getMovie().equals(session.getSelectedMovie()))
                 .map(Option::getScreenTimes)
                 .flatMap(List::stream)
@@ -229,10 +236,10 @@ public class ApolloKinoService {
                 .findFirst();
     }
 
-    public Map<LocalDate, List<Option>> getOptions() {
+    public Map<LocalDate, List<Option>> getOptions(Cinema cinema) {
         LocalDateTime currentDateTime = LocalDateTime.now();
         Map<LocalDate, List<Option>> filteredOptions = new LinkedHashMap<>();
-        for (Map.Entry<LocalDate, List<Option>> optionEntry : options.entrySet()) {
+        for (Map.Entry<LocalDate, List<Option>> optionEntry : options.get(cinema).entrySet()) {
             List<Option> movieOptions = optionEntry.getValue();
             List<Option> newMovieOptions = new ArrayList<>();
             for (Option movieOption : movieOptions) {
@@ -297,7 +304,7 @@ public class ApolloKinoService {
             String uuid = extractUUID(currentUrl);
             sleep(333);
             String saal = $(".schedule-card__title-container").findAll(tagName("p")).last().text();
-            Screen screen = screenConfig.getScreen(saal);
+            Screen screen = screenConfig.getScreen(session.getCinema(), saal);
             boolean validSeat = screen.isValidSeat(rowAndSeat);
             if (!validSeat) {
                 throw new RuntimeException("Invalid seat");

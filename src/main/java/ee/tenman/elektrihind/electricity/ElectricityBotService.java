@@ -5,6 +5,7 @@ import com.google.common.cache.CacheBuilder;
 import ee.tenman.elektrihind.apollo.ApolloKinoService;
 import ee.tenman.elektrihind.apollo.ApolloKinoSession;
 import ee.tenman.elektrihind.apollo.ApolloKinoState;
+import ee.tenman.elektrihind.apollo.Cinema;
 import ee.tenman.elektrihind.apollo.Option;
 import ee.tenman.elektrihind.apollo.Option.ScreenTime;
 import ee.tenman.elektrihind.apollo.ReBookingService;
@@ -414,10 +415,20 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         };
         switch (session.getCurrentState()) {
             case INITIAL -> {
+                for (Cinema cinema : Cinema.values()) {
+                    List<InlineKeyboardButton> rowInline = new ArrayList<>();
+                    InlineKeyboardButton button = new InlineKeyboardButton(cinema.getName());
+                    button.setCallbackData(getCallbackData.apply(cinema.name()));
+                    rowInline.add(button);
+                    rowsInline.add(rowInline);
+                }
+            }
+            case SELECT_CINEMA -> {
+                session.setCinema(Cinema.valueOf(chosenOption));
                 LocalDate currentDate = LocalDate.now();
                 List<InlineKeyboardButton> rowInline = new ArrayList<>();
                 int count = 0;
-                for (LocalDate localDate : apolloKinoService.getOptions().keySet()) {
+                for (LocalDate localDate : apolloKinoService.getOptions(session.getCinema()).keySet()) {
                     String text = localDate.format(DATE_TIME_FORMATTER);
                     if (localDate.equals(currentDate)) {
                         text = "Täna";
@@ -436,7 +447,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             case SELECT_DATE -> {
                 LocalDate selectedDate = LocalDate.parse(chosenOption);
                 session.setSelectedDate(selectedDate);
-                List<Option> optionsList = apolloKinoService.getOptions().get(selectedDate);
+                List<Option> optionsList = apolloKinoService.getOptions(session.getCinema()).get(selectedDate);
                 if (optionsList == null || optionsList.isEmpty()) {
                     Message message = sendMessage(chatId, "No movies found for " + selectedDate.format(DATE_TIME_FORMATTER));
                     messagesToDelete.put(session.getSessionId().toString(), message.getMessageId());
@@ -455,7 +466,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             case SELECT_MOVIE -> {
                 session.setSelectedMovie(chosenOption);
                 List<InlineKeyboardButton> rowInline = new ArrayList<>();
-                apolloKinoService.getOptions().get(session.getSelectedDate()).stream()
+                apolloKinoService.getOptions(session.getCinema()).get(session.getSelectedDate()).stream()
                         .filter(screen -> screen.getMovie().equals(session.getSelectedMovie()))
                         .map(Option::getScreenTimes)
                         .flatMap(List::stream)
@@ -473,7 +484,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 ScreenTime screenTime = apolloKinoService.screenTime(session)
                         .orElseThrow(() -> new IllegalArgumentException("Screen time not found for "
                                 + session.getSelectedDate() + " " + session.getSelectedMovie() + " " + session.getSelectedTime()));
-                Map<String, Integer> seatCounts = screenConfiguration.getScreen(screenTime.getHall()).getSeatCounts();
+                Map<String, Integer> seatCounts = screenConfiguration.getScreen(session.getCinema(), screenTime.getHall()).getSeatCounts();
                 List<InlineKeyboardButton> rowInline = new ArrayList<>();
                 for (Entry<String, Integer> entry : seatCounts.entrySet()) {
                     InlineKeyboardButton button = new InlineKeyboardButton(entry.getKey());
@@ -488,7 +499,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 ScreenTime screenTime = apolloKinoService.screenTime(session)
                         .orElseThrow(() -> new IllegalArgumentException("Screen time not found for "
                                 + session.getSelectedDate() + " " + session.getSelectedMovie() + " " + session.getSelectedTime()));
-                int maxSeats = screenConfiguration.getScreen(screenTime.getHall()).getSeatCounts().get(session.getSelectedRow());
+                int maxSeats = screenConfiguration.getScreen(session.getCinema(), screenTime.getHall()).getSeatCounts().get(session.getSelectedRow());
                 for (int i = 1; i <= maxSeats; i++) {
                     List<InlineKeyboardButton> rowInline = getRowWithButton(getCallbackData, i);
                     rowsInline.add(rowInline);

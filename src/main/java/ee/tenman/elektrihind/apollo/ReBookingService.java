@@ -142,8 +142,8 @@ public class ReBookingService {
             Set<StarSeat> actualSeats = bookingResult.get().getValue();
             String message = String.format("Re-booked: %s %s wanted: %s on %s at %s",
                     session.getSelectedMovie(),
-                    actualSeats,
-                    session.getSelectedStarSeats(),
+                    session.formatStarSeats(actualSeats),
+                    session.formatStarSeats(session.getSelectedStarSeats()),
                     session.getSelectedDate().format(DATE_TIME_FORMATTER),
                     session.getSelectedTime());
             log.info(message);

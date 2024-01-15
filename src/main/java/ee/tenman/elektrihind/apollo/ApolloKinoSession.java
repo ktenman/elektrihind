@@ -22,6 +22,7 @@ import static ee.tenman.elektrihind.apollo.ApolloKinoState.COMPLETED;
 import static ee.tenman.elektrihind.apollo.ApolloKinoState.DECLINED;
 import static ee.tenman.elektrihind.apollo.ApolloKinoState.INITIAL;
 import static java.lang.Integer.parseInt;
+import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
@@ -108,8 +109,10 @@ public class ApolloKinoSession {
                     Collections.sort(seats);
                     return entry.getKey() + "K" + formatRange(seats);
                 })
-                .collect(joining(", "))
-                .formatted("[%s]");
+                .collect(collectingAndThen(
+                        joining(", "),
+                        result -> "[" + result + "]"
+                ));
     }
 
     public void updateLastInteractionTime() {

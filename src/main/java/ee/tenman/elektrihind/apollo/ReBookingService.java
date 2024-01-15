@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
 import static ee.tenman.elektrihind.apollo.ApolloKinoService.DATE_TIME_FORMATTER;
 import static java.util.Comparator.comparing;
@@ -97,9 +98,10 @@ public class ReBookingService {
         if (lock.tryLock()) {
             try {
                 AtomicBoolean rebooked = new AtomicBoolean(false);
+                Predicate<ApolloKinoSession> shouldRebook = session -> cacheService.isRebookEverything() || isReadyToReBook(session);
                 sessions.entrySet().stream()
                         .sorted(comparing((Entry<UUID, ApolloKinoSession> o) -> o.getValue().getUpdatedAt()).reversed())
-                        .filter(entry -> isReadyToReBook(entry.getValue()))
+                        .filter(entry -> shouldRebook.test(entry.getValue()))
                         .forEach(entry -> {
                             log.info(REBOOKING_SESSION_TEMPLATE, entry.getKey());
                             ApolloKinoSession rebookedSession = reBook(entry.getValue());
@@ -108,18 +110,7 @@ public class ReBookingService {
                             rebooked.set(true);
                             log.info("Rebooked session {}", entry.getKey());
                         });
-                if (cacheService.isRebookEverything()) {
-                    log.info("Rebooking everything");
-                    sessions.forEach((k, v) -> {
-                        log.info(REBOOKING_SESSION_TEMPLATE, k);
-                        ApolloKinoSession rebookedSession = reBook(v);
-                        sessions.remove(k);
-                        sessions.put(k, rebookedSession);
-                        rebooked.set(true);
-                        log.info("Rebooked session {}", k);
-                    });
-                    cacheService.setRebookEverything(false);
-                }
+                cacheService.setRebookEverything(false);
                 if (rebooked.get()) {
                     updateLastInteractionTimes();
                 }

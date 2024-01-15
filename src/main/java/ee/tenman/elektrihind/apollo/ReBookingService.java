@@ -108,18 +108,6 @@ public class ReBookingService {
                             rebooked.set(true);
                             log.info("Rebooked session {}", entry.getKey());
                         });
-                if (cacheService.isRebookEverything()) {
-                    log.info("Rebooking everything");
-                    sessions.forEach((k, v) -> {
-                        log.info(REBOOKING_SESSION_TEMPLATE, k);
-                        ApolloKinoSession rebookedSession = reBook(v);
-                        sessions.remove(k);
-                        sessions.put(k, rebookedSession);
-                        rebooked.set(true);
-                        log.info("Rebooked session {}", k);
-                    });
-                    cacheService.setRebookEverything(false);
-                }
                 if (rebooked.get()) {
                     updateLastInteractionTimes();
                 }

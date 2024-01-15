@@ -360,12 +360,9 @@ public class ApolloKinoService {
                 return book(session);
             }
             headerTimer.click();
-
             int seconds = toSeconds($(".cart-session-timer").text()) - 10;
             CountdownTimer.startTimer(seconds);
-
             $$(By.tagName("button")).find(text("Eemalda piletid")).click();
-            cacheService.setRebookEverything(true);
             return book(session);
         } catch (Exception e) {
             log.error("Failed to re-book", e);

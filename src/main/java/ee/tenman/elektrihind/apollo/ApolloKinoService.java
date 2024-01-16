@@ -133,7 +133,7 @@ public class ApolloKinoService {
         } catch (Exception e) {
             log.error("Failed to init", e);
         } finally {
-            Selenide.closeWebDriver();
+            Selenide.closeWindow();
             log.info("Init took {} seconds", TimeUtility.durationInSeconds(startTime).asString());
         }
     }
@@ -339,7 +339,7 @@ public class ApolloKinoService {
             log.error("Failed to book", e);
             return Optional.empty();
         } finally {
-            Selenide.closeWebDriver();
+            Selenide.closeWindow();
         }
     }
 
@@ -361,7 +361,7 @@ public class ApolloKinoService {
                 return book(session);
             }
             headerTimer.click();
-            int seconds = toSeconds($(".cart-session-timer").text()) - 5;
+            int seconds = toSeconds($(".cart-session-timer").text()) - 4;
             CountdownTimer.startTimer(seconds);
             $$(By.tagName("button")).find(text("Eemalda piletid")).click();
             return book(session);
@@ -369,7 +369,7 @@ public class ApolloKinoService {
             log.error("Failed to re-book", e);
             return Optional.empty();
         } finally {
-            Selenide.closeWebDriver();
+            Selenide.closeWindow();
         }
 
     }

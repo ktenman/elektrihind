@@ -157,7 +157,7 @@ public class ReBookingService {
             return false;
         }
         long seconds = Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds();
-        return seconds > 850;
+        return seconds > 855;
     }
 
     public int getActiveBookingCount() {

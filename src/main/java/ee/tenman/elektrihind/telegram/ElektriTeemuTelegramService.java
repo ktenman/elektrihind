@@ -27,7 +27,7 @@ public class ElektriTeemuTelegramService {
         log.info("Message sent to chat: {}, message: {}", chatId, message);
     }
 
-    @Retryable(maxAttempts = 6, backoff = @Backoff(delay = 1500))
+    @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 7777))
     public void sendFileToTelegram(File file, long chatId) {
         log.info("Sending file to chat: {} file: {}", chatId, file.getName());
         MultipartFile multipartFile = new CustomMultipartFile(file);

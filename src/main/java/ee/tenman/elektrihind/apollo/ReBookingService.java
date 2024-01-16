@@ -102,7 +102,7 @@ public class ReBookingService {
                         .filter(entry -> isReadyToReBook(entry.getValue()))
                         .forEach(entry -> {
                             log.info(REBOOKING_SESSION_TEMPLATE, entry.getKey());
-                            ApolloKinoSession rebookedSession = reBook(entry.getValue());
+                            ApolloKinoSession rebookedSession = book(entry.getValue());
                             sessions.remove(entry.getKey());
                             sessions.put(entry.getKey(), rebookedSession);
                             rebooked.set(true);
@@ -122,7 +122,7 @@ public class ReBookingService {
         }
     }
 
-    private ApolloKinoSession reBook(ApolloKinoSession session) {
+    private ApolloKinoSession book(ApolloKinoSession session) {
         log.info(REBOOKING_SESSION_TEMPLATE, session.getSessionId());
 
         Optional<Entry<File, Set<StarSeat>>> bookingResult = apolloKinoService.reBook(session);
@@ -135,7 +135,11 @@ public class ReBookingService {
                     session.getSelectedDate().format(DATE_TIME_FORMATTER));
             log.info(message);
             elektriTeemuTelegramService.sendToTelegram(message, session.getChatId());
-            elektriTeemuTelegramService.sendFileToTelegram(bookingResult.get().getKey(), session.getChatId());
+            try {
+                elektriTeemuTelegramService.sendFileToTelegram(bookingResult.get().getKey(), session.getChatId());
+            } catch (Exception e) {
+                log.error("Failed to send file to telegram", e);
+            }
         }
         session.updateLastInteractionTime();
         return session;
@@ -153,7 +157,7 @@ public class ReBookingService {
             return false;
         }
         long seconds = Duration.between(session.getUpdatedAt(), LocalDateTime.now()).toSeconds();
-        return seconds > 840;
+        return seconds > 850;
     }
 
     public int getActiveBookingCount() {

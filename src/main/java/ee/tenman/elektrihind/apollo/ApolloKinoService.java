@@ -359,7 +359,7 @@ public class ApolloKinoService {
                 return book(session);
             }
             headerTimer.click();
-            int seconds = toSeconds($(".cart-session-timer").text()) - 4;
+            int seconds = toSeconds($(".cart-session-timer").text()) - 7;
             CountdownTimer.startTimer(seconds);
             $$(By.tagName("button")).find(text("Eemalda piletid")).click();
             return book(session);

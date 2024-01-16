@@ -60,7 +60,7 @@ public class SchedulingService {
         cacheService.setLatestPrices(electricityPrices);
     }
 
-    @Scheduled(cron = "0 58/10 * * * ?") // Runs every 60 minutes
+    @Scheduled(cron = "0 29 * * * ?") // Runs every 60 minutes
     public void fetchEuribor() {
         log.info("Fetching Euribor rates...");
         euriborRateFetcher.fetchEuriborRates();

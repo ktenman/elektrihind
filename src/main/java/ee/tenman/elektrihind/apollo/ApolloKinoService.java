@@ -350,6 +350,7 @@ public class ApolloKinoService {
             return Optional.empty();
         }
         try {
+            Selenide.clearBrowserCookies();
             open("https://www.apollokino.ee/account/tickets");
             getWebDriver().manage().window().maximize();
             $(".cky-btn-accept").click();

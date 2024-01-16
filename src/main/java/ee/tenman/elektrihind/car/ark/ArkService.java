@@ -180,7 +180,7 @@ public class ArkService implements CaptchaSolver {
         );
 
         log.info("Found car details for regNr: {}", regNr);
-        fourThreadExecutor.submit(Selenide::closeWindow);
+        Selenide.closeWindow();
         return carData;
     }
 

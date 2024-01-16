@@ -151,7 +151,7 @@ public class Auto24Service implements CaptchaSolver {
         result.put("Turuhind", split[1] + "\n");
         result.put("Reg nr", regNr);
         log.info("Price for regNr: {} is {}", regNr, response);
-        fourThreadExecutor.submit(Selenide::closeWindow);
+        Selenide.closeWindow();
         return result;
     }
 
@@ -226,7 +226,7 @@ public class Auto24Service implements CaptchaSolver {
             FileUtils.copyFile(screenshot, new File(DIRECTORY_PATH_2 + "/" + solveCaptcha.toUpperCase() + ".png"));
             fileNames.add(solveCaptcha.toUpperCase());
         }
-        xThreadExecutor.submit(Selenide::closeWindow);
+        Selenide.closeWindow();
     }
 
     @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1500))
@@ -269,7 +269,7 @@ public class Auto24Service implements CaptchaSolver {
         }
 
         log.info("Found car details for regNr: {}", regNr);
-        fourThreadExecutor.submit(Selenide::closeWindow);
+        Selenide.closeWindow();
         return carDetails;
     }
 

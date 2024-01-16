@@ -129,11 +129,10 @@ public class ApolloKinoService {
             for (Cinema cinema : Cinema.values()) {
                 init(cinema, acceptedDays);
             }
-            Selenide.closeWindow();
         } catch (Exception e) {
             log.error("Failed to init", e);
         } finally {
-            Selenide.closeWindow();
+            Selenide.closeWebDriver();
             log.info("Init took {} seconds", TimeUtility.durationInSeconds(startTime).asString());
         }
     }
@@ -339,7 +338,7 @@ public class ApolloKinoService {
             log.error("Failed to book", e);
             return Optional.empty();
         } finally {
-            Selenide.closeWindow();
+            Selenide.closeWebDriver();
         }
     }
 
@@ -350,7 +349,6 @@ public class ApolloKinoService {
             return Optional.empty();
         }
         try {
-            Selenide.clearBrowserCookies();
             open("https://www.apollokino.ee/account/tickets");
             getWebDriver().manage().window().maximize();
             $(".cky-btn-accept").click();
@@ -369,7 +367,7 @@ public class ApolloKinoService {
             log.error("Failed to re-book", e);
             return Optional.empty();
         } finally {
-            Selenide.closeWindow();
+            Selenide.closeWebDriver();
         }
 
     }

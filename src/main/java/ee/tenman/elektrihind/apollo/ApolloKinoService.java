@@ -368,6 +368,8 @@ public class ApolloKinoService {
         } catch (Exception e) {
             log.error("Failed to re-book", e);
             return Optional.empty();
+        } finally {
+            Selenide.closeWebDriver();
         }
 
     }

@@ -29,7 +29,7 @@ jobs:
       - run: mvn -T 1C --quiet -Dparallel=methods -DthreadCount=2 --batch-mode test
 
   build_and_push:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'repository_dispatch'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

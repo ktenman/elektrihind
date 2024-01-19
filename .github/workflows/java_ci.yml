@@ -29,7 +29,7 @@ jobs:
       - run: mvn -T 1C --quiet -Dparallel=methods -DthreadCount=2 --batch-mode test
 
   build_and_push:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'repository_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -56,12 +56,11 @@ jobs:
   #          image: "${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}"
   #          fail-build: false  # or false, depending on how you want to handle scan failures
 
-
-  deploy:
-    if: github.ref == 'refs/heads/main' || github.event_name == 'repository_dispatch'
+  deploy_on_push:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'repository_dispatch'
     runs-on: ubuntu-latest
     needs: [ test, build_and_push ]
-    steps:
+    steps: &deploy_steps
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
@@ -110,3 +109,9 @@ jobs:
 
       - name: Cleanup on runner
         run: rm .env
+
+  deploy_on_dispatch:
+    if: github.event_name == 'repository_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - *deploy_steps

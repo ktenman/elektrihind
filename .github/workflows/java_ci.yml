@@ -60,7 +60,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name != 'repository_dispatch'
     runs-on: ubuntu-latest
     needs: [ test, build_and_push ]
-    steps: &deploy_steps
+    steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
@@ -114,4 +114,51 @@ jobs:
     if: github.event_name == 'repository_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - *deploy_steps
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add SSH key of tenman.ee to known hosts
+        run: echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+
+      - name: Create .env file
+        run: |
+          echo "TELEGRAM_ELEKTRITEEMU_TOKEN=${{ secrets.TELEGRAM_ELEKTRITEEMU_TOKEN }}" > .env
+          echo "TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}" >> .env
+          echo "OMDB_API_KEY=${{ secrets.OMDB_API_KEY }}" >> .env
+          echo "TWO_CAPTCHA_API_KEY=${{ secrets.TWO_CAPTCHA_API_KEY }}" >> .env
+          echo "DIGITAL_OCEAN_API_TOKEN=${{ secrets.DIGITAL_OCEAN_API_TOKEN }}" >> .env
+          echo "SCRAPENINJA_API_KEY=${{ secrets.SCRAPENINJA_API_KEY }}" >> .env
+          echo "VISION_BASE64_ENCODED_KEY=${{ secrets.VISION_BASE64_ENCODED_KEY }}" >> .env
+          echo "OPENAI_API_TOKEN=${{ secrets.OPENAI_API_TOKEN }}" >> .env
+          echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+          echo "RABBITMQ_USER=${{ secrets.RABBITMQ_USER }}" >> .env
+          echo "RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}" >> .env
+          echo "APOLLO_KINO_USERNAME=${{ secrets.APOLLO_KINO_USERNAME }}" >> .env
+          echo "APOLLO_KINO_PASSWORD=${{ secrets.APOLLO_KINO_PASSWORD }}" >> .env
+
+      - name: Copy .env and docker-compose.yml files to server
+        run: |
+          scp .env docker-compose.yml githubuser@tenman.ee:~/  # Copying to the home directory of githubuser
+      - name: Deploy with Docker Compose
+        run: |
+          ssh githubuser@tenman.ee "\
+            docker-compose down || true && \
+            docker rm elektrihind_main -f || true && \
+            docker rm captcha_solver_main -f || true && \
+            docker rm automaks_main -f || true && \
+            docker pull '$DOCKER_IMAGE_NAME:latest' || true && \
+            docker pull ktenman/captcha-solver:latest || true && \
+            docker pull ktenman/automaks:latest || true && \
+            docker-compose up -d && \
+            echo 'Pruning unused Docker images...' && \
+            docker image prune -af"
+
+      - name: Cleanup on server
+        run: ssh githubuser@tenman.ee "rm ~/docker-compose.yml ~/.env"
+
+      - name: Cleanup on runner
+        run: rm .env

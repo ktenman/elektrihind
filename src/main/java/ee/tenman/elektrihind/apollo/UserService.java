@@ -42,7 +42,7 @@ public class UserService {
 		return users.stream()
 				.filter(user -> user.username().equals(username))
 				.findFirst()
-				.orElseThrow(() -> new RuntimeException(STR."User not found: \{username}"));
+				.orElseThrow(() -> new RuntimeException("User not found: " + username));
 	}
 	
 	public User getRandomUser() {

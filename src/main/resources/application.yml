@@ -69,4 +69,5 @@ logging:
 apollo-kino:
   username: ${APOLLO_KINO_USERNAME}
   password: ${APOLLO_KINO_PASSWORD}
+  username-password-pairs: ${APOLLO_KINO_USERNAME_PASSWORD_PAIRS:}
 

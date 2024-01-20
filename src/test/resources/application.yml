@@ -48,4 +48,5 @@ openai:
 
 apollo-kino:
   username:
-  password: $
+  password:
+  username-password-pairs:

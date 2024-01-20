@@ -58,10 +58,12 @@ public class ApolloKinoService {
     public static final DateTimeFormatter SHORT_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM");
     private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     private Map<Cinema, Map<LocalDate, List<Option>>> options = new TreeMap<>();
+    
     @Value("${apollo-kino.username}")
     private String username;
     @Value("${apollo-kino.password}")
     private String password;
+    
     @Resource
     private ScreenConfiguration screenConfig;
     @Resource
@@ -203,7 +205,8 @@ public class ApolloKinoService {
                     .orElseThrow(() -> new RuntimeException("Date not found"));
             this.options.get(cinema).put(chosenDate, movieOptions);
             if (this.options.get(cinema).size() == 4) {
-                break;
+                Selenide.clearBrowserCookies();
+                return;
             }
             open(cinema.getUrl());
         }
@@ -220,7 +223,6 @@ public class ApolloKinoService {
                         });
             }
         }
-        Selenide.clearBrowserCookies();
     }
 
     public Optional<ScreenTime> screenTime(ApolloKinoSession session) {

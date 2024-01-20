@@ -86,6 +86,7 @@ jobs:
           echo "RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}" >> .env
           echo "APOLLO_KINO_USERNAME=${{ secrets.APOLLO_KINO_USERNAME }}" >> .env
           echo "APOLLO_KINO_PASSWORD=${{ secrets.APOLLO_KINO_PASSWORD }}" >> .env
+          echo "APOLLO_KINO_USERNAME_PASSWORD_PAIRS=${{ secrets.APOLLO_KINO_USERNAME_PASSWORD_PAIRS }}" >> .env
 
       - name: Copy .env and docker-compose.yml files to server
         run: |
@@ -139,6 +140,7 @@ jobs:
           echo "RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}" >> .env
           echo "APOLLO_KINO_USERNAME=${{ secrets.APOLLO_KINO_USERNAME }}" >> .env
           echo "APOLLO_KINO_PASSWORD=${{ secrets.APOLLO_KINO_PASSWORD }}" >> .env
+          echo "APOLLO_KINO_USERNAME_PASSWORD_PAIRS=${{ secrets.APOLLO_KINO_USERNAME_PASSWORD_PAIRS }}" >> .env
 
       - name: Copy .env and docker-compose.yml files to server
         run: |

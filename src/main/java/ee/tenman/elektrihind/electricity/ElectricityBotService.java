@@ -277,6 +277,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             log.info("Received callback query to clear cache for regNr: {}", arkMatcher.group(1));
             String regNr = arkMatcher.group(1).toUpperCase();
             cacheService.evictCacheEntry(regNr);
+            sendMessage(chatId, "Cache cleared for " + regNr);
             return;
         }
         Matcher apolloKinoSessionIdMatcher = APOLLO_KINO_SESSION_ID_PATTERN.matcher(callData);

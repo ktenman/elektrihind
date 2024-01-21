@@ -27,7 +27,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
@@ -48,10 +47,6 @@ public class ArkService implements CaptchaSolver {
 
     private static final String SITE_KEY = "6LepmygUAAAAAJB-Oalk-YSrlPj1dilm95QRY66J";
     private static final String PAGE_URL = "https://eteenindus.mnt.ee/public/soidukTaustakontroll.jsf";
-    private static final String AUTO_MAKS_URL = "https://www.err.ee/1609128527/uuendatud-kalkulaator-vaata-kui-suur-tuleb-sinu-automaks";
-
-    @Resource(name = "fourThreadExecutor")
-    private ExecutorService fourThreadExecutor;
 
     @Resource
     private TwoCaptchaSolverService recaptchaSolverService;
@@ -110,7 +105,11 @@ public class ArkService implements CaptchaSolver {
     }
 
     private static void addLatestOdometerFromPDF(Map<String, String> carDetails) {
-        $$(tagName("a")).filter(text("Salvestan")).last().click();
+        ElementsCollection elements = $$(tagName("a")).filter(text("Salvestan"));
+        if (elements.isEmpty() || elements.size() == 1) {
+            return;
+        }
+        elements.last().click();
         File downloadsMainFolder = new File(Configuration.downloadsFolder);
         Optional<File> latestPDF = Stream.of(Optional.ofNullable(downloadsMainFolder.listFiles(File::isDirectory))
                         .orElse(new File[0]))
@@ -127,7 +126,6 @@ public class ArkService implements CaptchaSolver {
 
     @SneakyThrows
     @Cacheable(value = ONE_MONTH_CACHE_5, key = "#regNr")
-    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public Map<String, String> carDetails(String regNr, String captchaToken, Map<String, String> carData, CarSearchUpdateListener updateListener) {
         if (StringUtils.isBlank(captchaToken)) {
             throw new RuntimeException("Captcha token is blank");

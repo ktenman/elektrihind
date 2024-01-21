@@ -18,7 +18,7 @@ class ArkServiceTest {
     @Disabled
     void carDetails() {
         String captchaToken = arkService.getCaptchaToken();
-        Map<String, String> stringStringMap = arkService.carDetails("876BCH", captchaToken, new HashMap<>(), (
+        Map<String, String> stringStringMap = arkService.carDetails("205HKH", captchaToken, new HashMap<>(), (
                 carDetails, isFinalUpdate) -> System.out.println(carDetails));
     }
 }

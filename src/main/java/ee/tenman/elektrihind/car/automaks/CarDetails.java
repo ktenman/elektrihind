@@ -55,10 +55,18 @@ public class CarDetails {
         this.carType = extractCarType(carDataMap.get(CATEGORY_KEY));
         setCO2Emissions(carDataMap);
         this.electric = ELECTRIC_FUEL_TYPE.equalsIgnoreCase(carDataMap.get(FUEL_TYPE_KEY));
-        this.engineCapacity = parseInteger(carDataMap.get(ENGINE_KEY));
-        this.enginePower = parseInteger(carDataMap.get(ENGINE_POWER_KEY));
-        this.fullMass = parseInteger(carDataMap.get(FULL_MASS_KEY));
-        this.year = extractYear(carDataMap.get(REGISTRATION_DATE_KEY));
+        this.engineCapacity = Optional.ofNullable(carDataMap.get(ENGINE_KEY))
+                .map(this::parseInteger)
+                .orElse(null);
+        this.enginePower = Optional.ofNullable(carDataMap.get(ENGINE_POWER_KEY))
+                .map(this::parseInteger)
+                .orElse(null);
+        this.fullMass = Optional.ofNullable(carDataMap.get(FULL_MASS_KEY))
+                .map(this::parseInteger)
+                .orElseThrow(() -> new IllegalArgumentException("Could not parse full mass from " + carDataMap.get(FULL_MASS_KEY)));
+        this.year = Optional.ofNullable(carDataMap.get(REGISTRATION_DATE_KEY))
+                .map(this::extractYear)
+                .orElseThrow(() -> new IllegalArgumentException("Could not parse year from " + carDataMap.get(REGISTRATION_DATE_KEY)));
     }
 
     private CarType extractCarType(String category) {
@@ -83,7 +91,7 @@ public class CarDetails {
         return Optional.ofNullable(value)
                 .map(this::extractNumericValue)
                 .map(Integer::parseInt)
-                .orElseThrow(() -> new IllegalArgumentException("Could not parse integer from " + value));
+                .orElse(null);
     }
 
     private Integer extractYear(String registrationDate) {
@@ -101,8 +109,8 @@ public class CarDetails {
         if (string == null || !string.contains(" ")) {
             return null;
         }
-
-        Pattern pattern = Pattern.compile("\\b\\d{2,4}\\b");
+        
+        Pattern pattern = Pattern.compile("\\b\\d{1,4}\\b");
         Matcher matcher = pattern.matcher(string);
         if (matcher.find()) {
             return matcher.group();

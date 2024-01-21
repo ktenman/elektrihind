@@ -110,6 +110,7 @@ public class ApolloKinoService {
     }
 
     @Scheduled(cron = "0 15 3,15 * * *")
+//    @Scheduled(cron = "0 * * * * *")
     public void onSchedule() {
         init();
         cacheService.updateApolloKinoData(options);
@@ -124,7 +125,7 @@ public class ApolloKinoService {
         long startTime = System.nanoTime();
         try {
             LocalDateTime today = LocalDateTime.now();
-            List<String> acceptedDays = IntStream.range(0, 4)
+            List<String> acceptedDays = IntStream.range(0, 5)
                     .mapToObj(today::plusDays)
                     .map(d -> d.format(DATE_TIME_FORMATTER))
                     .toList();
@@ -204,7 +205,7 @@ public class ApolloKinoService {
                     .map(d -> LocalDate.parse(d, DATE_TIME_FORMATTER))
                     .orElseThrow(() -> new RuntimeException("Date not found"));
             this.options.get(cinema).put(chosenDate, movieOptions);
-            if (this.options.get(cinema).size() == 4) {
+            if (this.options.get(cinema).size() == 5) {
                 Selenide.clearBrowserCookies();
                 return;
             }

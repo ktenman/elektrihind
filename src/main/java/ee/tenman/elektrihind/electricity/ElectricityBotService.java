@@ -115,6 +115,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
     public static final Pattern CAR_REGISTRATION_PATTERN = Pattern.compile("^ark\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
+    public static final Pattern CLEAR_CAR_CACHE_REGISTRATION_PATTERN = Pattern.compile("^clear\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
     public static final Pattern CAR_PRICE_REGISTRATION_PATTERN = Pattern.compile("^price\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
     public static final Pattern CHAT_PATTERN = Pattern.compile("(?s)^chat\\s+(.+)$", Pattern.CASE_INSENSITIVE);
     private static final String EURIBOR = "euribor";
@@ -269,6 +270,13 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             log.info("Received callback query for regNr: {}", arkMatcher.group(1));
             String regNr = arkMatcher.group(1).toUpperCase();
             search(startTime, chatId, regNr, null);
+            return;
+        }
+        Matcher clearMatcher = CLEAR_CAR_CACHE_REGISTRATION_PATTERN.matcher(callData);
+        if (clearMatcher.find()) {
+            log.info("Received callback query to clear cache for regNr: {}", arkMatcher.group(1));
+            String regNr = arkMatcher.group(1).toUpperCase();
+            cacheService.evictCacheEntry(regNr);
             return;
         }
         Matcher apolloKinoSessionIdMatcher = APOLLO_KINO_SESSION_ID_PATTERN.matcher(callData);

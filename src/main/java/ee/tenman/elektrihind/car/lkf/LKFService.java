@@ -45,6 +45,7 @@ public class LKFService implements CaptchaSolver {
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
         Selenide.$(By.id("edit-submit")).shouldBe(Condition.visible).click();
         ElementsCollection elements = $$(By.tagName("p"));
+        Selenide.sleep(2666);
         boolean hadCrashes = elements.find(Condition.text("on osalenud kindlustusjuhtumites")).exists() ||
                 elements.find(Condition.text("on osalenud kindlustusjuhtumis")).exists();
 

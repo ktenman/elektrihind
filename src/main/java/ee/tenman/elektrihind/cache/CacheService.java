@@ -247,12 +247,6 @@ public class CacheService {
         }
     }
 
-    public void updateSessionsJson(String sessionsJson) {
-        Optional.ofNullable(cacheManager.getCache(SESSIONS_CACHE))
-                .ifPresent(c -> c.put(SESSIONS_KEY, sessionsJson));
-        log.info("Updated sessions cache");
-    }
-
     public Map<UUID, ApolloKinoSession> getRebookingSessions() {
         log.info("Getting rebooking sessions from cache");
         Optional<String> sessionsJson = Optional.ofNullable(cacheManager.getCache(SESSIONS_CACHE))

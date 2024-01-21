@@ -20,7 +20,7 @@ captcha-solver:
   url: http://${RABBITMQ_HOST:captcha-solver}:52525
 
 automaks:
-  url: http://tenman.ee:52526
+  url: http://${RABBITMQ_HOST:automaks}:52526
 
 twocaptcha:
   key: ${TWO_CAPTCHA_API_KEY}

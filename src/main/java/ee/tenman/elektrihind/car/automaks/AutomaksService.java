@@ -14,8 +14,8 @@ public class AutomaksService {
 
     @Resource
     AutomaksClient automaksClient;
-
-    @Retryable(maxAttempts = 6, backoff = @Backoff(delay = 5000))
+    
+    @Retryable(maxAttempts = 2, backoff = @Backoff(delay = 1000))
     public Optional<TaxResponse> calculate(CarDetails carDetails) {
         log.info("Calculating tax for car: {}", carDetails);
         try {

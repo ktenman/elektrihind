@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
@@ -44,8 +45,8 @@ public class LKFService implements CaptchaSolver {
         Selenide.$(By.name("vehicle")).setValue(regNr);
         executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
         Selenide.$(By.id("edit-submit")).shouldBe(Condition.visible).click();
+        Selenide.sleep(TimeUnit.SECONDS.toMillis(2));
         ElementsCollection elements = $$(By.tagName("p"));
-        Selenide.sleep(2666);
         boolean hadCrashes = elements.find(Condition.text("on osalenud kindlustusjuhtumites")).exists() ||
                 elements.find(Condition.text("on osalenud kindlustusjuhtumis")).exists();
 

@@ -272,14 +272,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             search(startTime, chatId, regNr, null);
             return;
         }
-        Matcher clearMatcher = CLEAR_CAR_CACHE_REGISTRATION_PATTERN.matcher(callData);
-        if (clearMatcher.find()) {
-            log.info("Received callback query to clear cache for regNr: {}", arkMatcher.group(1));
-            String regNr = arkMatcher.group(1).toUpperCase();
-            cacheService.evictCacheEntry(regNr);
-            sendMessage(chatId, "Cache cleared for " + regNr);
-            return;
-        }
         Matcher apolloKinoSessionIdMatcher = APOLLO_KINO_SESSION_ID_PATTERN.matcher(callData);
         if (apolloKinoSessionIdMatcher.find()) {
             Integer sessionId = Integer.parseInt(apolloKinoSessionIdMatcher.group(1));
@@ -803,6 +795,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         Matcher arkMatcher = CAR_REGISTRATION_PATTERN.matcher(messageText);
         Matcher chatMatcher = CHAT_PATTERN.matcher(messageText);
         Matcher carPriceMatcher = CAR_PRICE_REGISTRATION_PATTERN.matcher(messageText);
+	    Matcher clearMatcher = CLEAR_CAR_CACHE_REGISTRATION_PATTERN.matcher(messageText);
 
         boolean showMenu = false;
         if ("/start".equalsIgnoreCase(messageText)) {
@@ -846,6 +839,13 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         } else if (matcher.find()) {
             handleDurationMessage(matcher, chatId, messageId);
         } // Consider adding an else block for unhandled text messages
+        else if (clearMatcher.find()) {
+	        log.info("Received message to clear cache for regNr: {}", clearMatcher.group(1));
+	        String regNr = clearMatcher.group(1).toUpperCase();
+	        cacheService.evictCacheEntry(regNr);
+	        sendMessage(chatId, "Cache cleared for " + regNr);
+	        return;
+        }
         if (showMenu) {
             displayMenu(chatId);
         }

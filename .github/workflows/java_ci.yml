@@ -164,3 +164,19 @@ jobs:
 
       - name: Cleanup on runner
         run: rm .env
+
+  auto-merge-dependabot:
+    name: 🤖 Auto merge dependabot PR
+    needs: [ test ]
+    if: github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: 🤖 Merge PR from dependabot
+        uses: fastify/github-action-merge-dependabot@v3.9.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          target: minor
+          merge-method: rebase

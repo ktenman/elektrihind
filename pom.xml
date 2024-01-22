@@ -98,7 +98,7 @@
         <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots</artifactId>
-            <version>6.9.0</version>
+            <version>6.9.7.0</version>
         </dependency>
         <dependency>
             <groupId>com.codeborne</groupId>

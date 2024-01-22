@@ -1,6 +1,12 @@
 version: 2
 updates:
-  - package-ecosystem: "maven" # For Maven projects
-    directory: "/" # Root directory where pom.xml is located
+  - package-ecosystem: maven
+    directory: "/"
     schedule:
-      interval: "weekly" # Frequency of update checks
+      interval: daily
+    open-pull-requests-limit: 10
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10

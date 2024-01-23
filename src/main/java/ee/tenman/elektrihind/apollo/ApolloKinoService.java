@@ -26,7 +26,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -205,10 +204,6 @@ public class ApolloKinoService {
                     .map(d -> LocalDate.parse(d, DATE_TIME_FORMATTER))
                     .orElseThrow(() -> new RuntimeException("Date not found"));
             this.options.get(cinema).put(chosenDate, movieOptions);
-            if (this.options.get(cinema).size() == 5) {
-                Selenide.clearBrowserCookies();
-                return;
-            }
             open(cinema.getUrl());
         }
         for (List<Option> optionList : options.get(cinema).values()) {
@@ -224,6 +219,7 @@ public class ApolloKinoService {
                         });
             }
         }
+        Selenide.clearBrowserCookies();
     }
 
     public Optional<ScreenTime> screenTime(ApolloKinoSession session) {
@@ -237,7 +233,7 @@ public class ApolloKinoService {
 
     public Map<LocalDate, List<Option>> getOptions(Cinema cinema) {
         LocalDateTime currentDateTime = LocalDateTime.now();
-        Map<LocalDate, List<Option>> filteredOptions = new LinkedHashMap<>();
+        Map<LocalDate, List<Option>> filteredOptions = new TreeMap<>();
         for (Map.Entry<LocalDate, List<Option>> optionEntry : options.get(cinema).entrySet()) {
             List<Option> movieOptions = optionEntry.getValue();
             List<Option> newMovieOptions = new ArrayList<>();

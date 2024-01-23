@@ -24,5 +24,9 @@ public class Option {
     public String getMovieTitleWithImdbRating() {
         return imdbRating == null || imdbRating.equals(0.0) ? movie : movie + " [" + imdbRating + "]";
     }
-
+    
+    public Double getImdbRating() {
+        return imdbRating == null ? 0.0 : imdbRating;
+    }
+    
 }

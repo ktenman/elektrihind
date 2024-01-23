@@ -39,8 +39,10 @@ public class ChatService {
                     throw new IllegalStateException("Timeout or interruption while waiting for chat response [UUID: " + uuid + "]", e);
                 }
             }, executorService).get();
-
-            return Optional.ofNullable(response);
+            
+            return Optional.ofNullable(response)
+                    .map(s -> s.replaceAll("\n{3,}", "\n"))
+                    .map(String::trim);
         } catch (Exception e) {
             log.error("Error while awaiting chat response", e);
             return Optional.empty();

@@ -102,6 +102,7 @@ import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static ee.tenman.elektrihind.apollo.ApolloKinoService.DATE_TIME_FORMATTER;
@@ -428,6 +429,9 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 session.setCinema(Cinema.valueOf(chosenOption));
                 LocalDate currentDate = LocalDate.now();
                 List<InlineKeyboardButton> rowInline = new ArrayList<>();
+                List<LocalDate> acceptedDays = IntStream.range(0, 3)
+                        .mapToObj(currentDate::plusDays)
+                        .toList();
                 int count = 0;
                 for (LocalDate localDate : apolloKinoService.getOptions(session.getCinema()).keySet()) {
                     String text = localDate.format(DATE_TIME_FORMATTER);
@@ -438,9 +442,11 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     }
                     InlineKeyboardButton button = new InlineKeyboardButton(text);
                     button.setCallbackData(getCallbackData.apply(localDate.toString()));
-                    rowInline.add(button);
-                    if (++count == 3) {
-                        break;
+                    if (acceptedDays.contains(localDate)) {
+                        rowInline.add(button);
+                        if (++count == 3) {
+                            break;
+                        }
                     }
                 }
                 rowsInline.add(rowInline);

@@ -48,9 +48,15 @@ import static ee.tenman.elektrihind.utility.GlobalConstants.TEST_PROFILE;
 @Service
 @Slf4j
 public class CacheService {
-
+    
     static final int DAILY_MESSAGE_LIMIT = 1;
-
+    public static final String ARK_CAPTCHA_DETECTION_KEY = "arkCaptchaDetection";
+    private static final String AUTOMATIC_FETCHING_KEY = "automaticFetching";
+    private static final String DURATIONS_KEY = "durations";
+    private static final String LAST_EURIBOR_MESSAGE_SENT_KEY = "lastEuriborMessageSentDate";
+    private static final String LAST_EURIBOR_RATE_KEY = "lastEuriborRate";
+    private static final String SESSIONS_KEY = "sessions";
+    
     @Resource
     private Clock clock;
     @Resource
@@ -62,13 +68,7 @@ public class CacheService {
     @Setter
     @Getter
     private List<ElectricityPrice> latestPrices = new ArrayList<>();
-
-    public static final String AUTOMATIC_FETCHING_KEY = "automaticFetching";
-    private static final String DURATIONS_KEY = "durations";
-    private static final String LAST_EURIBOR_MESSAGE_SENT_KEY = "lastEuriborMessageSentDate";
-    private static final String LAST_EURIBOR_RATE_KEY = "lastEuriborRate";
-    private static final String SESSIONS_KEY = "sessions";
-
+    
     @Resource
     private CacheManager cacheManager;
 
@@ -142,6 +142,14 @@ public class CacheService {
 
     public void setAutomaticFetchingEnabled(Boolean automaticFetchingEnabled) {
         setBooleanInCache(AUTOMATIC_FETCHING_KEY, automaticFetchingEnabled);
+    }
+    
+    public void setArkCaptchaDetection(Boolean arkCaptchaDetectionEnabled) {
+        setBooleanInCache(ARK_CAPTCHA_DETECTION_KEY, arkCaptchaDetectionEnabled);
+    }
+    
+    public boolean isArkCaptchaDetectionEnabled() {
+        return getBooleanFromCache(ARK_CAPTCHA_DETECTION_KEY);
     }
 
     private boolean getBooleanFromCache(String key) {

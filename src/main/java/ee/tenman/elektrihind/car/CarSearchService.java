@@ -1,9 +1,9 @@
 package ee.tenman.elektrihind.car;
 
+import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.car.ark.ArkService;
 import ee.tenman.elektrihind.car.auto24.Auto24Service;
 import ee.tenman.elektrihind.car.lkf.LKFService;
-import ee.tenman.elektrihind.car.scrapeninja.ScrapeninjaService;
 import ee.tenman.elektrihind.electricity.CarSearchUpdateListener;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
@@ -38,7 +38,7 @@ public class CarSearchService {
     private Auto24Service auto24Service;
 
     @Resource
-    private ScrapeninjaService scrapeninjaService;
+    private CacheService cacheService;
 
     @Resource(name = "fourThreadExecutor")
     private ExecutorService fourThreadExecutor;

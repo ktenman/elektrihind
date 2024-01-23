@@ -5,6 +5,7 @@ import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.car.automaks.AutomaksService;
 import ee.tenman.elektrihind.car.automaks.CarDetails;
 import ee.tenman.elektrihind.car.automaks.TaxResponse;
@@ -17,8 +18,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -53,10 +52,17 @@ public class ArkService implements CaptchaSolver {
 
     @Resource
     private AutomaksService automaksService;
+    
+    @Resource
+    private CacheService cacheService;
 
     @Override
     public String getCaptchaToken() {
         log.info("Solving ark captcha");
+        if (!cacheService.isArkCaptchaDetectionEnabled()) {
+            log.info("Ark captcha detection disabled");
+            return "";
+        }
         String token = recaptchaSolverService.solveCaptcha(SITE_KEY, PAGE_URL);
         log.info("Ark captcha solved");
         return token;
@@ -126,8 +132,13 @@ public class ArkService implements CaptchaSolver {
 
     @SneakyThrows
     @Cacheable(value = ONE_MONTH_CACHE_5, key = "#regNr")
-    public Map<String, String> carDetails(String regNr, String captchaToken, Map<String, String> carData, CarSearchUpdateListener updateListener) {
-        if (StringUtils.isBlank(captchaToken)) {
+    public Map<String, String> carDetails(
+            String regNr,
+            String captchaToken,
+            Map<String, String> carData,
+            CarSearchUpdateListener updateListener
+    ) {
+        if (StringUtils.isBlank(captchaToken) && cacheService.isArkCaptchaDetectionEnabled()) {
             throw new RuntimeException("Captcha token is blank");
         }
         log.info("Searching car details for regNr: {}", regNr);
@@ -141,7 +152,9 @@ public class ArkService implements CaptchaSolver {
                 .sibling(0)
                 .$("input")
                 .setValue(regNr);
-        executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
+        if (cacheService.isArkCaptchaDetectionEnabled()) {
+            executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
+        }
         $$(tagName("button")).find(text("OTSIN")).click();
         TimeUnit.SECONDS.sleep(3);
         SelenideElement contentTitle = Selenide.$(className("content-title"));
@@ -180,14 +193,6 @@ public class ArkService implements CaptchaSolver {
         log.info("Found car details for regNr: {}", regNr);
         Selenide.closeWindow();
         return carData;
-    }
-
-    @SneakyThrows
-    @Cacheable(value = ONE_MONTH_CACHE_5, key = "#regNr")
-    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 2000))
-    public Map<String, String> carDetails(String regNr, String captchaToken) {
-        return carDetails(regNr, captchaToken, new LinkedHashMap<>(), (carDetails, isLast) -> {
-        });
     }
 
 }

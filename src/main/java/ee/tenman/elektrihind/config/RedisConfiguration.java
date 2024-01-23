@@ -71,7 +71,7 @@ public class RedisConfiguration {
         cacheConfigurations.put(SESSIONS_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(3)));
         cacheConfigurations.put(APOLLO_KINO_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(2)));
         cacheConfigurations.put(ELECTRICITY_PRICES_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofHours(2)));
-        cacheConfigurations.put(MOVIE_DETAILS_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofHours(3)));
+        cacheConfigurations.put(MOVIE_DETAILS_CACHE, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofDays(7)));
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig().entryTtl(DEFAULT_TTL);
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)

@@ -107,9 +107,9 @@ public class ApolloKinoService {
             options = new TreeMap<>(cacheService.getApolloKinoData());
         }
     }
-
-    @Scheduled(cron = "0 15 3,15 * * *")
-//    @Scheduled(cron = "0 * * * * *")
+    
+    //    @Scheduled(cron = "0 15 3,15 * * *")
+    @Scheduled(cron = "0 * * * * *")
     public void onSchedule() {
         init();
         cacheService.updateApolloKinoData(options);
@@ -141,10 +141,11 @@ public class ApolloKinoService {
 
     private void init(Cinema cinema, List<String> acceptedDays) {
         options.computeIfAbsent(cinema, k -> new TreeMap<>());
-        options.get(cinema).keySet().stream()
+        List<String> idsToRemove = options.get(cinema).keySet().stream()
                 .map(optionList -> optionList.format(DATE_TIME_FORMATTER))
                 .filter(day -> !acceptedDays.contains(day))
-                .forEach(s -> options.get(cinema).remove(LocalDate.parse(s, DATE_TIME_FORMATTER)));
+                .toList();
+        idsToRemove.forEach(s -> options.get(cinema).remove(LocalDate.parse(s, DATE_TIME_FORMATTER)));
         open(cinema.getUrl());
         getWebDriver().manage().window().maximize();
         $(".cky-btn-accept").click();

@@ -42,7 +42,7 @@ services:
     container_name: automaks_main
     image: ktenman/automaks:latest
     ports:
-      - "52526:8080"
+      - "52526:52526"
     restart: always
 
   redis:

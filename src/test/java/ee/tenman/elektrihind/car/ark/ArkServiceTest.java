@@ -1,5 +1,6 @@
 package ee.tenman.elektrihind.car.ark;
 
+import com.codeborne.selenide.Configuration;
 import ee.tenman.elektrihind.IntegrationTest;
 import ee.tenman.elektrihind.cache.CacheService;
 import jakarta.annotation.Resource;
@@ -25,7 +26,7 @@ class ArkServiceTest {
     void carDetails() {
         cacheService.setArkCaptchaDetection(false);
         String captchaToken = arkService.getCaptchaToken();
-        
+        Configuration.headless = false;
         Map<String, String> result = arkService.carDetails("205HKH", captchaToken, new HashMap<>(), (
                 carDetails, isFinalUpdate) -> System.out.println(carDetails));
         

@@ -43,8 +43,8 @@ import static org.openqa.selenium.By.tagName;
 @Service
 @Slf4j
 public class ArkService implements CaptchaSolver {
-
-    private static final String SITE_KEY = "6LepmygUAAAAAJB-Oalk-YSrlPj1dilm95QRY66J";
+    
+    private static final String SITE_KEY = "6LfM2VUpAAAAAIxz2LW7-pZy2tcQpV1lA-B1kHCa";
     private static final String PAGE_URL = "https://eteenindus.mnt.ee/public/soidukTaustakontroll.jsf";
 
     @Resource

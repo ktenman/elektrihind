@@ -20,7 +20,7 @@ automaks:
   url: http://localhost:52526
 
 twocaptcha:
-  key: e3a4665821cb079d4c6b1fc7f60fcbaa
+  key:
 
 scrapeninja:
   key:

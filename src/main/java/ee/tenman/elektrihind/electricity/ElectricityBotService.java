@@ -107,7 +107,6 @@ import java.util.stream.Stream;
 
 import static ee.tenman.elektrihind.apollo.ApolloKinoService.DATE_TIME_FORMATTER;
 import static ee.tenman.elektrihind.apollo.ApolloKinoService.SHORT_DATE_FORMATTER;
-import static ee.tenman.elektrihind.cache.CacheService.ARK_CAPTCHA_DETECTION_KEY;
 
 @Service
 @Slf4j
@@ -326,14 +325,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             case REBOOT_COMMAND -> {
                 digitalOceanService.rebootDroplet();
                 sendMessageCode(chatId, "Droplet reboot initiated!");
-            }
-            case ARK_CAPTCHA_DETECTION_KEY + " true" -> {
-                cacheService.setArkCaptchaDetection(true);
-                sendMessage(chatId, "Ark captcha detection enabled.");
-            }
-            case ARK_CAPTCHA_DETECTION_KEY + " false" -> {
-                cacheService.setArkCaptchaDetection(false);
-                sendMessage(chatId, "Ark captcha detection disabled.");
             }
             default -> sendMessage(chatId, "Command not recognized.");
         }
@@ -755,21 +746,16 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         rowInline2.add(buttonReboot);
 
         List<InlineKeyboardButton> rowInline3 = new ArrayList<>();
-        InlineKeyboardButton arkCaptchaEnablingButton = getArkCaptchaEnablingButton();
-        rowInline3.add(arkCaptchaEnablingButton);
-
-        List<InlineKeyboardButton> rowInline5 = new ArrayList<>();
         InlineKeyboardButton apolloKino = new InlineKeyboardButton("Apollo Kino");
         apolloKino.setCallbackData(APOLLO_KINO);
         InlineKeyboardButton bookings = new InlineKeyboardButton(DISPLAY_BOOKINGS);
         bookings.setCallbackData(DISPLAY_BOOKINGS);
-        rowInline5.add(apolloKino);
-        rowInline5.add(bookings);
+        rowInline3.add(apolloKino);
+        rowInline3.add(bookings);
 
         rowsInline.add(rowInline1);
         rowsInline.add(rowInline2);
         rowsInline.add(rowInline3);
-        rowsInline.add(rowInline5);
         markupInline.setKeyboard(rowsInline);
 
         SendMessage message = new SendMessage();
@@ -789,14 +775,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         boolean automaticFetchingEnabled = cacheService.isAutomaticFetchingEnabled();
         inlineKeyboardButton.setText(automaticFetchingEnabled ? "Disable automatic fetching" : "Enable automatic fetching");
         inlineKeyboardButton.setCallbackData("automaticFetching " + !automaticFetchingEnabled);
-        return inlineKeyboardButton;
-    }
-    
-    private InlineKeyboardButton getArkCaptchaEnablingButton() {
-        InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
-        boolean arkCaptchaDetectionEnabled = cacheService.isArkCaptchaDetectionEnabled();
-        inlineKeyboardButton.setText(arkCaptchaDetectionEnabled ? "Disable ark captcha fetching" : "Enable ark captcha fetching");
-        inlineKeyboardButton.setCallbackData(ARK_CAPTCHA_DETECTION_KEY + " " + !arkCaptchaDetectionEnabled);
         return inlineKeyboardButton;
     }
 

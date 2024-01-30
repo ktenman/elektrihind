@@ -59,10 +59,6 @@ public class ArkService implements CaptchaSolver {
     @Override
     public String getCaptchaToken() {
         log.info("Solving ark captcha");
-        if (!cacheService.isArkCaptchaDetectionEnabled()) {
-            log.info("Ark captcha detection disabled");
-            return "";
-        }
         String token = recaptchaSolverService.solveCaptcha(SITE_KEY, PAGE_URL);
         log.info("Ark captcha solved");
         return token;
@@ -138,7 +134,7 @@ public class ArkService implements CaptchaSolver {
             Map<String, String> carData,
             CarSearchUpdateListener updateListener
     ) {
-        if (StringUtils.isBlank(captchaToken) && cacheService.isArkCaptchaDetectionEnabled()) {
+        if (StringUtils.isBlank(captchaToken)) {
             throw new RuntimeException("Captcha token is blank");
         }
         log.info("Searching car details for regNr: {}", regNr);
@@ -152,9 +148,7 @@ public class ArkService implements CaptchaSolver {
                 .sibling(0)
                 .$("input")
                 .setValue(regNr);
-        if (cacheService.isArkCaptchaDetectionEnabled()) {
-            executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
-        }
+        executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
         $$(tagName("button")).find(text("OTSIN")).click();
         TimeUnit.SECONDS.sleep(3);
         SelenideElement contentTitle = Selenide.$(className("content-title"));

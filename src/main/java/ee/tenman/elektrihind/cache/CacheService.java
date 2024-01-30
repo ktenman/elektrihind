@@ -50,7 +50,6 @@ import static ee.tenman.elektrihind.utility.GlobalConstants.TEST_PROFILE;
 public class CacheService {
     
     static final int DAILY_MESSAGE_LIMIT = 1;
-    public static final String ARK_CAPTCHA_DETECTION_KEY = "arkCaptchaDetection";
     private static final String AUTOMATIC_FETCHING_KEY = "automaticFetching";
     private static final String DURATIONS_KEY = "durations";
     private static final String LAST_EURIBOR_MESSAGE_SENT_KEY = "lastEuriborMessageSentDate";
@@ -142,14 +141,6 @@ public class CacheService {
 
     public void setAutomaticFetchingEnabled(Boolean automaticFetchingEnabled) {
         setBooleanInCache(AUTOMATIC_FETCHING_KEY, automaticFetchingEnabled);
-    }
-    
-    public void setArkCaptchaDetection(Boolean arkCaptchaDetectionEnabled) {
-        setBooleanInCache(ARK_CAPTCHA_DETECTION_KEY, arkCaptchaDetectionEnabled);
-    }
-    
-    public boolean isArkCaptchaDetectionEnabled() {
-        return getBooleanFromCache(ARK_CAPTCHA_DETECTION_KEY);
     }
 
     private boolean getBooleanFromCache(String key) {

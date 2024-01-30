@@ -24,7 +24,6 @@ class ArkServiceTest {
     @Test
     @Disabled
     void carDetails() {
-        cacheService.setArkCaptchaDetection(false);
         String captchaToken = arkService.getCaptchaToken();
         Configuration.headless = false;
         Map<String, String> result = arkService.carDetails("205HKH", captchaToken, new HashMap<>(), (

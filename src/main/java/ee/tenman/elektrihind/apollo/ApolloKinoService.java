@@ -108,8 +108,7 @@ public class ApolloKinoService {
         }
     }
     
-    //    @Scheduled(cron = "0 15 3,15 * * *")
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 15 3,15 * * *")
     public void onSchedule() {
         init();
         cacheService.updateApolloKinoData(options);

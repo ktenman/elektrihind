@@ -148,7 +148,7 @@ public class ArkService implements CaptchaSolver {
                 .sibling(0)
                 .$("input")
                 .setValue(regNr);
-        executeJavaScript("document.getElementById('g-recaptcha-response').innerHTML = arguments[0];", captchaToken);
+        executeJavaScript("document.getElementById('ostsingForm:recaptchaResponse').innerHTML = arguments[0];", captchaToken);
         $$(tagName("button")).find(text("OTSIN")).click();
         TimeUnit.SECONDS.sleep(3);
         SelenideElement contentTitle = Selenide.$(className("content-title"));

@@ -20,9 +20,12 @@ import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.config.ScreenConfiguration;
 import ee.tenman.elektrihind.digitalocean.DigitalOceanService;
 import ee.tenman.elektrihind.euribor.EuriborRateFetcher;
+import ee.tenman.elektrihind.movies.MovieDetails;
+import ee.tenman.elektrihind.movies.MovieDetailsService;
 import ee.tenman.elektrihind.queue.ChatService;
 import ee.tenman.elektrihind.queue.OnlineCheckService;
 import ee.tenman.elektrihind.telegram.JavaElekterTelegramService;
+import ee.tenman.elektrihind.utility.AsyncRunner;
 import ee.tenman.elektrihind.utility.DateTimeConstants;
 import ee.tenman.elektrihind.utility.FileToBase64;
 import ee.tenman.elektrihind.utility.TextUtility;
@@ -197,6 +200,10 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private SessionManagementService sessionManagementService;
     @Resource
     private ReBookingService reBookingService;
+    @Resource
+    private AsyncRunner asyncRunner;
+    @Resource
+    private MovieDetailsService movieDetailsService;
 
     public static String buildSHA256(String input) {
         byte[] hashInBytes = SHA_256_DIGEST.digest(input.getBytes(StandardCharsets.UTF_8));
@@ -455,6 +462,19 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 optionsList.sort(Comparator.comparing(Option::getImdbRating).reversed());
                 for (Option option : optionsList) {
                     List<InlineKeyboardButton> rowInline = new ArrayList<>();
+                    if (option.getImdbRating() == null) {
+                        asyncRunner.run(() -> {
+                            try {
+                                Double imdbRating = movieDetailsService.fetchMovieDetails(option.getMovieOriginalTitle())
+                                        .map(MovieDetails::getImdbRating)
+                                        .map(Double::parseDouble)
+                                        .orElse(0.0);
+                                option.setImdbRating(imdbRating);
+                            } catch (Exception e) {
+                                log.error("Failed to get imdb rating for {}", option.getMovieOriginalTitle(), e);
+                            }
+                        });
+                    }
                     InlineKeyboardButton button = new InlineKeyboardButton(option.getMovieTitleWithImdbRating());
                     String callbackData = getCallbackData.apply(option.getMovie());
                     button.setCallbackData(callbackData);

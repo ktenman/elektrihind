@@ -462,19 +462,15 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 optionsList.sort(Comparator.comparing(Option::getImdbRating).reversed());
                 for (Option option : optionsList) {
                     List<InlineKeyboardButton> rowInline = new ArrayList<>();
-                    if (option.getImdbRating() == 0.0) {
-                        asyncRunner.run(() -> {
-                            try {
-                                Double imdbRating = movieDetailsService.fetchMovieDetails(option.getMovieOriginalTitle())
-                                        .map(MovieDetails::getImdbRating)
-                                        .map(Double::parseDouble)
-                                        .orElse(0.0);
-                                option.setImdbRating(imdbRating);
-                            } catch (Exception e) {
-                                log.error("Failed to get imdb rating for {}", option.getMovieOriginalTitle(), e);
-                            }
-                        });
-                    }
+                    asyncRunner.run(() -> {
+                        if (option.getImdbRating() != 0.0) {
+                            return;
+                        }
+                        movieDetailsService.fetchMovieDetails(option.getMovieOriginalTitle())
+                                .map(MovieDetails::getImdbRating)
+                                .map(Double::parseDouble)
+                                .ifPresent(option::setImdbRating);
+                    });
                     InlineKeyboardButton button = new InlineKeyboardButton(option.getMovieTitleWithImdbRating());
                     String callbackData = getCallbackData.apply(option.getMovie());
                     button.setCallbackData(callbackData);

@@ -25,6 +25,8 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -127,15 +129,19 @@ public class ApolloKinoService {
                     .mapToObj(today::plusDays)
                     .map(d -> d.format(DATE_TIME_FORMATTER))
                     .toList();
-            for (Cinema cinema : Cinema.values()) {
-                init(cinema, acceptedDays);
-            }
+            cinemasInRandomOrder().forEach(cinema -> init(cinema, acceptedDays));
         } catch (Exception e) {
             log.error("Failed to init", e);
         } finally {
             Selenide.closeWebDriver();
             log.info("Init took {} seconds", TimeUtility.durationInSeconds(startTime).asString());
         }
+    }
+    
+    private List<Cinema> cinemasInRandomOrder() {
+        List<Cinema> cinemas = Arrays.asList(Cinema.values());
+        Collections.shuffle(cinemas);
+        return cinemas;
     }
 
     private void init(Cinema cinema, List<String> acceptedDays) {

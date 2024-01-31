@@ -110,7 +110,7 @@ public class ApolloKinoService {
         }
     }
     
-    @Scheduled(cron = "0 15 3,15 * * *")
+    @Scheduled(cron = "0 15 3,9,15,21 * * *")
     public void onSchedule() {
         init();
         cacheService.updateApolloKinoData(options);
@@ -129,7 +129,9 @@ public class ApolloKinoService {
                     .mapToObj(today::plusDays)
                     .map(d -> d.format(DATE_TIME_FORMATTER))
                     .toList();
-            cinemasInRandomOrder().forEach(cinema -> init(cinema, acceptedDays));
+            Cinema cinema = cinemaInRandomOrder();
+            log.info("Initializing cinema {}", cinema);
+            init(cinema, acceptedDays);
         } catch (Exception e) {
             log.error("Failed to init", e);
         } finally {
@@ -142,6 +144,10 @@ public class ApolloKinoService {
         List<Cinema> cinemas = Arrays.asList(Cinema.values());
         Collections.shuffle(cinemas);
         return cinemas;
+    }
+    
+    private Cinema cinemaInRandomOrder() {
+        return cinemasInRandomOrder().getFirst();
     }
 
     private void init(Cinema cinema, List<String> acceptedDays) {

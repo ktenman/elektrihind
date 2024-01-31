@@ -462,7 +462,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 optionsList.sort(Comparator.comparing(Option::getImdbRating).reversed());
                 for (Option option : optionsList) {
                     List<InlineKeyboardButton> rowInline = new ArrayList<>();
-                    if (option.getImdbRating() == null) {
+                    if (option.getImdbRating() == 0.0) {
                         asyncRunner.run(() -> {
                             try {
                                 Double imdbRating = movieDetailsService.fetchMovieDetails(option.getMovieOriginalTitle())

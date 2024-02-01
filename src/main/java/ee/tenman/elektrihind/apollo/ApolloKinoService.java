@@ -5,6 +5,7 @@ import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.config.ScreenConfiguration;
+import ee.tenman.elektrihind.movies.MovieDetails;
 import ee.tenman.elektrihind.movies.MovieDetailsService;
 import ee.tenman.elektrihind.utility.AsyncRunner;
 import ee.tenman.elektrihind.utility.TimeUtility;
@@ -33,6 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -54,7 +56,7 @@ import static org.openqa.selenium.By.tagName;
 @Service
 @Slf4j
 public class ApolloKinoService {
-
+    
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final DateTimeFormatter SHORT_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM");
     private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
@@ -75,7 +77,7 @@ public class ApolloKinoService {
     private MovieDetailsService movieDetailsService;
     @Resource
     private AsyncRunner asyncRunner;
-
+    
     private static void selectSeats(int count) {
         $$(".radio-card__text").find(text("Staaritoolid")).click();
         sleep(777);
@@ -92,7 +94,7 @@ public class ApolloKinoService {
         $(id("confirm-button")).click();
         sleep(777);
     }
-
+    
     public static String extractUUID(String url) {
         Matcher matcher = UUID_PATTERN.matcher(url);
         if (matcher.find()) {
@@ -100,7 +102,7 @@ public class ApolloKinoService {
         }
         return null;
     }
-
+    
     @PostConstruct
     public void onStart() {
         options = new TreeMap<>(cacheService.getApolloKinoData());
@@ -115,7 +117,7 @@ public class ApolloKinoService {
         init();
         cacheService.updateApolloKinoData(options);
     }
-
+    
     public void init() {
         log.info("Initializing Apollo Kino");
         if (List.of(environment.getActiveProfiles()).contains(TEST_PROFILE)) {
@@ -149,7 +151,7 @@ public class ApolloKinoService {
     private Cinema cinemaInRandomOrder() {
         return cinemasInRandomOrder().getFirst();
     }
-
+    
     private void init(Cinema cinema, List<String> acceptedDays) {
         options.computeIfAbsent(cinema, k -> new TreeMap<>());
         List<String> idsToRemove = options.get(cinema).keySet().stream()
@@ -174,7 +176,7 @@ public class ApolloKinoService {
             TreeMap<String, String> movieTitles = new TreeMap<>();
             $$(".schedule-card__title")
                     .forEach(m -> movieTitles.put(m.text(), m.parent().parent().find(tagName("a")).getAttribute("href")));
-
+            
             List<Option> movieOptions = new ArrayList<>();
             for (Map.Entry<String, String> element : movieTitles.entrySet()) {
                 open(element.getValue());
@@ -233,27 +235,36 @@ public class ApolloKinoService {
         }
         Selenide.clearBrowserCookies();
     }
-
+    
     public Optional<ScreenTime> screenTime(ApolloKinoSession session) {
         return this.options.get(session.getCinema()).get(session.getSelectedDate()).stream()
                 .filter(screen -> screen.getMovie().equals(session.getSelectedMovie()))
                 .map(Option::getScreenTimes)
                 .flatMap(List::stream)
-                .filter(t -> t.time().equals(session.getSelectedTime()))
+                .filter(t -> t.getTime().equals(session.getSelectedTime()))
                 .findFirst();
     }
-
+    
     public Map<LocalDate, List<Option>> getOptions(Cinema cinema) {
+        AtomicBoolean updatedImdbRating = new AtomicBoolean(false);
         LocalDateTime currentDateTime = LocalDateTime.now();
         Map<LocalDate, List<Option>> filteredOptions = new TreeMap<>();
-        for (Map.Entry<LocalDate, List<Option>> optionEntry : options.get(cinema).entrySet()) {
-            List<Option> movieOptions = optionEntry.getValue();
+        for (Map.Entry<LocalDate, List<Option>> entry : options.get(cinema).entrySet()) {
+            LocalDate key = entry.getKey();
+            List<Option> movieOptions = entry.getValue();
             List<Option> newMovieOptions = new ArrayList<>();
             for (Option movieOption : movieOptions) {
                 List<ScreenTime> screenTimes = movieOption.getScreenTimes();
+                if (movieOption.getImdbRating() == 0.0) {
+                    asyncRunner.run(() -> movieDetailsService.fetchMovieDetails(movieOption.getMovieOriginalTitle())
+                            .map(MovieDetails::getImdbRating)
+                            .map(Double::parseDouble)
+                            .ifPresent(movieOption::setImdbRating));
+                    updatedImdbRating.set(true);
+                }
                 List<ScreenTime> newScreenTimes = new ArrayList<>();
                 for (ScreenTime screenTime : screenTimes) {
-                    LocalDateTime dateTime = LocalDateTime.of(optionEntry.getKey(), screenTime.time());
+                    LocalDateTime dateTime = LocalDateTime.of(key, screenTime.getTime());
                     if (currentDateTime.isBefore(dateTime)) {
                         newScreenTimes.add(screenTime);
                     }
@@ -269,12 +280,16 @@ public class ApolloKinoService {
                 }
             }
             if (!newMovieOptions.isEmpty()) {
-                filteredOptions.put(optionEntry.getKey(), newMovieOptions);
+                filteredOptions.put(key, newMovieOptions);
             }
+        }
+        if (updatedImdbRating.get()) {
+            log.info("Updated IMDB rating. Updating cache");
+            cacheService.updateApolloKinoData(options);
         }
         return filteredOptions;
     }
-
+    
     private static int toSeconds(String time) {
         try {
             String[] split = time.split(":");
@@ -285,7 +300,7 @@ public class ApolloKinoService {
             throw new RuntimeException("Failed to parse time", e);
         }
     }
-
+    
     public Optional<Map.Entry<File, Set<StarSeat>>> book(ApolloKinoSession session) {
         Optional<ScreenTime> screenTime = screenTime(session);
         if (screenTime.isEmpty()) {
@@ -294,7 +309,7 @@ public class ApolloKinoService {
         }
         String rowAndSeat = session.getRowAndSeat();
         try {
-            open(screenTime.get().url());
+            open(screenTime.get().getUrl());
             getWebDriver().manage().window().maximize();
             ElementsCollection elements = $$(className("user__account-name"));
             boolean acceptedTerms = false;
@@ -328,7 +343,7 @@ public class ApolloKinoService {
             switchTo().defaultContent();
             $$(tagName("button")).find(text("Maksma")).click();
             sleep(333);
-
+            
             ElementsCollection starSeatRows = $$(className("checkout-card__title")).filter(text(session.getSelectedMovie()))
                     .first()
                     .parent()
@@ -352,7 +367,7 @@ public class ApolloKinoService {
             Selenide.closeWebDriver();
         }
     }
-
+    
     public Optional<Map.Entry<File, Set<StarSeat>>> reBook(ApolloKinoSession session) {
         Optional<ScreenTime> screenTime = screenTime(session);
         if (screenTime.isEmpty()) {
@@ -364,7 +379,7 @@ public class ApolloKinoService {
             getWebDriver().manage().window().maximize();
             $(".cky-btn-accept").click();
             login();
-
+            
             SelenideElement headerTimer = $(".header__timer");
             if (!headerTimer.exists()) {
                 return book(session);
@@ -380,15 +395,15 @@ public class ApolloKinoService {
         } finally {
             Selenide.closeWebDriver();
         }
-
+        
     }
-
+    
     private void login() {
         $(name("username")).setValue(username);
         $(name("password")).setValue(password);
         $(".user__login-submit").click();
     }
-
+    
     private String extractShowId(String currentUrl) {
         Pattern pattern = Pattern.compile("show%2F(\\d+)$");
         Matcher matcher = pattern.matcher(currentUrl);
@@ -397,7 +412,7 @@ public class ApolloKinoService {
         }
         throw new RuntimeException("Show id not found");
     }
-
+    
     private int extractInt(String val) {
         try {
             return Integer.parseInt(val);
@@ -405,7 +420,7 @@ public class ApolloKinoService {
             return 0;
         }
     }
-
+    
     public int[] coordinates(Screen screen, String rowAndSeat) {
         String[] split = rowAndSeat.split("K");
         String row = split[0];
@@ -415,5 +430,5 @@ public class ApolloKinoService {
         int x = (currentSeat % 2 == 1 ? points[0] : points[1]) + points[2] * index;
         return new int[]{x, points[3]};
     }
-
+    
 }

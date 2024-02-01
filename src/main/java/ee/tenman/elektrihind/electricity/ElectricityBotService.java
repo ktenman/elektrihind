@@ -20,7 +20,6 @@ import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.config.ScreenConfiguration;
 import ee.tenman.elektrihind.digitalocean.DigitalOceanService;
 import ee.tenman.elektrihind.euribor.EuriborRateFetcher;
-import ee.tenman.elektrihind.movies.MovieDetails;
 import ee.tenman.elektrihind.movies.MovieDetailsService;
 import ee.tenman.elektrihind.queue.ChatService;
 import ee.tenman.elektrihind.queue.OnlineCheckService;
@@ -462,15 +461,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 optionsList.sort(Comparator.comparing(Option::getImdbRating).reversed());
                 for (Option option : optionsList) {
                     List<InlineKeyboardButton> rowInline = new ArrayList<>();
-                    asyncRunner.run(() -> {
-                        if (option.getImdbRating() != 0.0) {
-                            return;
-                        }
-                        movieDetailsService.fetchMovieDetails(option.getMovieOriginalTitle())
-                                .map(MovieDetails::getImdbRating)
-                                .map(Double::parseDouble)
-                                .ifPresent(option::setImdbRating);
-                    });
                     InlineKeyboardButton button = new InlineKeyboardButton(option.getMovieTitleWithImdbRating());
                     String callbackData = getCallbackData.apply(option.getMovie());
                     button.setCallbackData(callbackData);
@@ -486,8 +476,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                         .map(Option::getScreenTimes)
                         .flatMap(List::stream)
                         .forEach(t -> {
-                            InlineKeyboardButton button = new InlineKeyboardButton(t.time().toString());
-                            String callbackData = getCallbackData.apply(t.time().toString());
+                            InlineKeyboardButton button = new InlineKeyboardButton(t.getTime().toString());
+                            String callbackData = getCallbackData.apply(t.getTime().toString());
                             button.setCallbackData(callbackData);
                             rowInline.add(button);
                         });
@@ -499,7 +489,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 ScreenTime screenTime = apolloKinoService.screenTime(session)
                         .orElseThrow(() -> new IllegalArgumentException("Screen time not found for "
                                 + session.getSelectedDate() + " " + session.getSelectedMovie() + " " + session.getSelectedTime()));
-                Map<String, Integer> seatCounts = screenConfiguration.getScreen(session.getCinema(), screenTime.hall()).seatCounts();
+                Map<String, Integer> seatCounts = screenConfiguration.getScreen(session.getCinema(), screenTime.getHall()).seatCounts();
                 List<InlineKeyboardButton> rowInline = new ArrayList<>();
                 for (Entry<String, Integer> entry : seatCounts.entrySet()) {
                     InlineKeyboardButton button = new InlineKeyboardButton(entry.getKey());
@@ -514,7 +504,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 ScreenTime screenTime = apolloKinoService.screenTime(session)
                         .orElseThrow(() -> new IllegalArgumentException("Screen time not found for "
                                 + session.getSelectedDate() + " " + session.getSelectedMovie() + " " + session.getSelectedTime()));
-                int maxSeats = screenConfiguration.getScreen(session.getCinema(), screenTime.hall()).seatCounts().get(session.getSelectedRow());
+                int maxSeats = screenConfiguration.getScreen(session.getCinema(), screenTime.getHall()).seatCounts().get(session.getSelectedRow());
                 for (int i = 1; i <= maxSeats; i++) {
                     List<InlineKeyboardButton> rowInline = getRowWithButton(getCallbackData, i);
                     rowsInline.add(rowInline);

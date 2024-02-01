@@ -14,8 +14,8 @@ public class ThreadPoolConfiguration {
     @Bean(name = "customExecutor")
     public Executor customExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(10);
+        executor.setCorePoolSize(15);
+        executor.setMaxPoolSize(30);
         executor.setQueueCapacity(500);
         executor.setThreadNamePrefix("CustomExecutor-");
         executor.initialize();

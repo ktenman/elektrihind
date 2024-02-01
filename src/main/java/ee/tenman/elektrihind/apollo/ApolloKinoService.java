@@ -5,6 +5,7 @@ import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import ee.tenman.elektrihind.cache.CacheService;
 import ee.tenman.elektrihind.config.ScreenConfiguration;
+import ee.tenman.elektrihind.movies.MovieDetails;
 import ee.tenman.elektrihind.movies.MovieDetailsService;
 import ee.tenman.elektrihind.utility.AsyncRunner;
 import ee.tenman.elektrihind.utility.TimeUtility;
@@ -33,6 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -239,21 +241,30 @@ public class ApolloKinoService {
                 .filter(screen -> screen.getMovie().equals(session.getSelectedMovie()))
                 .map(Option::getScreenTimes)
                 .flatMap(List::stream)
-                .filter(t -> t.time().equals(session.getSelectedTime()))
+                .filter(t -> t.getTime().equals(session.getSelectedTime()))
                 .findFirst();
     }
 
     public Map<LocalDate, List<Option>> getOptions(Cinema cinema) {
+        AtomicBoolean updatedImdbRating = new AtomicBoolean(false);
         LocalDateTime currentDateTime = LocalDateTime.now();
         Map<LocalDate, List<Option>> filteredOptions = new TreeMap<>();
-        for (Map.Entry<LocalDate, List<Option>> optionEntry : options.get(cinema).entrySet()) {
-            List<Option> movieOptions = optionEntry.getValue();
+        for (Map.Entry<LocalDate, List<Option>> entry : options.get(cinema).entrySet()) {
+            LocalDate key = entry.getKey();
+            List<Option> movieOptions = entry.getValue();
             List<Option> newMovieOptions = new ArrayList<>();
             for (Option movieOption : movieOptions) {
                 List<ScreenTime> screenTimes = movieOption.getScreenTimes();
+                if (movieOption.getImdbRating() == 0.0) {
+                    asyncRunner.run(() -> movieDetailsService.fetchMovieDetails(movieOption.getMovieOriginalTitle())
+                            .map(MovieDetails::getImdbRating)
+                            .map(Double::parseDouble)
+                            .ifPresent(movieOption::setImdbRating));
+                    updatedImdbRating.set(true);
+                }
                 List<ScreenTime> newScreenTimes = new ArrayList<>();
                 for (ScreenTime screenTime : screenTimes) {
-                    LocalDateTime dateTime = LocalDateTime.of(optionEntry.getKey(), screenTime.time());
+                    LocalDateTime dateTime = LocalDateTime.of(key, screenTime.getTime());
                     if (currentDateTime.isBefore(dateTime)) {
                         newScreenTimes.add(screenTime);
                     }
@@ -269,8 +280,12 @@ public class ApolloKinoService {
                 }
             }
             if (!newMovieOptions.isEmpty()) {
-                filteredOptions.put(optionEntry.getKey(), newMovieOptions);
+                filteredOptions.put(key, newMovieOptions);
             }
+        }
+        if (updatedImdbRating.get()) {
+            log.info("Updated IMDB rating. Updating cache");
+            cacheService.updateApolloKinoData(options);
         }
         return filteredOptions;
     }
@@ -294,7 +309,7 @@ public class ApolloKinoService {
         }
         String rowAndSeat = session.getRowAndSeat();
         try {
-            open(screenTime.get().url());
+            open(screenTime.get().getUrl());
             getWebDriver().manage().window().maximize();
             ElementsCollection elements = $$(className("user__account-name"));
             boolean acceptedTerms = false;

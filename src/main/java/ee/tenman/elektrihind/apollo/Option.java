@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,8 +14,9 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class Option {
-
+public class Option implements Serializable {
+	
+	private static final long serialVersionUID = 14451115423L;
     private String movie;
     private String movieOriginalTitle;
     private List<ScreenTime> screenTimes = new ArrayList<>();

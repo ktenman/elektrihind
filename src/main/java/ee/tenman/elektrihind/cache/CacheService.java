@@ -279,18 +279,23 @@ public class CacheService {
     }
 
     public Map<Cinema, Map<LocalDate, List<Option>>> getApolloKinoData() {
-        log.info("Getting Apollo Kino data from cache");
-        Optional<String> dataJson = Optional.ofNullable(cacheManager.getCache(APOLLO_KINO_CACHE))
-                .map(c -> c.get(APOLLO_KINO_CACHE, String.class));
-        if (dataJson.isEmpty()) {
-            log.info("Apollo Kino data not found in cache");
+        try {
+            log.info("Getting Apollo Kino data from cache");
+            Optional<String> dataJson = Optional.ofNullable(cacheManager.getCache(APOLLO_KINO_CACHE))
+                    .map(c -> c.get(APOLLO_KINO_CACHE, String.class));
+            if (dataJson.isEmpty()) {
+                log.info("Apollo Kino data not found in cache");
+                return Collections.emptyMap();
+            }
+            TypeReference<Map<Cinema, Map<LocalDate, List<Option>>>> typeReference = new TypeReference<>() {
+            };
+            Map<Cinema, Map<LocalDate, List<Option>>> result = JsonUtil.deserializeMap(dataJson.get(), typeReference);
+            log.info("Apollo Kino data retrieved from cache");
+            return result;
+        } catch (Exception e) {
+            log.error("Error getting Apollo Kino data from cache", e);
             return Collections.emptyMap();
         }
-        TypeReference<Map<Cinema, Map<LocalDate, List<Option>>>> typeReference = new TypeReference<>() {
-        };
-        Map<Cinema, Map<LocalDate, List<Option>>> result = JsonUtil.deserializeMap(dataJson.get(), typeReference);
-        log.info("Apollo Kino data retrieved from cache");
-        return result;
     }
 
     public void removeRebookingSession(UUID uuid) {

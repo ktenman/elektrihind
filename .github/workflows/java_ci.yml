@@ -97,14 +97,11 @@ jobs:
       - name: Deploy with Docker Compose
         run: |
           ssh githubuser@tenman.ee "\
-            docker-compose down || true && \
-            docker rm elektrihind_main -f || true && \
-            docker rm captcha_solver_main -f || true && \
-            docker rm automaks_main -f || true && \
             docker pull '$DOCKER_IMAGE_NAME:latest' || true && \
             docker pull ktenman/captcha-solver:latest || true && \
             docker pull ktenman/automaks:latest || true && \
-            docker-compose up -d && \
+            docker-compose pull && \
+            docker-compose up -d --build && \
             echo 'Pruning unused Docker images...' && \
             docker image prune -af"
 
@@ -152,17 +149,13 @@ jobs:
       - name: Deploy with Docker Compose
         run: |
           ssh githubuser@tenman.ee "\
-            docker-compose down || true && \
-            docker rm elektrihind_main -f || true && \
-            docker rm captcha_solver_main -f || true && \
-            docker rm automaks_main -f || true && \
             docker pull '$DOCKER_IMAGE_NAME:latest' || true && \
             docker pull ktenman/captcha-solver:latest || true && \
             docker pull ktenman/automaks:latest || true && \
-            docker-compose up -d && \
+            docker-compose pull && \
+            docker-compose up -d --build && \
             echo 'Pruning unused Docker images...' && \
             docker image prune -af"
-
       - name: Cleanup on server
         run: ssh githubuser@tenman.ee "rm ~/docker-compose.yml ~/.env"
 

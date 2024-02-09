@@ -48,10 +48,12 @@ public class MovieDetailsService {
                         Optional<String> imdbId = imdbService.getIMDbId(title);
                         if (imdbId.isPresent()) {
                             Optional<String> imdbRating = imdbService.getImdbRatingV2(imdbId.get());
-                            return imdbRating.map(rating -> MovieDetails.builder()
+                            Optional<MovieDetails> optionalMovieDetails = imdbRating.map(rating -> MovieDetails.builder()
                                     .imdbID(imdbId.get())
                                     .imdbRating(rating)
                                     .build());
+                            optionalMovieDetails.ifPresent(details -> cacheService.saveMovieDetails(title, details));
+                            return optionalMovieDetails;
                         }
                         return Optional.empty();
                     });

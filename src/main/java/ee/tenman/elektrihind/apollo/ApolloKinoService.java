@@ -255,7 +255,7 @@ public class ApolloKinoService {
             List<Option> newMovieOptions = new ArrayList<>();
             for (Option movieOption : movieOptions) {
                 List<ScreenTime> screenTimes = movieOption.getScreenTimes();
-                if (movieOption.getImdbRating() == 0.0) {
+                if (movieOption.getImdbRating() == null) {
                     asyncRunner.run(() -> movieDetailsService.fetchMovieDetails(movieOption.getMovieOriginalTitle())
                             .map(MovieDetails::getImdbRating)
                             .map(Double::parseDouble)
@@ -274,7 +274,7 @@ public class ApolloKinoService {
                             .movie(movieOption.getMovie())
                             .screenTimes(newScreenTimes)
                             .movieOriginalTitle(movieOption.getMovieOriginalTitle())
-                            .imdbRating(movieOption.getImdbRating())
+                            .imdbRating(movieOption.getNumericalImdbRating())
                             .build();
                     newMovieOptions.add(newMovieOption);
                 }

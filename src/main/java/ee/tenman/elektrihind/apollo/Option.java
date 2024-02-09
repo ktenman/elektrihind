@@ -27,7 +27,7 @@ public class Option implements Serializable {
         return imdbRating == null || imdbRating.equals(0.0) ? movie : movie + " [" + imdbRating + "]";
     }
     
-    public Double getImdbRating() {
+    public Double getNumericalImdbRating() {
         return imdbRating == null ? 0.0 : imdbRating;
     }
     

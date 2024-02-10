@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +22,8 @@ public class Option implements Serializable {
     private String movieOriginalTitle;
     private List<ScreenTime> screenTimes = new ArrayList<>();
     private Double imdbRating;
+	@Builder.Default
+	private Instant updatedAt = Instant.now();
 	
 	@JsonIgnore
     public String getMovieTitleWithImdbRating() {

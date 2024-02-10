@@ -23,7 +23,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -255,12 +257,13 @@ public class ApolloKinoService {
             List<Option> newMovieOptions = new ArrayList<>();
             for (Option movieOption : movieOptions) {
                 List<ScreenTime> screenTimes = movieOption.getScreenTimes();
-                if (movieOption.getImdbRating() == null) {
+                if (movieOption.getUpdatedAt().isBefore(currentDateTime.toInstant(ZoneOffset.UTC).minus(7, ChronoUnit.DAYS))) {
                     asyncRunner.run(() -> movieDetailsService.fetchMovieDetails(movieOption.getMovieOriginalTitle())
                             .map(MovieDetails::getImdbRating)
                             .map(Double::parseDouble)
                             .ifPresent(movieOption::setImdbRating));
                     updatedImdbRating.set(true);
+                    movieOption.setUpdatedAt(currentDateTime.toInstant(ZoneOffset.UTC));
                 }
                 List<ScreenTime> newScreenTimes = new ArrayList<>();
                 for (ScreenTime screenTime : screenTimes) {

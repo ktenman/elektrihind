@@ -384,7 +384,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     private void displayApolloKinoMenu(long chatId, ApolloKinoSession session, String chosenOption) {
-
+        ensureEditLimit();
         if (BACK_BUTTON.equals(chosenOption)) {
             session.setPreviousState();
             if (!session.getSelectedOptions().isEmpty()) {

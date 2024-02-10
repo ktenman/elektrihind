@@ -252,6 +252,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
     @SneakyThrows(ExecutionException.class)
     private void handleCallbackQuery(CallbackQuery callbackQuery) {
+        ensureEditLimit();
         String userName = Optional.ofNullable(callbackQuery)
                 .map(CallbackQuery::getMessage)
                 .map(Message::getFrom)
@@ -785,6 +786,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     }
 
     private void handleTextMessage(Message message) {
+        ensureEditLimit();
         AtomicLong startTime = new AtomicLong(System.nanoTime());
         long chatId = message.getChatId();
         int messageId = message.getMessageId();

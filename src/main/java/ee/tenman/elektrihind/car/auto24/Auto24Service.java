@@ -165,6 +165,7 @@ public class Auto24Service implements CaptchaSolver {
         if (acceptCookies.exists()) {
             acceptCookies.click();
         }
+        TimeUnit.MILLISECONDS.sleep(2000);
         $(By.name("vpc_reg_nr")).setValue(regNr);
 
         File screenshot = $("#vpc_captcha").screenshot();

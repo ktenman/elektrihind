@@ -63,14 +63,15 @@ public class CarSearchService {
         int timeout = 7;
         TimeUnit timeUnit = TimeUnit.MINUTES;
 
-        CompletableFuture<LinkedHashMap<String, String>> carPriceFuture = CompletableFuture.supplyAsync(() -> auto24Service.carPrice(regNr), fourThreadExecutor)
-                .orTimeout(timeout, timeUnit);
+//        CompletableFuture<LinkedHashMap<String, String>> carPriceFuture = CompletableFuture.supplyAsync(() -> auto24Service.carPrice(regNr), fourThreadExecutor)
+//                .orTimeout(timeout, timeUnit);
         CompletableFuture<String> arkCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> arkService.getCaptchaToken(), fourThreadExecutor)
                 .orTimeout(timeout, timeUnit);
         CompletableFuture<String> lkfCaptchaTokenFuture = CompletableFuture.supplyAsync(() -> lkfService.getCaptchaToken(), fourThreadExecutor)
                 .orTimeout(timeout, timeUnit);
-
-        Map<String, String> response = carPriceFuture.join();
+        
+        Map<String, String> response = new LinkedHashMap<>();
+        response.put("Reg nr", regNr);
 
         updateListener.onUpdate(response, false);
 

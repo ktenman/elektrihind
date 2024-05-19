@@ -159,8 +159,8 @@ jobs:
       - name: Cleanup on server
         run: ssh githubuser@tenman.ee "rm ~/docker-compose.yml ~/.env"
 
-      - name: Cleanup on runner
-        run: rm .env
+#      - name: Cleanup on runner
+#        run: rm .env
 
   auto-merge-dependabot:
     name: 🤖 Auto merge dependabot PR

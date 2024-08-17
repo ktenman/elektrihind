@@ -16,8 +16,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 public class ChatService {
-
-    private static final int TIMEOUT = 60000;
+    
+    private static final int TIMEOUT = 120000;
     private final Map<UUID, CompletableFuture<String>> chatFutures = new ConcurrentHashMap<>();
     @Resource
     private RabbitMQPublisher rabbitMQPublisher;

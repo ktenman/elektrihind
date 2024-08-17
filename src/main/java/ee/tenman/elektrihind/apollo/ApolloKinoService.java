@@ -9,13 +9,11 @@ import ee.tenman.elektrihind.movies.MovieDetails;
 import ee.tenman.elektrihind.movies.MovieDetailsService;
 import ee.tenman.elektrihind.utility.AsyncRunner;
 import ee.tenman.elektrihind.utility.TimeUtility;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -105,7 +103,7 @@ public class ApolloKinoService {
         return null;
     }
     
-    @PostConstruct
+    //    @PostConstruct
     public void onStart() {
         options = new TreeMap<>(cacheService.getApolloKinoData());
         if (options.isEmpty()) {
@@ -114,7 +112,7 @@ public class ApolloKinoService {
         }
     }
     
-    @Scheduled(cron = "0 15 3,9,15,21 * * *")
+    //    @Scheduled(cron = "0 15 3,9,15,21 * * *")
     public void onSchedule() {
         init();
         cacheService.updateApolloKinoData(options);

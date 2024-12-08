@@ -49,15 +49,9 @@ jobs:
         with:
           context: .
           push: true
-          #          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }},${{ env.DOCKER_IMAGE_NAME }}:latest
           tags: ${{ env.DOCKER_IMAGE_NAME }}:latest
           cache-from: type=registry,ref=${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
           cache-to: type=inline
-  #      - name: Scan the Docker image
-  #        uses: anchore/scan-action@v3.3.6
-  #        with:
-  #          image: "${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}"
-  #          fail-build: false  # or false, depending on how you want to handle scan failures
 
   deploy_on_push:
     name: 🚀 Deploy on push
@@ -94,7 +88,7 @@ jobs:
 
       - name: Copy .env and docker-compose.yml files to server
         run: |
-          scp .env docker-compose.yml githubuser@tenman.ee:~/  # Copying to the home directory of githubuser
+          scp .env docker-compose.yml githubuser@tenman.ee:~/
       - name: Deploy with Docker Compose
         run: |
           ssh githubuser@tenman.ee "\
@@ -105,12 +99,6 @@ jobs:
             docker-compose up -d --build && \
             echo 'Pruning unused Docker images...' && \
             docker image prune -af"
-
-      - name: Cleanup on server
-        run: ssh githubuser@tenman.ee "rm ~/docker-compose.yml ~/.env"
-
-  #     - name: Cleanup on runner
-  #       run: rm .env
 
   deploy_on_dispatch:
     name: 🚀 Deploy on dispatch
@@ -146,7 +134,7 @@ jobs:
 
       - name: Copy .env and docker-compose.yml files to server
         run: |
-          scp .env docker-compose.yml githubuser@tenman.ee:~/  # Copying to the home directory of githubuser
+          scp .env docker-compose.yml githubuser@tenman.ee:~/
       - name: Deploy with Docker Compose
         run: |
           ssh githubuser@tenman.ee "\
@@ -157,11 +145,6 @@ jobs:
             docker-compose up -d --build && \
             echo 'Pruning unused Docker images...' && \
             docker image prune -af"
-      - name: Cleanup on server
-        run: ssh githubuser@tenman.ee "rm ~/docker-compose.yml ~/.env"
-
-      - name: Cleanup on runner
-        run: rm .env
 
   auto-merge-dependabot:
     name: 🤖 Auto merge dependabot PR

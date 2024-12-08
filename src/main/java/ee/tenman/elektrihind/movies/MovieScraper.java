@@ -17,8 +17,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.open;
@@ -44,24 +46,24 @@ public class MovieScraper {
 
     @PostConstruct
     public void fetchMovies() {
-        Instant startTime = Instant.now();
-        log.info("Starting movie fetching process.");
-        try {
-            initializeBrowser();
-            List<String> movieUrls = fetchMovieUrls();
-            List<MovieDto> movies = fetchMovieDetailsFromUrls(movieUrls);
-
-            log.info("In total found movies: {}", movies.size());
-            movies.sort(Comparator.comparing(MovieDto::getImdbRating).reversed());
-
-            writeMoviesToCsv(movies);
-            javaElekterTelegramService.sendCsvToTelegram(FILE_NAME);
-        } catch (Exception e) {
-            log.error("Error fetching movies", e);
-        } finally {
-            Instant endTime = Instant.now();
-            log.info("Movie fetching process completed in: {} seconds", Duration.between(startTime, endTime).getSeconds());
-        }
+//        Instant startTime = Instant.now();
+//        log.info("Starting movie fetching process.");
+//        try {
+//            initializeBrowser();
+//            List<String> movieUrls = fetchMovieUrls();
+//            List<MovieDto> movies = fetchMovieDetailsFromUrls(movieUrls);
+//
+//            log.info("In total found movies: {}", movies.size());
+//            movies.sort(Comparator.comparing(MovieDto::getImdbRating).reversed());
+//
+//            writeMoviesToCsv(movies);
+//            javaElekterTelegramService.sendCsvToTelegram(FILE_NAME);
+//        } catch (Exception e) {
+//            log.error("Error fetching movies", e);
+//        } finally {
+//            Instant endTime = Instant.now();
+//            log.info("Movie fetching process completed in: {} seconds", Duration.between(startTime, endTime).getSeconds());
+//        }
     }
 
     private void initializeBrowser() {

@@ -13,12 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Document;
@@ -36,24 +31,14 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 
-import static ee.tenman.elektrihind.electricity.ElectricityBotService.CAR_REGISTRATION_PATTERN;
 import static ee.tenman.elektrihind.electricity.ElectricityBotService.DURATION_PATTERN;
 import static ee.tenman.elektrihind.electricity.ElectricityBotService.UNKNOWN_USERNAME;
 import static ee.tenman.elektrihind.electricity.PriceFinderServiceTest.ELECTRICITY_PRICES;
 import static java.time.ZoneOffset.UTC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ElectricityBotServiceTest {
@@ -290,21 +275,6 @@ class ElectricityBotServiceTest {
         int result = service.durationInMinutes(matcher);
 
         assertThat(result).isEqualTo(expectedDurationInMinutes);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "ark 12345", "ark AB123", "ark abcD"})
-    void testValidPatterns(String input) {
-        assertThat(CAR_REGISTRATION_PATTERN.matcher(input).matches()).isTrue();
-    }
-
-
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "ark", "arK 123 456", "ARK-123", "xyz 123", "ark on katki"})
-    void testInvalidPatterns(String input) {
-        assertThat(CAR_REGISTRATION_PATTERN.matcher(input).matches()).isFalse();
     }
 
     @Test

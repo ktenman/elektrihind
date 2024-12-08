@@ -3,6 +3,7 @@ name: Java CI with Docker
 on:
   push:
   pull_request:
+  workflow_dispatch:  # Added manual trigger
   repository_dispatch:
     types: [ trigger-deploy ]
 

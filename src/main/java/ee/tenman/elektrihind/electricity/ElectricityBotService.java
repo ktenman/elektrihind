@@ -2,31 +2,18 @@ package ee.tenman.elektrihind.electricity;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import ee.tenman.elektrihind.apollo.ApolloKinoService;
-import ee.tenman.elektrihind.apollo.ApolloKinoSession;
-import ee.tenman.elektrihind.apollo.ApolloKinoState;
-import ee.tenman.elektrihind.apollo.Cinema;
-import ee.tenman.elektrihind.apollo.Option;
-import ee.tenman.elektrihind.apollo.ReBookingService;
-import ee.tenman.elektrihind.apollo.ScreenTime;
-import ee.tenman.elektrihind.apollo.SessionManagementService;
-import ee.tenman.elektrihind.apollo.StarSeat;
+import ee.tenman.elektrihind.apollo.*;
 import ee.tenman.elektrihind.cache.CacheService;
-import ee.tenman.elektrihind.car.CarSearchService;
-import ee.tenman.elektrihind.car.PlateDetectionService;
 import ee.tenman.elektrihind.car.auto24.Auto24Service;
 import ee.tenman.elektrihind.config.FeesConfiguration;
 import ee.tenman.elektrihind.config.HolidaysConfiguration;
 import ee.tenman.elektrihind.config.ScreenConfiguration;
 import ee.tenman.elektrihind.digitalocean.DigitalOceanService;
 import ee.tenman.elektrihind.euribor.EuriborRateFetcher;
-import ee.tenman.elektrihind.movies.MovieDetailsService;
 import ee.tenman.elektrihind.queue.ChatService;
 import ee.tenman.elektrihind.queue.OnlineCheckService;
 import ee.tenman.elektrihind.telegram.JavaElekterTelegramService;
-import ee.tenman.elektrihind.utility.AsyncRunner;
 import ee.tenman.elektrihind.utility.DateTimeConstants;
-import ee.tenman.elektrihind.utility.FileToBase64;
 import ee.tenman.elektrihind.utility.TextUtility;
 import ee.tenman.elektrihind.utility.TimeUtility;
 import jakarta.annotation.PostConstruct;
@@ -43,13 +30,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Document;
-import org.telegram.telegrambots.meta.api.objects.File;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.PhotoSize;
-import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -67,36 +48,15 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.time.Clock;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -117,7 +77,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final Random RANDOM = new Random();
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final Pattern DURATION_PATTERN = Pattern.compile("parim hind (\\d+)(?: h |:)?(\\d+)?(?: min)?", Pattern.CASE_INSENSITIVE);
-    public static final Pattern CAR_REGISTRATION_PATTERN = Pattern.compile("^ark\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
     public static final Pattern CLEAR_CAR_CACHE_REGISTRATION_PATTERN = Pattern.compile("^clear\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
     public static final Pattern CAR_PRICE_REGISTRATION_PATTERN = Pattern.compile("^price\\s+([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE);
     public static final Pattern CHAT_PATTERN = Pattern.compile("(?s)^chat\\s+(.+)$", Pattern.CASE_INSENSITIVE);
@@ -125,7 +84,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private static final String METRIC = "metric";
     private static final String APOLLO_KINO = "apollo";
     private static final Pattern APOLLO_KINO_SESSION_ID_PATTERN = Pattern.compile(APOLLO_KINO + "=([0-9]+)=(.+)");
-    private static final MessageDigest SHA_256_DIGEST;
     private static final String SHA256_ALGORITHM = "SHA-256";
     private static final String REBOOT_COMMAND = "reboot";
     private static final String CONFIRM_BUTTON = "Confirm";
@@ -152,13 +110,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
             "ElektriGeenius_bot", "ktenman", "JavaElekterBot", "edurbrito", "vladminajev", "kalaindrek",
             "Veske"
     ));
-    static {
-        try {
-            SHA_256_DIGEST = MessageDigest.getInstance(SHA256_ALGORITHM);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-    }
     @Resource
     private HolidaysConfiguration holidaysConfiguration;
     @Resource
@@ -172,11 +123,7 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     @Resource
     private PriceFinderService priceFinderService;
     @Resource
-    private CarSearchService carSearchService;
-    @Resource
     private DigitalOceanService digitalOceanService;
-    @Resource
-    private PlateDetectionService plateDetectionService;
     @Resource(name = "singleThreadExecutor")
     private ExecutorService singleThreadExecutor;
     @Resource
@@ -199,19 +146,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
     private SessionManagementService sessionManagementService;
     @Resource
     private ReBookingService reBookingService;
-    @Resource
-    private AsyncRunner asyncRunner;
-    @Resource
-    private MovieDetailsService movieDetailsService;
-
-    public static String buildSHA256(String input) {
-        byte[] hashInBytes = SHA_256_DIGEST.digest(input.getBytes(StandardCharsets.UTF_8));
-        StringBuilder stringBuilder = new StringBuilder();
-        for (byte b : hashInBytes) {
-            stringBuilder.append(String.format("%02x", b));
-        }
-        return stringBuilder.toString();
-    }
 
     List<String[]> readCsv(String filePath) {
         List<String[]> data = new ArrayList<>();
@@ -273,13 +207,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         String callData = callbackQuery.getData();
         long chatId = callbackQuery.getMessage().getChatId();
 
-        Matcher arkMatcher = CAR_REGISTRATION_PATTERN.matcher(callData);
-        if (arkMatcher.find()) {
-            log.info("Received callback query for regNr: {}", arkMatcher.group(1));
-            String regNr = arkMatcher.group(1).toUpperCase();
-            search(startTime, chatId, regNr, null);
-            return;
-        }
         Matcher apolloKinoSessionIdMatcher = APOLLO_KINO_SESSION_ID_PATTERN.matcher(callData);
         if (apolloKinoSessionIdMatcher.find()) {
             Integer sessionId = Integer.parseInt(apolloKinoSessionIdMatcher.group(1));
@@ -670,54 +597,8 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                 handleTextMessage(message);
             } else if (message.hasDocument()) {
                 handleDocumentMessage(message, chatId);
-            } else if (message.hasPhoto()) {
-                handlePhotoMessage(message, chatId);
             }
         }
-    }
-
-    private void handlePhotoMessage(Message message, long chatId) {
-        // Photos are sent as a list, the highest quality photo is usually the last one
-        List<PhotoSize> photos = message.getPhoto();
-        if (photos == null || photos.isEmpty()) {
-            sendMessage(chatId, "No photo detected.");
-            return;
-        }
-
-        String fileId = photos.getLast().getFileId();
-        byte[] imageBytes = downloadImage(fileId); // Implement downloadImage to retrieve the photo as byte array
-        handlePlateNumberImage(message, imageBytes);
-    }
-
-    private void handlePlateNumberImage(Message message, byte[] imageBytes) {
-        AtomicLong startTime = new AtomicLong(System.nanoTime());
-        String base64EncodedImage = FileToBase64.encodeToBase64(imageBytes);
-        String imageHashValue = buildSHA256(base64EncodedImage);
-        Optional<String> detectedPlate = plateDetectionService.detectPlate(base64EncodedImage, imageHashValue);
-
-        if (detectedPlate.isEmpty()) {
-            return;
-        }
-
-        String plateNumber = detectedPlate.get();
-        InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardForPlateNumber(plateNumber);
-
-        String messageContent = cacheService.isAutomaticFetchingEnabled() ?
-                "Detected a plate number: " + plateNumber :
-                "Detected a potential plate number. Would you like to check it?";
-
-        SendMessage messageWithButton = createMessageWithInlineKeyboard(message, messageContent, inlineKeyboardMarkup);
-        if (!cacheService.isAutomaticFetchingEnabled()) {
-            executeSendMessage(messageWithButton);
-        }
-        performSearchIfAutoFetchingEnabled(startTime, message, plateNumber);
-    }
-
-    private void performSearchIfAutoFetchingEnabled(AtomicLong startTime, Message message, String plateNumber) {
-        if (!cacheService.isAutomaticFetchingEnabled()) {
-            return;
-        }
-        search(startTime, message.getChatId(), plateNumber, message.getMessageId());
     }
 
     private void displayMenu(long chatId) {
@@ -793,7 +674,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
 
         String messageText = message.getText();
         Matcher matcher = DURATION_PATTERN.matcher(messageText);
-        Matcher arkMatcher = CAR_REGISTRATION_PATTERN.matcher(messageText);
         Matcher chatMatcher = CHAT_PATTERN.matcher(messageText);
         Matcher carPriceMatcher = CAR_PRICE_REGISTRATION_PATTERN.matcher(messageText);
 	    Matcher clearMatcher = CLEAR_CAR_CACHE_REGISTRATION_PATTERN.matcher(messageText);
@@ -813,9 +693,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         } else if (messageText.toLowerCase().contains(EURIBOR)) {
             String euriborResonse = euriborRateFetcher.getEuriborRateResponse();
             sendMessageCode(chatId, messageId, euriborResonse);
-        } else if (arkMatcher.find()) {
-            String regNr = arkMatcher.group(1).toUpperCase();
-            search(startTime, chatId, regNr, messageId);
         } else if (carPriceMatcher.find()) {
             String regNr = carPriceMatcher.group(1).toUpperCase();
             price(startTime, chatId, regNr, messageId);
@@ -875,37 +752,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
                     } else {
                         log.error("Error fetching car details: {}", throwable.getLocalizedMessage());
                         editMessage(chatId, messageId, "Fetching car price timed out for: " + regNr);
-                    }
-                    messageUpdateFlags.remove(messageId);
-                    lastPercentages.remove(messageId);
-                    return null;
-                });
-    }
-
-    private void search(AtomicLong startTime, long chatId, String regNr, Integer originalMessageId) {
-        if (startTime.get() == 0) {
-            startTime.set(System.nanoTime());
-        }
-
-        Message message = sendMessageCode(chatId, originalMessageId, "Fetching car details for registration plate " + regNr + "...");
-        Integer messageId = message.getMessageId();
-        messageUpdateFlags.put(messageId, new AtomicBoolean(false));
-        beginMessageUpdateAnimation(chatId, regNr, messageId);
-
-        CompletableFuture.runAsync(() -> {
-                    startTime.set(System.nanoTime());
-                    CarSearchUpdateListener listener = (data, isFinalUpdate) -> handleCarSearchUpdate(chatId, data, isFinalUpdate, messageId, startTime);
-                    Map<String, String> carSearchData = carSearchService.searchV2(regNr, listener);
-                    handleCarSearchUpdate(chatId, carSearchData, true, messageId, startTime);
-                }, singleThreadExecutor)
-                .orTimeout(15, TimeUnit.MINUTES)
-                .exceptionally(throwable -> {
-                    if (throwable.getCause() instanceof TimeoutException) {
-                        log.error("Fetching car details timed out for regNr: {}", throwable.getMessage());
-                        sendMessageWithRetryButton(chatId, "An error occurred while fetching car details.", regNr);
-                    } else {
-                        log.error("Error fetching car details: {}", throwable.getLocalizedMessage());
-                        sendMessageWithRetryButton(chatId, "Fetching car details timed out. Click below to retry.", regNr);
                     }
                     messageUpdateFlags.remove(messageId);
                     lastPercentages.remove(messageId);
@@ -1195,12 +1041,6 @@ public class ElectricityBotService extends TelegramLongPollingBot {
         String fileName = document.getFileName();
         if (fileName.endsWith(".csv")) {
             handleCsvDocument(document, chatId);
-            return;
-        }
-
-        if (fileName.toLowerCase().matches(".*(\\.jpg|\\.png)")) {
-            byte[] imageBytes = downloadImage(document.getFileId());
-            handlePlateNumberImage(message, imageBytes);
             return;
         }
 

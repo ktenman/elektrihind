@@ -5,6 +5,7 @@ import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import ee.tenman.elektrihind.telegram.JavaElekterTelegramService;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
@@ -17,11 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static com.codeborne.selenide.Selenide.$$;
 import static com.codeborne.selenide.Selenide.open;
@@ -31,7 +28,7 @@ import static com.codeborne.selenide.Selenide.open;
 public class MovieScraper {
 
     private static final String FILE_NAME = "movies.csv";
-    private static final int UPPER_LIMIT = 999;
+    private static final int UPPER_LIMIT = 9999;
 
     @Resource
     private MovieDetailsService movieDetailsService;
@@ -45,7 +42,7 @@ public class MovieScraper {
     @Resource
     private IMDBService imdbService;
 
-    //    @PostConstruct
+    @PostConstruct
     public void fetchMovies() {
         Instant startTime = Instant.now();
         log.info("Starting movie fetching process.");
@@ -69,7 +66,8 @@ public class MovieScraper {
 
     private void initializeBrowser() {
         log.info("Initializing browser configurations.");
-        open("https://poff.ee/otsi_filmi/?towns=Tartu&cinemas=Elektriteater%2C%20Tartu");
+        open("https://poff.ee/otsi_filmi/index.html");
+//        open("https://poff.ee/otsi_filmi/?towns=Tartu&cinemas=Elektriteater%2C%20Tartu");
     }
 
     private List<String> fetchMovieUrls() {

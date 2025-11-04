@@ -6,7 +6,7 @@ COPY src /app/src
 RUN mvn -T 1C --batch-mode --quiet package -DskipTests
 
 # Stage 2: Final Image with OpenJDK, Firefox, and GeckoDriver
-FROM openjdk:21-jdk-slim-bookworm
+FROM openjdk:22-jdk-slim-bookworm
 WORKDIR /app
 
 # Install necessary utilities
